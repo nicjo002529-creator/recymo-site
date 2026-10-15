@@ -27,10 +27,28 @@
     "telephone": "+3285217445",
     "email": "info@recymo.be",
     "address": { "@type": "PostalAddress", "streetAddress": "Rue Roua 6", "postalCode": "4260", "addressLocality": "Braives", "addressCountry": "BE" },
-    "geo": { "@type": "GeoCoordinates", "latitude": 50.6711, "longitude": 5.1771 },
+    "geo": { "@type": "GeoCoordinates", "latitude": 50.5753, "longitude": 5.2077 },
     "openingHoursSpecification": [
       { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "07:00", "closes": "17:00" },
       { "@type": "OpeningHoursSpecification", "dayOfWeek": "Saturday", "opens": "08:00", "closes": "12:00" }
+    ],
+    "hasMap": "https://www.google.com/maps/place/Recymo+Wallonie/@50.5753235,5.2076884,17z",
+    "areaServed": { "@type": "AdministrativeArea", "name": "Wallonie" },
+    "sameAs": ["https://www.facebook.com/profile.php?id=61580435163410"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Dois-je prévenir avant de venir déposer ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui pour les terres : elles sont acceptées sous réserve d'acceptation préalable par notre service qualité, et les NMT doivent nous être communiquées avant les premiers versages. Pour les déchets de construction, un appel suffit pour savoir quel site choisir et quel tarif s'applique." } },
+      { "@type": "Question", "name": "Comment le prix est-il calculé ?", "acceptedAnswer": { "@type": "Answer", "text": "Au poids. Chaque camion est pesé sur la bascule du site, et le prix dépend du type de déchet et de sa propreté. Un supplément de 7,50 € s'applique aux versages et enlèvements de moins de 5 tonnes." } },
+      { "@type": "Question", "name": "Puis-je recevoir le relevé de pesée ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Une bascule est disponible sur tous nos sites récepteurs, et nous fournissons le relevé au format Excel sur demande." } },
+      { "@type": "Question", "name": "Que se passe-t-il si mon chargement n'est pas conforme ?", "acceptedAnswer": { "@type": "Answer", "text": "Un versage non conforme est considéré comme un déchet de classe 2 et facturé comme tel." } },
+      { "@type": "Question", "name": "Quelles terres acceptez-vous ?", "acceptedAnswer": { "@type": "Answer", "text": "Les terres de type I à V, selon le site : Braives, Fosses-la-Ville, Transinnes et Sambreville n'acceptent pas les mêmes types ni aux mêmes conditions." } },
+      { "@type": "Question", "name": "Vos granulats recyclés sont-ils certifiés ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Nos granulats sont conformes à la norme NBN EN 13242. Les déclarations de performances et les contrôles qualité sont téléchargeables en ligne." } },
+      { "@type": "Question", "name": "Pouvez-vous livrer les granulats ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, nous pouvons livrer. Les prix affichés s'entendent au départ du site de Braives." } }
     ]
   }
   </script>
@@ -95,6 +113,22 @@
           <h2 class="h2">Ce que vous pouvez déposer chez nous</h2>
           <p class="lead">Les déchets inertes de chantier que nous acceptons sur nos sites.</p>
         </div>
+
+        <form class="finder" id="finder" role="search">
+          <label for="finder-q">Puis-je déposer… ?</label>
+          <div class="finder-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="finder-q" type="search" autocomplete="off" placeholder="Tapez un déchet : brique, tarmac, ardoise…" aria-describedby="finder-aide">
+          </div>
+          <p class="finder-help" id="finder-aide">Exemples :
+            <button type="button" class="chip" data-suggest>béton armé</button>
+            <button type="button" class="chip" data-suggest>briques</button>
+            <button type="button" class="chip" data-suggest>terre végétale</button>
+            <button type="button" class="chip" data-suggest>Ytong</button>
+          </p>
+          <div class="finder-results" aria-live="polite"></div>
+        </form>
+
         <ul class="waste-grid">
           <li class="waste-card"><span class="icon"><img src="assets/img/icons/terres.png" alt="" width="64" height="64" loading="lazy"></span><h3>Terres</h3></li>
           <li class="waste-card"><span class="icon"><img src="assets/img/icons/dechet_construction.png" alt="" width="64" height="64" loading="lazy"></span><h3>Déchets de construction</h3></li>
@@ -230,6 +264,19 @@
       </div>
     </section>
 
+    <!-- Chiffres (provisoires : à remplacer par les chiffres réels quand ils seront disponibles) -->
+    <section class="section-tight" aria-labelledby="chiffres-titre">
+      <div class="container">
+        <h2 class="sr-only" id="chiffres-titre">Recymo en chiffres</h2>
+        <dl class="figures">
+          <div><dt>de capacité de versage par an, en estimation (±2000 t par jour)</dt><dd>±500&nbsp;000&nbsp;t</dd></div>
+          <div><dt>sites de versage en Wallonie, tous équipés d'une bascule</dt><dd>4</dd></div>
+          <div><dt>la tonne pour déposer du béton non armé propre</dt><dd>0 €</dd></div>
+          <div><dt>déclarations de performances et contrôles qualité à télécharger</dt><dd>9</dd></div>
+        </dl>
+      </div>
+    </section>
+
     <!-- CTA -->
     <section class="section-tight">
       <div class="container">
@@ -273,6 +320,46 @@
       </div>
     </section>
 
+    <!-- FAQ -->
+    <section class="section bg-sand" id="faq">
+      <div class="container faq-layout">
+        <div class="section-head">
+          <h2 class="h2">Questions fréquentes</h2>
+          <p class="lead">Une autre question ? Appelez-nous au <a href="tel:+3285217445">085 21 74 45</a>.</p>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Dois-je prévenir avant de venir déposer ?</summary>
+            <p>Oui pour les terres : elles sont acceptées sous réserve d'acceptation préalable par notre service qualité, et les NMT doivent nous être communiquées avant les premiers versages. Pour les déchets de construction, un appel suffit pour savoir quel site choisir et quel tarif s'applique.</p>
+          </details>
+          <details>
+            <summary>Comment le prix est-il calculé ?</summary>
+            <p>Au poids. Chaque camion est pesé sur la bascule du site, et le prix dépend du type de déchet et de sa propreté. Un supplément de 7,50 € s'applique aux versages et enlèvements de moins de 5 tonnes. Vous pouvez <a href="tarifs.html#estimer">estimer votre prix en ligne</a>.</p>
+          </details>
+          <details>
+            <summary>Puis-je recevoir le relevé de pesée ?</summary>
+            <p>Oui. Une bascule est disponible sur tous nos sites récepteurs, et nous fournissons le relevé au format Excel sur demande.</p>
+          </details>
+          <details>
+            <summary>Que se passe-t-il si mon chargement n'est pas conforme ?</summary>
+            <p>Un versage non conforme est considéré comme un déchet de classe 2 et facturé comme tel. En cas de doute sur votre chargement, appelez-nous avant de venir.</p>
+          </details>
+          <details>
+            <summary>Quelles terres acceptez-vous ?</summary>
+            <p>Les terres de type I à V, selon le site : Braives, Fosses-la-Ville, Transinnes et Sambreville n'acceptent pas les mêmes types ni aux mêmes conditions. Le détail est dans notre <a href="tarifs.html#versage-terre">tarif terres</a>. Les informations officielles sur la gestion des terres sont sur <a href="https://walterre.be/" target="_blank" rel="noopener">Walterre</a>.</p>
+          </details>
+          <details>
+            <summary>Vos granulats recyclés sont-ils certifiés ?</summary>
+            <p>Oui. Nos granulats sont conformes à la norme NBN EN 13242. Les déclarations de performances et les contrôles qualité sont téléchargeables sur la page <a href="fiches-techniques.html">fiches techniques</a>.</p>
+          </details>
+          <details>
+            <summary>Pouvez-vous livrer les granulats ?</summary>
+            <p>Oui, nous pouvons livrer. Les prix affichés s'entendent au départ du site de Braives : <a href="contact.html?sujet=Achat%20de%20granulats#formulaire">demandez-nous un prix livré</a>.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
     <!-- Contact -->
     <section class="section" id="contact">
       <div class="container">
@@ -281,7 +368,7 @@
         </div>
         <div class="contact-grid">
           <div class="info-list">
-            <a class="info-item" href="https://www.openstreetmap.org/?mlat=50.6711&amp;mlon=5.1771#map=16/50.6711/5.1771" target="_blank" rel="noopener">
+            <a class="info-item" href="https://www.google.com/maps/dir/?api=1&amp;destination=50.5753235%2C5.2076884" target="_blank" rel="noopener">
               <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
               <span><small>Adresse</small><strong>Rue Roua 6, 4260 Braives</strong></span>
             </a>
@@ -295,12 +382,12 @@
             </a>
             <div class="info-item">
               <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span><small>Horaires</small><strong>Lun–Ven 7h–17h · Sam 8h–12h</strong></span>
+              <span><small>Horaires</small><strong>Lun–Ven 7h–17h · Sam 8h–12h</strong><span class="live" data-statut="braives"></span></span>
             </div>
             <a class="btn btn-primary" href="contact.html#formulaire" style="margin-top:4px">Notre formulaire de contact</a>
           </div>
           <div class="map-frame">
-            <iframe title="Carte : Recymo, Rue Roua 6, 4260 Braives" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=5.1621%2C50.6651%2C5.1921%2C50.6771&amp;layer=mapnik&amp;marker=50.6711%2C5.1771"></iframe>
+            <iframe title="Carte : Recymo, Rue Roua 6, 4260 Braives" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=5.1927%2C50.5693%2C5.2227%2C50.5813&amp;layer=mapnik&amp;marker=50.5753%2C5.2077"></iframe>
           </div>
         </div>
       </div>
@@ -353,6 +440,12 @@
     </div>
   </footer>
 
+  <nav class="mobile-bar no-print" aria-label="Contact rapide">
+    <a class="btn btn-dark" href="tel:+3285217445"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Appeler</a>
+    <a class="btn btn-primary" href="contact.html#formulaire">Demander un devis</a>
+  </nav>
+
   <script src="assets/js/main.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
 </body>
 </html>

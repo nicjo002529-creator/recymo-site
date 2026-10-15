@@ -90,11 +90,38 @@
     });
   }
 
-  /* Contact form: validates, then opens the visitor's mail client prefilled */
+  /* Contact form: validates, then sends directly (FormSubmit, when an endpoint
+     is configured) or opens the visitor's mail client prefilled */
   var form = document.getElementById("contact-form");
   if (form) {
+    var endpoint = form.getAttribute("data-endpoint");
+    var params = new URLSearchParams(location.search);
+
+    if (endpoint) {
+      form.action = endpoint;
+      form.querySelectorAll("[data-online-only], [data-foot-online]").forEach(function (el) { el.hidden = false; });
+      form.querySelectorAll("[data-foot-mailto]").forEach(function (el) { el.hidden = true; });
+    }
+
+    // Prefill from the price calculator or other links (?sujet=…&message=…)
+    if (params.get("sujet")) {
+      Array.prototype.forEach.call(form.elements.sujet.options, function (o) {
+        if (o.text === params.get("sujet")) form.elements.sujet.value = o.text;
+      });
+    }
+    if (params.get("message")) form.elements.message.value = params.get("message");
+
+    if (params.get("envoye") === "1") {
+      var sent = document.getElementById("form-sent");
+      if (sent) { sent.hidden = false; sent.focus(); }
+    }
+
+    var photo = form.elements.attachment;
+    var photoOk = function () {
+      return !photo || !photo.files || !photo.files[0] || photo.files[0].size <= 5 * 1024 * 1024;
+    };
+
     form.addEventListener("submit", function (e) {
-      e.preventDefault();
       var ok = true;
       form.querySelectorAll("[required]").forEach(function (input) {
         var field = input.closest(".field");
@@ -102,9 +129,25 @@
         field.classList.toggle("invalid", !valid);
         if (!valid && ok) { input.focus(); ok = false; }
       });
-      if (!ok) return;
+      if (endpoint && !photoOk()) {
+        photo.closest(".field").classList.add("invalid");
+        if (ok) photo.focus();
+        ok = false;
+      }
       var v = function (n) { return (form.elements[n].value || "").trim(); };
       var subject = "Demande " + v("sujet").toLowerCase() + " — " + v("nom") + (v("societe") ? " (" + v("societe") + ")" : "");
+      if (!ok) { e.preventDefault(); return; }
+
+      if (endpoint) {
+        // Let the browser post the form; FormSubmit redirects back here
+        form.elements._subject.value = subject;
+        form.elements._next.value = location.origin + location.pathname + "?envoye=1#formulaire";
+        var btn = form.querySelector("button[type=submit]");
+        btn.disabled = true;
+        btn.firstChild.textContent = "Envoi en cours… ";
+        return;
+      }
+      e.preventDefault();
       var body = [
         v("message"),
         "",
@@ -118,9 +161,10 @@
       var status = document.getElementById("form-status");
       if (status) status.hidden = false;
     });
+    form.addEventListener("change", function (e) { if (e.target === photo && photoOk()) photo.closest(".field").classList.remove("invalid"); });
     form.addEventListener("input", function (e) {
       var field = e.target.closest(".field");
-      if (field && field.classList.contains("invalid") && e.target.checkValidity()) field.classList.remove("invalid");
+      if (field && field.classList.contains("invalid") && e.target.checkValidity() && (e.target !== photo || photoOk())) field.classList.remove("invalid");
     });
   }
 
