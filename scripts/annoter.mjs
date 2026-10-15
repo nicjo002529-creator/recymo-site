@@ -5,7 +5,11 @@
 // Usage : node scripts/annoter.mjs
 import { readFileSync, writeFileSync } from "node:fs";
 
-const PAGES = { "index.html": "i", "tarifs.html": "t", "fiches-techniques.html": "f", "contact.html": "c", "mentions-legales.html": "m" };
+const PAGES = {
+  "index.html": "i", "tarifs.html": "t", "fiches-techniques.html": "f", "contact.html": "c", "mentions-legales.html": "m",
+  // Pages néerlandaises : mêmes clés que la page française correspondante
+  "nl/index.html": "i", "nl/tarieven.html": "t", "nl/technische-fiches.html": "f", "nl/contact.html": "c", "nl/juridische-informatie.html": "m"
+};
 const TAGS = "h1|h2|h3|p|td|th|dd|dt|summary|figcaption|strong|small|span|li|a|label|button";
 
 // Zones jamais modifiables : en-tête, scripts, barre mobile, SVG

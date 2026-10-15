@@ -2,6 +2,13 @@
   "use strict";
   document.documentElement.classList.add("js");
 
+  // Pages néerlandaises : dossier nl/, chemins des fichiers communs préfixés par ../
+  var RACINE = document.documentElement.getAttribute("data-racine") || "";
+  var NL = /^nl/.test(document.documentElement.lang);
+  window.RECYMO_RACINE = RACINE;
+  window.RECYMO_NL = NL;
+  var T = function (fr, nl) { return NL ? nl : fr; };
+
   /* Header shadow on scroll */
   var header = document.querySelector(".site-header");
   var onScroll = function () {
@@ -16,7 +23,7 @@
   if (toggle && links) {
     var setOpen = function (open) {
       toggle.setAttribute("aria-expanded", String(open));
-      toggle.setAttribute("aria-label", open ? "Fermer le menu" : "Ouvrir le menu");
+      toggle.setAttribute("aria-label", open ? T("Fermer le menu", "Menu sluiten") : T("Ouvrir le menu", "Menu openen"));
       links.classList.toggle("is-open", open);
     };
     toggle.addEventListener("click", function () {
@@ -107,9 +114,10 @@
     }
 
     // Prefill from the price calculator or other links (?sujet=…&message=…)
+    // (sur les pages NL, la valeur des options reste en français)
     if (params.get("sujet")) {
       Array.prototype.forEach.call(form.elements.sujet.options, function (o) {
-        if (o.text === params.get("sujet")) form.elements.sujet.value = o.text;
+        if (o.value === params.get("sujet") || o.text === params.get("sujet")) form.elements.sujet.value = o.value;
       });
     }
     if (params.get("message")) form.elements.message.value = params.get("message");
@@ -121,7 +129,7 @@
       var info = document.createElement("div");
       info.className = "notice info";
       info.setAttribute("role", "status");
-      info.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><p><strong>Votre estimation est déjà dans le message.</strong> Il ne reste qu’à indiquer vos coordonnées et à envoyer.</p>';
+      info.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><p>' + T("<strong>Votre estimation est déjà dans le message.</strong> Il ne reste qu’à indiquer vos coordonnées et à envoyer.", "<strong>Uw raming staat al in het bericht.</strong> Vul enkel nog uw gegevens in en verstuur.") + "</p>";
       form.parentNode.insertBefore(info, form);
       setTimeout(function () { form.elements.nom.focus({ preventScroll: true }); }, 50);
     }
@@ -133,7 +141,7 @@
     var fichiers = [];
     var liste = document.getElementById("docs-liste");
     var champDocs = photo ? photo.closest(".field") : null;
-    var tailleTxt = function (o) { return o < 1048576 ? Math.max(1, Math.round(o / 1024)) + " Ko" : (o / 1048576).toFixed(1).replace(".", ",") + " Mo"; };
+    var tailleTxt = function (o) { return o < 1048576 ? Math.max(1, Math.round(o / 1024)) + T(" Ko", " kB") : (o / 1048576).toFixed(1).replace(".", ",") + T(" Mo", " MB"); };
     var afficherFichiers = function () {
       if (!liste) return;
       liste.innerHTML = "";
@@ -143,11 +151,11 @@
         nom.className = "docs-nom";
         nom.textContent = f.name;
         var t = document.createElement("small");
-        t.textContent = (f.type === "application/pdf" ? "PDF" : "Image") + " · " + tailleTxt(f.size);
+        t.textContent = (f.type === "application/pdf" ? "PDF" : T("Image", "Afbeelding")) + " · " + tailleTxt(f.size);
         var del = document.createElement("button");
         del.type = "button";
         del.className = "docs-del";
-        del.setAttribute("aria-label", "Retirer " + f.name);
+        del.setAttribute("aria-label", T("Retirer ", "Verwijder ") + f.name);
         del.innerHTML = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg>";
         del.addEventListener("click", function () { fichiers.splice(i, 1); afficherFichiers(); photo.focus(); });
         li.appendChild(nom); li.appendChild(t); li.appendChild(del);
@@ -211,16 +219,17 @@
     var erreur = document.getElementById("form-error");
 
     var parEmail = function () {
-      var subject = "Demande " + v("sujet").toLowerCase() + " — " + v("nom") + (v("societe") ? " (" + v("societe") + ")" : "");
+      var sujetTxt = form.elements.sujet.options[form.elements.sujet.selectedIndex].text;
+      var subject = T("Demande ", "Aanvraag ") + sujetTxt.toLowerCase() + " — " + v("nom") + (v("societe") ? " (" + v("societe") + ")" : "");
       var body = [
         v("message"),
         "",
         "—",
-        "Nom : " + v("nom"),
-        "Société : " + (v("societe") || "-"),
-        "Email : " + v("email"),
-        "Téléphone : " + v("telephone")
-      ].concat(fichiers.length ? ["", "Documents à joindre : " + fichiers.map(function (f) { return f.name; }).join(", ") + " (je les ajoute à cet email)."] : []).join("\n");
+        T("Nom : ", "Naam: ") + v("nom"),
+        T("Société : ", "Bedrijf: ") + (v("societe") || "-"),
+        T("Email : ", "E-mail: ") + v("email"),
+        T("Téléphone : ", "Telefoon: ") + v("telephone")
+      ].concat(fichiers.length ? ["", T("Documents à joindre : ", "Bij te voegen documenten: ") + fichiers.map(function (f) { return f.name; }).join(", ") + T(" (je les ajoute à cet email).", " (ik voeg ze toe aan deze e-mail).")] : []).join("\n");
       window.location.href = "mailto:info@recymo.be?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
       var status = document.getElementById("form-status");
       if (status) status.hidden = false;
@@ -245,7 +254,7 @@
       if (!API) { parEmail(); return; }
 
       btn.disabled = true;
-      btn.firstChild.textContent = "Envoi en cours… ";
+      btn.firstChild.textContent = T("Envoi en cours… ", "Bezig met verzenden… ");
       Promise.all(fichiers.map(lireFichier)).then(function (docs) {
         var ctrl = new AbortController();
         var t = setTimeout(function () { ctrl.abort(); }, 75000);
@@ -254,7 +263,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             nom: v("nom"), societe: v("societe"), email: v("email"), telephone: v("telephone"),
-            sujet: v("sujet"), message: v("message"), fichiers: docs.filter(Boolean), _honey: form.elements._honey.value
+            sujet: v("sujet"), message: v("message"), fichiers: docs.filter(Boolean), langue: NL ? "nl" : "fr", _honey: form.elements._honey.value
           }),
           signal: ctrl.signal
         }).then(function (r) {
@@ -269,7 +278,9 @@
             }
             if (r.status >= 500) throw new Error("serveur");
             if (erreur) {
-              erreur.querySelector("p").textContent = d.erreur || "L'envoi n'a pas fonctionné. Appelez-nous au 085 21 74 45.";
+              erreur.querySelector("p").textContent = NL
+                ? (r.status === 429 ? "U hebt al meerdere aanvragen verstuurd. Bel ons op 085 21 74 45." : "Het verzenden is niet gelukt. Bel ons op 085 21 74 45.")
+                : d.erreur || "L'envoi n'a pas fonctionné. Appelez-nous au 085 21 74 45.";
               erreur.hidden = false;
               erreur.focus();
             }
@@ -313,13 +324,13 @@
     if (window.recymoAdminCharge) { window.recymoAdminOuvrir(); return; }
     var css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href = "assets/css/admin.css";
+    css.href = RACINE + "assets/css/admin.css";
     document.head.appendChild(css);
     var h = document.createElement("script");
-    h.src = "serveur/horaires.js";
+    h.src = RACINE + "serveur/horaires.js";
     h.onload = function () {
       var s = document.createElement("script");
-      s.src = "assets/js/admin.js";
+      s.src = RACINE + "assets/js/admin.js";
       document.body.appendChild(s);
     };
     document.body.appendChild(h);
@@ -351,6 +362,23 @@
   }
   // Stay in admin mode while browsing between pages
   if (enAdmin()) chargerAdmin();
+
+  /* Navigateur en néerlandais sur une page française : proposer la version NL (une seule fois) */
+  var versionNl = document.querySelector('link[rel="alternate"][hreflang="nl-BE"]');
+  var dejaVu = function () { try { return !!localStorage.getItem("recymo-langue"); } catch (e) { return true; } };
+  if (!NL && versionNl && /^nl\b/i.test(navigator.language || "") && !dejaVu()) {
+    var bandeau = document.createElement("div");
+    bandeau.className = "lang-bandeau";
+    bandeau.setAttribute("lang", "nl");
+    bandeau.innerHTML = '<p>Deze website bestaat ook in het Nederlands.</p><a class="btn btn-primary btn-sm" href="' + versionNl.getAttribute("data-local") + '">Nederlandse versie</a><button type="button" class="lang-fermer" aria-label="Sluiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
+    var retenir = function () { try { localStorage.setItem("recymo-langue", "vu"); } catch (e) {} };
+    bandeau.querySelector("a").addEventListener("click", retenir);
+    bandeau.querySelector("button").addEventListener("click", function () { retenir(); bandeau.remove(); });
+    document.body.appendChild(bandeau);
+  }
+  document.querySelectorAll("[data-langue]").forEach(function (a) {
+    a.addEventListener("click", function () { try { localStorage.setItem("recymo-langue", a.getAttribute("data-langue")); } catch (e) {} });
+  });
 
   /* Current year */
   document.querySelectorAll("[data-year]").forEach(function (el) { el.textContent = new Date().getFullYear(); });

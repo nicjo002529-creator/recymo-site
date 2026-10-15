@@ -33,7 +33,18 @@ const LOCAL_DIRS = {
   [DATA_REPO]: process.env.LOCAL_DATA_DIR || path.join(__dirname, "..", "..", "recymo-data-local")
 };
 const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
-const PAGES = ["index.html", "tarifs.html", "fiches-techniques.html", "contact.html", "mentions-legales.html"];
+// Pages françaises et leur version néerlandaise (dossier nl/)
+const VERSION_NL = {
+  "index.html": "nl/index.html", "tarifs.html": "nl/tarieven.html", "fiches-techniques.html": "nl/technische-fiches.html",
+  "contact.html": "nl/contact.html", "mentions-legales.html": "nl/juridische-informatie.html"
+};
+const PAGES = [...Object.keys(VERSION_NL), ...Object.values(VERSION_NL)];
+const langueDe = (f) => (f.startsWith("nl/") ? "nl" : "fr");
+const pageJumelle = (f) => VERSION_NL[f] || Object.keys(VERSION_NL).find((k) => VERSION_NL[k] === f);
+// Prix recopiés d'une langue à l'autre : seuls les mots courants changent
+const traduirePrix = (v, langue) => langue === "nl"
+  ? v.replace(/à convenir/gi, "Op aanvraag").replace(/gratuit/gi, "Gratis").replace(/sur demande/gi, "op aanvraag")
+  : v.replace(/op aanvraag/gi, "À convenir").replace(/gratis/gi, "Gratuit");
 
 /* ---------------------------------------------------------------- Stockage */
 
@@ -195,11 +206,11 @@ const remplacerTexte = (html, cle, valeur) => {
   return html.replace(re, (t, ouv, tag, ancien, ferm) => ouv + echapper(valeur) + ferm);
 };
 
-const appliquerHoraires = (html, horaires) => {
+const appliquerHoraires = (html, horaires, langue) => {
   for (const [site, h] of Object.entries(horaires)) {
-    const texte = echapper(H.texteCourt(h));
+    const texte = echapper(H.texteCourt(h, langue));
     html = html.replace(new RegExp('(<(\\w+)[^>]*data-horaires-texte="' + site + '"[^>]*>)([^<]*)(</\\2>)', "g"), (t, o, tag, a, f) => o + texte + f);
-    html = html.replace(new RegExp('(<dl[^>]*data-horaires-liste="' + site + '"[^>]*>)[\\s\\S]*?(</dl>)', "g"), (t, o, f) => o + H.listeHtml(h, echapper) + f);
+    html = html.replace(new RegExp('(<dl[^>]*data-horaires-liste="' + site + '"[^>]*>)[\\s\\S]*?(</dl>)', "g"), (t, o, f) => o + H.listeHtml(h, echapper, langue) + f);
     if (site === "braives") {
       html = html.replace(/("openingHoursSpecification": )\[[\s\S]*?\n    \]/, (t, o) => o + H.jsonLd(h));
     }
@@ -225,17 +236,28 @@ const enregistrer = async (patches) => {
       const nouveau = remplacerTexte(html, String(p.cle), String(p.valeur).slice(0, 2000));
       if (nouveau === null) throw Object.assign(new Error("Élément introuvable : " + p.cle), { status: 400 });
       pages[p.page] = nouveau;
-      // Le guide des classes reprend le prix du tableau
       if (/^prix-/.test(p.cle)) {
+        const cle = String(p.cle).replace(/[^\w-]/g, "");
+        // Le guide des classes reprend le prix du tableau
+        const guide = (f, v) => {
+          const affiche = /€/.test(v) && !/\/t/.test(v) ? v + "/t" : v;
+          pages[f] = pages[f].replace(new RegExp('(<span[^>]*data-prix-de="' + cle + '"[^>]*>)[^<]*(</span>)', "g"), (t, o, fin) => o + echapper(affiche) + fin);
+        };
         const v = String(p.valeur).slice(0, 200);
-        const affiche = /€/.test(v) && !/\/t/.test(v) ? v + "/t" : v;
-        pages[p.page] = pages[p.page].replace(new RegExp('(<span[^>]*data-prix-de="' + String(p.cle).replace(/[^\w-]/g, "") + '"[^>]*>)[^<]*(</span>)', "g"), (t, o, f) => o + echapper(affiche) + f);
+        guide(p.page, v);
+        // Même prix sur la page de l'autre langue
+        const jumelle = pageJumelle(p.page);
+        if (jumelle) {
+          const vj = traduirePrix(v, langueDe(jumelle));
+          const autre = remplacerTexte(await page(jumelle), cle, vj);
+          if (autre !== null) { pages[jumelle] = autre; guide(jumelle, vj); }
+        }
       }
       resume.push("texte " + p.cle);
     } else if (p.type === "horaires") {
       const h = H.valider(p.horaires);
       fichiers["assets/data/horaires.json"] = JSON.stringify(h, null, 2) + "\n";
-      for (const f of PAGES) pages[f] = appliquerHoraires(await page(f), h);
+      for (const f of PAGES) pages[f] = appliquerHoraires(await page(f), h, langueDe(f));
       resume.push("horaires");
     } else if (p.type === "photo" || p.type === "galerie-ajout") {
       const m = String(p.image || "").match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
@@ -249,7 +271,8 @@ const enregistrer = async (patches) => {
         fichiers[fichier] = buf;
         for (const f of PAGES) {
           const html = await page(f);
-          pages[f] = html.replace(new RegExp('(<img[^>]*data-photo="' + slot + '"[^>]*?\\ssrc=")[^"]*(")', "g"), "$1" + fichier + "$2")
+          // Les pages nl/ gardent leur préfixe ../
+          pages[f] = html.replace(new RegExp('(<img[^>]*data-photo="' + slot + '"[^>]*?\\ssrc=")((?:\\.\\./)*)[^"]*(")', "g"), "$1$2" + fichier + "$3")
             .replace(new RegExp('(<img[^>]*data-photo="' + slot + '"[^>]*?\\swidth=")\\d+("[^>]*?\\sheight=")\\d+(")', "g"), "$1" + (+p.largeur || 1600) + "$2" + (+p.hauteur || 1067) + "$3");
         }
         resume.push("photo " + slot);
@@ -257,21 +280,26 @@ const enregistrer = async (patches) => {
         const id = "galerie-" + horodatage();
         const fichier = `assets/img/${id}.${ext}`;
         fichiers[fichier] = buf;
-        const html = await page("contact.html");
-        const fig =
-          '<figure>\n            <img data-photo="' + id + '" src="' + fichier + '" alt="' + echapperAttr(String(p.alt || p.legende || "Photo Recymo").slice(0, 200)) +
-          '" width="' + (+p.largeur || 1600) + '" height="' + (+p.hauteur || 1067) + '" loading="lazy">\n            <figcaption>' +
-          echapper(String(p.legende || "").slice(0, 120)) + "</figcaption>\n          </figure>\n          ";
-        if (!html.includes("<!-- fin galerie -->")) throw Object.assign(new Error("Galerie introuvable"), { status: 400 });
-        pages["contact.html"] = html.replace("<!-- fin galerie -->", fig + "<!-- fin galerie -->");
+        for (const f of ["contact.html", "nl/contact.html"]) {
+          const html = await page(f);
+          const fig =
+            '<figure>\n            <img data-photo="' + id + '" src="' + (f.startsWith("nl/") ? "../" : "") + fichier + '" alt="' + echapperAttr(String(p.alt || p.legende || "Photo Recymo").slice(0, 200)) +
+            '" width="' + (+p.largeur || 1600) + '" height="' + (+p.hauteur || 1067) + '" loading="lazy">\n            <figcaption>' +
+            echapper(String(p.legende || "").slice(0, 120)) + "</figcaption>\n          </figure>\n          ";
+          if (!html.includes("<!-- fin galerie -->")) throw Object.assign(new Error("Galerie introuvable"), { status: 400 });
+          pages[f] = html.replace("<!-- fin galerie -->", fig + "<!-- fin galerie -->");
+        }
         resume.push("photo ajoutée");
       }
     } else if (p.type === "galerie-retrait") {
       const id = String(p.slot).replace(/[^\w-]/g, "");
-      const html = await page("contact.html");
       const re = new RegExp('<figure>\\s*<img data-photo="' + id + '"[\\s\\S]*?</figure>\\s*');
-      if (!re.test(html)) throw Object.assign(new Error("Photo introuvable"), { status: 400 });
-      pages["contact.html"] = html.replace(re, "");
+      let trouvee = false;
+      for (const f of ["contact.html", "nl/contact.html"]) {
+        const html = await page(f);
+        if (re.test(html)) { trouvee = true; pages[f] = html.replace(re, ""); }
+      }
+      if (!trouvee) throw Object.assign(new Error("Photo introuvable"), { status: 400 });
       resume.push("photo retirée");
     } else {
       throw Object.assign(new Error("Modification inconnue"), { status: 400 });
@@ -326,7 +354,8 @@ const routes = {
     const demande = {
       id: crypto.randomUUID(), date: new Date().toISOString(),
       nom: champ("nom", 120), societe: champ("societe", 120), email: champ("email", 160),
-      telephone: champ("telephone", 40), sujet: champ("sujet", 80), message: champ("message", 5000), photo: null
+      telephone: champ("telephone", 40), sujet: champ("sujet", 80), message: champ("message", 5000), photo: null,
+      langue: d.langue === "nl" ? "nl" : "fr"
     };
     if (!demande.nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(demande.email) || !demande.telephone || !demande.message) {
       throw Object.assign(new Error("Champs obligatoires manquants."), { status: 400 });

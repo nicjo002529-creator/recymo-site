@@ -8,6 +8,11 @@
   var SUPPLEMENT_PETIT = 7.5;   // par versage ou enlèvement de moins de 5 tonnes
   var SEUIL_PETIT = 5;
   var reduit = function () { return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  // Pages néerlandaises (nl/) : textes en néerlandais, fichiers communs dans ../
+  var NL = /^nl/.test(document.documentElement.lang);
+  var RACINE = document.documentElement.getAttribute("data-racine") || "";
+  var T = function (fr, nl) { return NL ? nl : fr; };
+  var TARIFS = T("tarifs.html", "tarieven.html");
 
   /* ---------- Sites et horaires ---------- */
   // Jours : 1 = lundi … 6 = samedi, 0 = dimanche. Heures en minutes.
@@ -24,18 +29,19 @@
     transinnes: {
       nom: "Transinnes", code: "WT011403", adresse: "Grand Route, 6890 Libin", lat: 50.0004, lon: 5.2027,
       horaires: { 1: [420, 945], 2: [420, 945], 3: [420, 945] },
-      note: "Jeudi et vendredi sur demande (minimum 1000 t par jour)."
+      note: T("Jeudi et vendredi sur demande (minimum 1000 t par jour).", "Donderdag en vrijdag op aanvraag (minimum 1000 t per dag).")
     },
     fosses: {
       nom: "Fosses-la-Ville", code: "WT026437", adresse: "Rue Adelin Beguin, 5070 Fosses-la-Ville", lat: 50.4044, lon: 4.7375,
       horaires: { 1: [420, 1020], 2: [420, 1020], 3: [420, 1020], 4: [420, 1020], 5: [420, 1020] }
     }
   };
-  var JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  var JOURS = NL ? ["zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"]
+    : ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 
   var heure = function (m) {
     var h = Math.floor(m / 60), mm = m % 60;
-    return h + "h" + (mm < 10 ? "0" : "") + mm;
+    return NL ? h + ":" + (mm < 10 ? "0" : "") + mm : h + "h" + (mm < 10 ? "0" : "") + mm;
   };
 
   // Heure de Bruxelles, quel que soit le fuseau du visiteur
@@ -55,19 +61,20 @@
 
   var statut = function (site) {
     var t = maintenant(), h = site.horaires[t.jour];
+    var ferme = T("Fermé", "Gesloten");
     if (h && t.min >= h[0] && t.min < h[1]) {
-      return { ouvert: true, texte: "Ouvert", detail: "ferme à " + heure(h[1]) };
+      return { ouvert: true, texte: T("Ouvert", "Open"), detail: T("ferme à ", "sluit om ") + heure(h[1]) };
     }
     if (h && t.min < h[0]) {
-      return { ouvert: false, texte: "Fermé", detail: "ouvre aujourd'hui à " + heure(h[0]) };
+      return { ouvert: false, texte: ferme, detail: T("ouvre aujourd'hui à ", "opent vandaag om ") + heure(h[0]) };
     }
     for (var i = 1; i <= 7; i++) {
       var j = (t.jour + i) % 7;
       if (site.horaires[j]) {
-        return { ouvert: false, texte: "Fermé", detail: "ouvre " + (i === 1 ? "demain" : JOURS[j]) + " à " + heure(site.horaires[j][0]) };
+        return { ouvert: false, texte: ferme, detail: T("ouvre ", "opent ") + (i === 1 ? T("demain", "morgen") : JOURS[j]) + T(" à ", " om ") + heure(site.horaires[j][0]) };
       }
     }
-    return { ouvert: false, texte: "Fermé", detail: "" };
+    return { ouvert: false, texte: ferme, detail: "" };
   };
 
   var majStatuts = function () {
@@ -118,7 +125,7 @@
     majStatuts();
   };
   if (window.fetch && document.querySelector("[data-statut]")) {
-    fetch("assets/data/horaires.json", { cache: "no-cache" })
+    fetch(RACINE + "assets/data/horaires.json", { cache: "no-cache" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) { if (d) window.recymoHoraires(d); })
       .catch(function () {});
@@ -185,6 +192,35 @@
     ] }
   ];
 
+  // Libellés néerlandais (le « sujet » reste en français : c'est la valeur du formulaire)
+  if (NL) {
+    var GROUPES_NL = ["Beton storten", "Metselpuin storten", "Ander afval storten", "Grond storten · Braives", "Grond storten · Fosses-la-Ville",
+      "Grond storten · Transinnes", "Grond storten · Sambreville", "Granulaten kopen (af Braives)"];
+    var LIBELLES_NL = {
+      "B0": "B0 · Ongewapend beton, zonder grond of fijne fractie", "B1": "B1 · Licht gewapend beton, buiten afmetingen of met fijne fractie",
+      "B2": "B2 · Licht gewapend en/of licht grondhoudend beton", "B3": "B3 · Sterk gewapend en/of sterk grondhoudend beton",
+      "B4": "B4 · Grondhoudend beton-asfalt", "B5": "B5 · Zeer sterk gewapend, vuil of grondhoudend beton", "B6": "B6 · Kleine grondhoudende steenslag",
+      "POT": "Palen, welfsels, paaltjes en afsluitplaten",
+      "BR0": "BR0 · Zuiver metselpuin, zonder fijne fractie en zonder grond", "BR1": "BR1 · Zuiver metselpuin",
+      "BR2": "BR2 · Licht vervuild of licht grondhoudend metselpuin", "BR3": "BR3 · Vervuild of grondhoudend metselpuin",
+      "BR4": "BR4 · Sterk vervuild of sterk grondhoudend metselpuin", "BR5": "BR5 · Grondhoudend metselpuin, minder dan 50 % grond",
+      "BR6": "BR6 · Grondhoudend metselpuin, meer dan 50 % grond", "BR7": "BR7 · Gemengd klasse 3-afval", "BR8": "BR8 · Natuurleien",
+      "BR9": "BR9 · Tegels", "BR10": "BR10 · Grondhoudend metselpuin, minder dan 25 % puin",
+      "YT": "Cellenbeton (Ytong…)", "TA": "TA · Bitumineus asfalt", "BT": "B-T · Beton met asfalt", "TN": "TN · Grondhoudend klasse 3-afval, niet zeefbaar",
+      "T-BR": "Grond type I tot V, kleine stortingen (met analyse)", "T-BR-GROS": "Grond type I tot V, grote werf",
+      "T-FO": "Grond type I en II", "T-TR": "Grond type I en II",
+      "T-SA-13": "Grond type I tot III, zonder analyse (< 400 m³)", "T-SA-45": "Grond type IV tot V, zonder analyse (< 400 m³)",
+      "T-SA-AN": "Grond type I tot V, met analyse", "T-SA-INV": "Grond met invasieve planten (Japanse duizendknoop…)",
+      "T-SA-AM": "Grond met asbestvezels van 100 tot 500 mg/kg DS",
+      "G-MIX": "Gemengd 0/63", "G-TA32": "Asfalt 0/32", "G-TA63": "Asfalt 0/63", "G-BE32": "Beton 0/32", "G-BE60": "Beton 0/60",
+      "G-BE2560": "Beton 25/60", "G-SAB": "Geel zand", "G-STAB": "Stabiter 0/32"
+    };
+    CALC.forEach(function (g, i) {
+      g.groupe = GROUPES_NL[i];
+      g.items.forEach(function (it) { it[1] = LIBELLES_NL[it[0]] || it[1]; });
+    });
+  }
+
   var euro = function (n) {
     return n.toLocaleString("fr-BE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   };
@@ -199,7 +235,7 @@
     var out = calc.querySelector("#calc-resultat");
     var MAX_LIGNES = 10;
     var index = {};
-    var options = '<option value="">Choisir un matériau…</option>';
+    var options = '<option value="">' + T("Choisir un matériau…", "Kies een materiaal…") + "</option>";
 
     CALC.forEach(function (g) {
       options += '<optgroup label="' + g.groupe + '">';
@@ -214,10 +250,10 @@
     var numeroter = function () {
       var lis = rows.querySelectorAll(".calc-row");
       lis.forEach(function (li, i) {
-        li.querySelector(".calc-row-num").textContent = "Matériau " + (i + 1);
+        li.querySelector(".calc-row-num").textContent = T("Matériau ", "Materiaal ") + (i + 1);
         var del = li.querySelector(".calc-del");
         del.hidden = lis.length === 1;
-        del.setAttribute("aria-label", "Retirer le matériau " + (i + 1));
+        del.setAttribute("aria-label", T("Retirer le matériau ", "Verwijder materiaal ") + (i + 1));
       });
       addBtn.hidden = lis.length >= MAX_LIGNES;
     };
@@ -232,9 +268,9 @@
           '<select id="calc-m' + n + '">' + options + "</select>" +
         "</div>" +
         '<div class="field calc-q">' +
-          '<label for="calc-q' + n + '">Tonnes</label>' +
-          '<input id="calc-q' + n + '" type="number" inputmode="decimal" min="0" step="0.5" placeholder="Ex. 12" aria-describedby="calc-q' + n + '-err">' +
-          '<span class="err" id="calc-q' + n + '-err">Indiquez un nombre de tonnes supérieur à zéro.</span>' +
+          '<label for="calc-q' + n + '">' + T("Tonnes", "Ton") + "</label>" +
+          '<input id="calc-q' + n + '" type="number" inputmode="decimal" min="0" step="0.5" placeholder="' + T("Ex. 12", "Bv. 12") + '" aria-describedby="calc-q' + n + '-err">' +
+          '<span class="err" id="calc-q' + n + '-err">' + T("Indiquez un nombre de tonnes supérieur à zéro.", "Geef een aantal ton groter dan nul in.") + "</span>" +
         "</div>" +
         '<button type="button" class="calc-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
       if (code) li.querySelector("select").value = code;
@@ -266,7 +302,7 @@
       var cell = document.querySelector('[data-edit="prix-' + code + '"]');
       if (!cell) return defaut;
       var t = cell.textContent.trim();
-      if (/gratuit/i.test(t)) return 0;
+      if (/gratuit|gratis/i.test(t)) return 0;
       var n = parseFloat(t.replace(/\s/g, "").replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, ""));
       return /\d/.test(t) && !isNaN(n) ? n : null;
     };
@@ -283,18 +319,18 @@
         var m = l.m, site = m.groupe.site ? SITES[m.groupe.site] : null;
         onglets[m.groupe.onglet] = true;
         sujets[m.groupe.sujet] = true;
-        var ligneMsg = "- " + (m.groupe.achat ? "Achat : " : "Versage : ") + m.label + (site ? " (site de " + site.nom + ")" : "");
+        var ligneMsg = "- " + (m.groupe.achat ? T("Achat : ", "Aankoop: ") : T("Versage : ", "Storten: ")) + m.label + (site ? T(" (site de ", " (site ") + site.nom + ")" : "");
 
-        if (m.prix === null) { surDemande.push(m.label); message.push(ligneMsg + (l.q ? ", " + tonnes(l.q) : "") + " : prix sur demande"); return; }
-        if (!l.q) { manqueQte++; message.push(ligneMsg + " : quantité à préciser"); return; }
+        if (m.prix === null) { surDemande.push(m.label); message.push(ligneMsg + (l.q ? ", " + tonnes(l.q) : "") + T(" : prix sur demande", ": prijs op aanvraag")); return; }
+        if (!l.q) { manqueQte++; message.push(ligneMsg + T(" : quantité à préciser", ": hoeveelheid nog te bepalen")); return; }
 
         var base = Math.round(m.prix * l.q * 100) / 100;
         var supp = m.groupe.supp && l.q < SEUIL_PETIT ? SUPPLEMENT_PETIT : 0;
-        message.push(ligneMsg + " : " + tonnes(l.q) + " × " + euro(m.prix) + (supp ? " + supplément " + euro(supp) : "") + " = " + euro(base + supp) + " HTVA");
+        message.push(ligneMsg + T(" : ", ": ") + tonnes(l.q) + " × " + euro(m.prix) + (supp ? T(" + supplément ", " + toeslag ") + euro(supp) : "") + " = " + euro(base + supp) + T(" HTVA", " excl. btw"));
         total += base + supp;
         detail +=
           '<div><dt>' + m.label + (site ? " · " + site.nom : "") +
-          '<span>' + tonnes(l.q) + " × " + euro(m.prix) + (supp ? " + supplément moins de 5 t " + euro(supp) : "") + "</span></dt>" +
+          '<span>' + tonnes(l.q) + " × " + euro(m.prix) + (supp ? T(" + supplément moins de 5 t ", " + toeslag minder dan 5 t ") + euro(supp) : "") + "</span></dt>" +
           "<dd>" + euro(base + supp) + "</dd></div>";
       });
 
@@ -303,42 +339,43 @@
       var sujetsListe = Object.keys(sujets);
       var devis = "contact.html?sujet=" + encodeURIComponent(sujetsListe.length === 1 ? sujetsListe[0] : "De devis") +
         "&message=" + encodeURIComponent(
-          (total ? "Estimation faite sur le site :\n" : "Demande de prix pour :\n") + message.join("\n") +
-          (total ? "\n\nTotal estimé : " + euro(total) + " HTVA, soit " + euro(total + tva) + " TVAC." : "") +
-          "\n\nPrécisions (date souhaitée, adresse du chantier…) : ") +
+          (total ? T("Estimation faite sur le site :\n", "Raming gemaakt op de website:\n") : T("Demande de prix pour :\n", "Prijsaanvraag voor:\n")) + message.join("\n") +
+          (total ? T("\n\nTotal estimé : ", "\n\nGeraamd totaal: ") + euro(total) + T(" HTVA, soit ", " excl. btw, of ") + euro(total + tva) + T(" TVAC.", " incl. btw.") : "") +
+          T("\n\nPrécisions (date souhaitée, adresse du chantier…) : ", "\n\nDetails (gewenste datum, adres van de werf…): ")) +
         "&estimation=1#formulaire";
       var liens = Object.keys(onglets).map(function (o) {
-        var nom = { "versage-classe3": "versage classe 3", "versage-terre": "versage terre", "granulats": "granulats" }[o];
-        return '<a href="tarifs.html#' + o + '">' + nom + "</a>";
+        var nom = NL ? { "versage-classe3": "storten klasse 3", "versage-terre": "grond storten", "granulats": "granulaten" }[o]
+          : { "versage-classe3": "versage classe 3", "versage-terre": "versage terre", "granulats": "granulats" }[o];
+        return '<a href="' + TARIFS + '#' + o + '">' + nom + "</a>";
       }).join(", ");
 
       var html = "";
       if (detail) {
         html +=
-          '<p class="calc-label">Estimation' + (lignes.length > 1 ? " pour " + lignes.length + " matériaux" : "") + "</p>" +
-          '<p class="calc-total">' + euro(total) + ' <span>HTVA</span></p>' +
-          '<p class="calc-ttc">' + euro(total + tva) + " TVAC</p>" +
-          '<dl class="calc-lines">' + detail + '<div class="calc-tva"><dt>TVA 21 %</dt><dd>' + euro(tva) + "</dd></div></dl>";
+          '<p class="calc-label">' + T("Estimation", "Raming") + (lignes.length > 1 ? T(" pour ", " voor ") + lignes.length + T(" matériaux", " materialen") : "") + "</p>" +
+          '<p class="calc-total">' + euro(total) + " <span>" + T("HTVA", "excl. btw") + "</span></p>" +
+          '<p class="calc-ttc">' + euro(total + tva) + T(" TVAC", " incl. btw") + "</p>" +
+          '<dl class="calc-lines">' + detail + '<div class="calc-tva"><dt>' + T("TVA 21 %", "Btw 21 %") + "</dt><dd>" + euro(tva) + "</dd></div></dl>";
       } else if (surDemande.length) {
-        html += '<p class="calc-total">Prix sur demande</p>';
+        html += '<p class="calc-total">' + T("Prix sur demande", "Prijs op aanvraag") + "</p>";
       } else {
-        html += '<p class="calc-unit">Indiquez les quantités pour obtenir le total.</p>';
+        html += '<p class="calc-unit">' + T("Indiquez les quantités pour obtenir le total.", "Geef de hoeveelheden in om het totaal te zien.") + "</p>";
       }
       if (detail && surDemande.length) {
-        html += '<p class="calc-warn">Non compris : ' + surDemande.join(", ") + " (prix sur demande).</p>";
+        html += '<p class="calc-warn">' + T("Non compris : ", "Niet inbegrepen: ") + surDemande.join(", ") + T(" (prix sur demande).", " (prijs op aanvraag).") + "</p>";
       } else if (!detail && surDemande.length) {
-        html += "<p>" + surDemande.join(", ") + " : facturé au cas par cas.</p>";
+        html += "<p>" + surDemande.join(", ") + T(" : facturé au cas par cas.", ": prijs per geval bepaald.") + "</p>";
       }
       if (detail && manqueQte) {
-        html += '<p class="calc-warn">' + (manqueQte === 1 ? "Un matériau n'a pas encore de quantité." : manqueQte + " matériaux n'ont pas encore de quantité.") + "</p>";
+        html += '<p class="calc-warn">' + (manqueQte === 1 ? T("Un matériau n'a pas encore de quantité.", "Eén materiaal heeft nog geen hoeveelheid.") : manqueQte + T(" matériaux n'ont pas encore de quantité.", " materialen hebben nog geen hoeveelheid.")) + "</p>";
       }
       html +=
-        '<p class="calc-note">Prix indicatif, établi d\'après le tarif en vigueur. Le poids réel est mesuré sur notre bascule' +
-        (lignes.length > 1 ? " ; le supplément de moins de 5 t s'applique par matériau" : "") + "." +
-        (onglets["versage-classe3"] ? " Un versage non conforme est facturé comme classe 2." : "") +
-        (onglets["versage-terre"] ? " Terres : sous réserve d'acceptation préalable par notre service qualité." : "") +
-        (Object.keys(onglets).length > 1 ? " Tarifs détaillés : " : " Tarif détaillé : ") + liens + ".</p>" +
-        '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">' + (detail ? "Envoyer cette estimation" : "Demander un prix") + '</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
+        '<p class="calc-note">' + T("Prix indicatif, établi d'après le tarif en vigueur. Le poids réel est mesuré sur notre bascule", "Indicatieve prijs volgens het geldende tarief. Het werkelijke gewicht wordt op onze weegbrug gemeten") +
+        (lignes.length > 1 ? T(" ; le supplément de moins de 5 t s'applique par matériau", "; de toeslag voor minder dan 5 t geldt per materiaal") : "") + "." +
+        (onglets["versage-classe3"] ? T(" Un versage non conforme est facturé comme classe 2.", " Een niet-conforme lading wordt als klasse 2 aangerekend.") : "") +
+        (onglets["versage-terre"] ? T(" Terres : sous réserve d'acceptation préalable par notre service qualité.", " Grond: onder voorbehoud van voorafgaande aanvaarding door onze kwaliteitsdienst.") : "") +
+        (Object.keys(onglets).length > 1 ? T(" Tarifs détaillés : ", " Gedetailleerde tarieven: ") : T(" Tarif détaillé : ", " Gedetailleerd tarief: ")) + liens + ".</p>" +
+        '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">' + (detail ? T("Envoyer cette estimation", "Deze raming versturen") : T("Demander un prix", "Prijs aanvragen")) + '</a><a class="btn btn-outline" href="tel:+3285217445">' + "085 21 74 45" + "</a></div>";
       out.innerHTML = html;
       animerTotal(detail ? total : null);
       if (detail && !estimationComptee && window.recymoStat) { estimationComptee = true; window.recymoStat("estimation"); }
@@ -410,6 +447,23 @@
     { mots: "renouee japon plante invasive", nom: "Terres avec plantes invasives", rep: "Acceptées uniquement à Sambreville, 40 €/t.", lien: "versage-terre" },
     { mots: "amiante fibre", nom: "Terres contenant des fibres d'amiante", rep: "Uniquement des terres avec 100 à 500 mg/kg MS de fibres d'amiante, à Sambreville, 32,50 €/t. Pour tout autre déchet amianté, appelez-nous.", lien: "versage-terre" }
   ];
+  if (NL) DECHETS = [
+    { mots: "ongewapend beton zuiver proper funderingsbeton plaat", nom: "Ongewapend beton", rep: "Aanvaard. 0 € per ton als het zuiver is, zonder grond of fijne fractie (max. 50 × 50 × 150 cm).", lien: "versage-classe3" },
+    { mots: "gewapend beton wapening ijzer staal", nom: "Gewapend beton", rep: "Aanvaard. Van 5 tot 10 €/t volgens wapening en grond; zeer sterk gewapend: prijs op aanvraag.", lien: "versage-classe3" },
+    { mots: "palen welfsels paaltjes afsluitplaten omheining", nom: "Palen, welfsels, paaltjes, afsluitplaten", rep: "Aanvaard. 22 €/t.", lien: "versage-classe3" },
+    { mots: "steenslag stenen kiezel", nom: "Kleine grondhoudende steenslag", rep: "Aanvaard. 14 €/t.", lien: "versage-classe3" },
+    { mots: "metselpuin puin baksteen bakstenen stenen metselwerk sloop afbraak", nom: "Metselpuin (bakstenen, metselwerk)", rep: "Aanvaard. Van 0 €/t (zuiver, zonder fijne fractie) tot 25 €/t volgens grond en zuiverheid.", lien: "versage-classe3" },
+    { mots: "leien lei natuurleien dak", nom: "Natuurleien", rep: "Aanvaard. 20 €/t.", lien: "versage-classe3" },
+    { mots: "tegels vloertegels faience", nom: "Tegels", rep: "Aanvaard. 12 €/t.", lien: "versage-classe3" },
+    { mots: "ytong cellenbeton gasbeton siporex", nom: "Cellenbeton (Ytong…)", rep: "Aanvaard. 90 €/t.", lien: "versage-classe3" },
+    { mots: "asfalt tarmac bitumen asfaltpuin weg", nom: "Bitumineus asfalt", rep: "Aanvaard. 8 €/t (ook beton met asfalt: 8 €/t; grondhoudend beton-asfalt: 12 €/t).", lien: "versage-classe3" },
+    { mots: "gemengd klasse 3 inert bouwafval", nom: "Gemengd klasse 3-afval", rep: "Aanvaard, prijs op aanvraag. Bel ons voor u komt.", lien: "versage-classe3" },
+    { mots: "grondhoudend niet zeefbaar", nom: "Grondhoudend klasse 3-afval, niet zeefbaar", rep: "Aanvaard. 30 €/t.", lien: "versage-classe3" },
+    { mots: "grond aarde uitgegraven bodem ophoging uitgraving", nom: "Uitgegraven grond", rep: "Aanvaard op onze 4 sites, van 7,45 tot 25 €/t volgens site en grondtype (I tot V). Voorafgaande aanvaarding door onze kwaliteitsdienst.", lien: "versage-terre" },
+    { mots: "teelaarde teelgrond humus", nom: "Teelaarde", rep: "Aanvaard. De prijs hangt af van de site en het grondtype: bel ons of bekijk het grondtarief.", lien: "versage-terre" },
+    { mots: "japanse duizendknoop invasieve planten exoten", nom: "Grond met invasieve planten", rep: "Enkel aanvaard in Sambreville, 40 €/t.", lien: "versage-terre" },
+    { mots: "asbest vezels", nom: "Grond met asbestvezels", rep: "Enkel grond met 100 tot 500 mg/kg DS asbestvezels, in Sambreville, 32,50 €/t. Voor ander asbesthoudend afval: bel ons.", lien: "versage-terre" }
+  ];
   var plain = function (s) {
     return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]/g, " ").trim();
   };
@@ -436,17 +490,18 @@
         var hay = plain(d.nom) + " " + d.mots;
         return mots.every(function (m) { return hay.indexOf(m) !== -1 || hay.split(" ").some(function (w) { return m.length > 3 && w.indexOf(m.slice(0, -1)) === 0; }); });
       });
-      trouves.sort(function (a, b) { return (plain(b.nom).indexOf(q) !== -1) - (plain(a.nom).indexOf(q) !== -1); });
+      var score = function (d) { var n = plain(d.nom), i = n.indexOf(q); return n === q ? 3 : i === 0 ? 2 : i !== -1 ? 1 : 0; };
+      trouves.sort(function (a, b) { return score(b) - score(a); });
       if (!trouves.length) {
         montrer("?",
-          '<div class="finder-item is-unknown"><p><strong>« ' + input.value.replace(/</g, "&lt;") + " » n'est pas dans notre liste.</strong> " +
-          "Nous acceptons les déchets inertes de chantier et les terres. Appelez-nous avant de venir, on vous dira tout de suite si c'est possible.</p>" +
-          '<a class="btn btn-dark btn-sm" href="tel:+3285217445">Appeler le 085 21 74 45</a></div>');
+          '<div class="finder-item is-unknown"><p><strong>' + T("« ", "“") + input.value.replace(/</g, "&lt;") + T(" » n'est pas dans notre liste.", "” staat niet in onze lijst.") + "</strong> " +
+          T("Nous acceptons les déchets inertes de chantier et les terres. Appelez-nous avant de venir, on vous dira tout de suite si c'est possible.", "Wij aanvaarden inert bouwafval en grond. Bel ons voor u komt, dan zeggen we u meteen of het kan.") + "</p>" +
+          '<a class="btn btn-dark btn-sm" href="tel:+3285217445">' + T("Appeler le 085 21 74 45", "Bel 085 21 74 45") + "</a></div>");
         return;
       }
       trouves = trouves.slice(0, 4);
       montrer(trouves.map(function (d) { return d.nom; }).join("|"), trouves.map(function (d) {
-        return '<div class="finder-item"><p><strong>' + d.nom + "</strong> " + d.rep + '</p><a href="tarifs.html#' + d.lien + '">Voir le tarif</a></div>';
+        return '<div class="finder-item"><p><strong>' + d.nom + "</strong> " + d.rep + '</p><a href="' + TARIFS + '#' + d.lien + '">' + T("Voir le tarif", "Bekijk het tarief") + "</a></div>";
       }).join(""));
     };
     input.addEventListener("input", chercher);
@@ -467,6 +522,16 @@
     "classe3": { nom: "déchets de construction (bétons, bricaillons, tarmac…)", sites: ["braives"], onglet: "versage-classe3" },
     "granulats": { nom: "achat de granulats", sites: ["braives"], onglet: "granulats", notes: { braives: "Livraison possible : demandez-nous un prix." } }
   };
+  if (NL) {
+    ACCEPTE["terres-1-2"].nom = "grond van type I en II";
+    ACCEPTE["terres-3-5"].nom = "grond van type III tot V";
+    ACCEPTE["terres-3-5"].notes.braives = "Enkel met analyse (RQT, CCQT).";
+    ACCEPTE.invasives.nom = "grond met invasieve planten";
+    ACCEPTE.amiante.nom = "grond met 100 tot 500 mg/kg DS asbestvezels";
+    ACCEPTE.classe3.nom = "bouwafval (beton, metselpuin, asfalt…)";
+    ACCEPTE.granulats.nom = "aankoop van granulaten";
+    ACCEPTE.granulats.notes.braives = "Levering mogelijk: vraag ons een prijs.";
+  }
   var distanceKm = function (a, b, c, d) {
     var R = 6371, rad = Math.PI / 180;
     var x = Math.sin((c - a) * rad / 2), y = Math.sin((d - b) * rad / 2);
@@ -481,7 +546,7 @@
     var codes = null;
     var chargerCodes = function () {
       if (codes) return Promise.resolve(codes);
-      return fetch("assets/data/codes-postaux.json").then(function (r) { return r.json(); }).then(function (d) { codes = d; return d; });
+      return fetch(RACINE + "assets/data/codes-postaux.json").then(function (r) { return r.json(); }).then(function (d) { codes = d; return d; });
     };
     var esc = function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; };
     var lienSite = function (k) {
@@ -495,11 +560,11 @@
       var champ = cpInput.closest(".field");
       if (!/^\d{4}$/.test(cp)) { champ.classList.add("invalid"); cpInput.focus(); return; }
       champ.classList.remove("invalid");
-      resultat.innerHTML = '<p class="proche-chargement">Recherche…</p>';
+      resultat.innerHTML = '<p class="proche-chargement">' + T("Recherche…", "Zoeken…") + "</p>";
       chargerCodes().then(function (liste) {
         var lieu = liste[cp];
         if (!lieu) {
-          resultat.innerHTML = '<div class="proche-vide"><p><strong>Code postal ' + esc(cp) + ' introuvable.</strong> Vérifiez le code (4 chiffres, Belgique) ou appelez-nous : on vous oriente vers le bon site.</p><a class="btn btn-dark btn-sm" href="tel:+3285217445">085 21 74 45</a></div>';
+          resultat.innerHTML = '<div class="proche-vide"><p><strong>' + T("Code postal ", "Postcode ") + esc(cp) + T(" introuvable.", " niet gevonden.") + "</strong> " + T("Vérifiez le code (4 chiffres, Belgique) ou appelez-nous : on vous oriente vers le bon site.", "Controleer de code (4 cijfers, België) of bel ons: we wijzen u de juiste site aan.") + '</p><a class="btn btn-dark btn-sm" href="tel:+3285217445">' + "085 21 74 45" + "</a></div>";
           return;
         }
         var type = ACCEPTE[typeSel.value];
@@ -510,22 +575,22 @@
           var s = SITES[t.k], l = lienSite(t.k), st = statut(s);
           var note = type.notes && type.notes[t.k];
           return '<article class="proche-site' + (premier ? " is-premier" : "") + '">' +
-            (premier ? '<p class="proche-label">Le plus proche de ' + esc(lieu[2]) + " (" + esc(cp) + ")</p>" : "") +
+            (premier ? '<p class="proche-label">' + T("Le plus proche de ", "Dichtst bij ") + esc(lieu[2]) + " (" + esc(cp) + ")</p>" : "") +
             '<div class="proche-tete"><h3>' + esc(s.nom) + '</h3><span class="proche-km">' + Math.round(t.km) + " km</span></div>" +
             '<p class="proche-adresse">' + esc(s.adresse) + "</p>" +
             '<p class="live ' + (st.ouvert ? "is-open" : "is-closed") + '"><span class="dot" aria-hidden="true"></span><strong>' + st.texte + "</strong>" + (st.detail ? " · " + st.detail : "") + "</p>" +
             (note ? '<p class="proche-note">' + esc(note) + "</p>" : "") +
-            (premier ? '<div class="proche-actions"><a class="btn btn-primary btn-sm" href="' + l.maps + '" target="_blank" rel="noopener">Itinéraire</a><a class="btn btn-outline btn-sm" href="' + l.waze + '" target="_blank" rel="noopener">Waze</a><a class="btn btn-outline btn-sm" href="tel:+3285217445">Appeler</a></div>'
-              : '<div class="proche-actions"><a class="btn btn-outline btn-sm" href="' + l.maps + '" target="_blank" rel="noopener">Itinéraire</a></div>') +
+            (premier ? '<div class="proche-actions"><a class="btn btn-primary btn-sm" href="' + l.maps + '" target="_blank" rel="noopener">' + T("Itinéraire", "Route") + '</a><a class="btn btn-outline btn-sm" href="' + l.waze + '" target="_blank" rel="noopener">Waze</a><a class="btn btn-outline btn-sm" href="tel:+3285217445">' + T("Appeler", "Bellen") + "</a></div>"
+              : '<div class="proche-actions"><a class="btn btn-outline btn-sm" href="' + l.maps + '" target="_blank" rel="noopener">' + T("Itinéraire", "Route") + "</a></div>") +
             "</article>";
         };
         resultat.innerHTML =
           carte(tries[0], true) +
-          (tries.length > 1 ? '<p class="proche-autres-titre">Autres sites qui acceptent les ' + esc(type.nom) + " :</p>" + '<div class="proche-autres">' + tries.slice(1).map(function (t) { return carte(t, false); }).join("") + "</div>"
-            : '<p class="proche-note">C\'est le seul site qui accepte les ' + esc(type.nom) + ".</p>") +
-          '<p class="proche-info">Distance à vol d\'oiseau : la route peut être plus longue. <a href="tarifs.html#' + type.onglet + '">Voir les tarifs et conditions</a>.</p>';
+          (tries.length > 1 ? '<p class="proche-autres-titre">' + T("Autres sites qui acceptent les ", "Andere sites die ") + esc(type.nom) + T(" :", " aanvaarden:") + "</p>" + '<div class="proche-autres">' + tries.slice(1).map(function (t) { return carte(t, false); }).join("") + "</div>"
+            : '<p class="proche-note">' + T("C'est le seul site qui accepte les ", "Dit is de enige site die ") + esc(type.nom) + T(".", " aanvaardt.") + "</p>") +
+          '<p class="proche-info">' + T("Distance à vol d'oiseau : la route peut être plus longue. ", "Afstand in vogelvlucht: de route kan langer zijn. ") + '<a href="' + TARIFS + '#' + type.onglet + '">' + T("Voir les tarifs et conditions", "Bekijk tarieven en voorwaarden") + "</a>.</p>";
       }, function () {
-        resultat.innerHTML = '<div class="proche-vide"><p>La recherche n\'a pas fonctionné. Réessayez, ou appelez-nous au 085 21 74 45.</p></div>';
+        resultat.innerHTML = '<div class="proche-vide"><p>' + T("La recherche n'a pas fonctionné. Réessayez, ou appelez-nous au 085 21 74 45.", "Het zoeken is niet gelukt. Probeer opnieuw of bel ons op 085 21 74 45.") + "</p></div>";
       });
     });
     cpInput.addEventListener("input", function () { if (/^\d{4}$/.test(cpInput.value.trim())) cpInput.closest(".field").classList.remove("invalid"); });

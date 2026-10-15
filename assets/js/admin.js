@@ -9,9 +9,11 @@
   var API = window.RECYMO_API;
   var CLE = "recymo-admin";
   var H = window.RecymoHoraires;
+  var RACINE = window.RECYMO_RACINE || "";
+  var LANGUE = RACINE ? "nl" : "fr";
   var page = (function () {
     var p = location.pathname.split("/").pop() || "index.html";
-    return /\.html$/.test(p) ? p : p + ".html";
+    return (LANGUE === "nl" ? "nl/" : "") + (/\.html$/.test(p) ? p : p + ".html");
   })();
 
   var jeton = null;
@@ -320,7 +322,7 @@
     var chargement = el("p", { text: "Chargement…" });
     panneauCorps.appendChild(chargement);
     var depart = horaires ? Promise.resolve(JSON.parse(JSON.stringify(horaires.horaires))) :
-      fetch("assets/data/horaires.json", { cache: "no-cache" }).then(function (r) { return r.json(); });
+      fetch(RACINE + "assets/data/horaires.json", { cache: "no-cache" }).then(function (r) { return r.json(); });
     depart.then(function (data) {
       donneesHoraires = data;
       chargement.remove();
@@ -378,9 +380,9 @@
     if (window.recymoHoraires) window.recymoHoraires(data);
     if (!H) return;
     Object.keys(data).forEach(function (k) {
-      document.querySelectorAll('[data-horaires-texte="' + k + '"]').forEach(function (n) { n.textContent = H.texteCourt(data[k]); });
+      document.querySelectorAll('[data-horaires-texte="' + k + '"]').forEach(function (n) { n.textContent = H.texteCourt(data[k], LANGUE); });
       document.querySelectorAll('[data-horaires-liste="' + k + '"]').forEach(function (n) {
-        n.innerHTML = H.listeHtml(data[k], function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; });
+        n.innerHTML = H.listeHtml(data[k], function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }, LANGUE);
       });
     });
   };
@@ -442,7 +444,10 @@
     // Barres : pages les plus vues
     var pages = {};
     serie.forEach(function (d) { Object.keys(d.pages || {}).forEach(function (p) { pages[p] = (pages[p] || 0) + d.pages[p]; }); });
-    var NOMS = { "/": "Accueil", "/tarifs": "Tarifs", "/fiches-techniques": "Fiches techniques", "/contact": "Contact", "/mentions-legales": "Mentions légales" };
+    var NOMS = {
+      "/": "Accueil", "/tarifs": "Tarifs", "/fiches-techniques": "Fiches techniques", "/contact": "Contact", "/mentions-legales": "Mentions légales",
+      "/nl/": "Accueil (NL)", "/nl/tarieven": "Tarifs (NL)", "/nl/technische-fiches": "Fiches techniques (NL)", "/nl/contact": "Contact (NL)", "/nl/juridische-informatie": "Mentions légales (NL)"
+    };
     var top = Object.keys(pages).sort(function (a, b) { return pages[b] - pages[a]; }).slice(0, 6).map(function (p) { return [NOMS[p] || p, pages[p]]; });
     if (top.length) zone.appendChild(barres("Pages les plus vues", top));
 
@@ -567,7 +572,8 @@
           el("p", { class: "adm-d-meta" }, [
             el("a", { href: "mailto:" + x.email, text: x.email }), " · ",
             el("a", { href: "tel:" + String(x.telephone).replace(/[^\d+]/g, ""), text: x.telephone }),
-            x.sujet ? " · " + x.sujet : ""
+            x.sujet ? " · " + x.sujet : "",
+            x.langue === "nl" ? " · Néerlandais : répondre en néerlandais" : ""
           ]),
           el("p", { class: "adm-d-msg", text: x.message }),
           x.photo ? el("button", { type: "button", class: "btn btn-outline btn-sm", text: "Voir la photo jointe", onclick: function (e) {

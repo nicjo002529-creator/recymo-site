@@ -895,3 +895,27 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
 .proche-info a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .proche-vide { padding: 14px 16px; border-radius: var(--r-md); background: #fff8e3; color: #5b4500; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .proche-chargement { color: #9fb8aa; }
+
+/* ---------- Langue : lien FR / NL et suggestion pour les navigateurs en néerlandais ---------- */
+.lang-switch {
+  min-width: 44px; height: 44px; padding: 0 10px; border-radius: 12px; display: grid; place-items: center;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  font-weight: 700; font-size: .85rem; letter-spacing: .04em;
+  transition: border-color var(--dur, .25s), color var(--dur, .25s);
+}
+.lang-switch:hover { border-color: var(--green-600); color: var(--green-900); }
+.lang-bandeau {
+  position: fixed; left: 16px; bottom: 16px; z-index: 45; max-width: min(420px, calc(100vw - 32px));
+  display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 18px;
+  background: var(--green-950); color: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-lg);
+}
+.lang-bandeau p { margin: 0; font-size: .95rem; flex: 1; }
+.lang-bandeau .btn { white-space: nowrap; }
+.lang-fermer {
+  width: 36px; height: 36px; flex: none; display: grid; place-items: center; cursor: pointer;
+  border: 0; border-radius: 10px; background: transparent; color: rgba(255, 255, 255, .8);
+}
+.lang-fermer:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+.lang-fermer svg { width: 18px; height: 18px; }
+@media (max-width: 820px) { .lang-bandeau { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); } }
+@media print { .lang-switch, .lang-bandeau { display: none !important; } }
