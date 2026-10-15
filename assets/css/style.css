@@ -116,6 +116,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .brand img { height: 40px; width: auto; }
 .nav-links { display: flex; align-items: center; gap: 4px; }
 .nav-links a {
+  white-space: nowrap;
   position: relative; padding: 10px 14px; border-radius: 999px;
   font-weight: 500; font-size: .95rem; color: var(--ink-2);
   transition: color .2s, background-color .2s;
@@ -140,7 +141,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .nav-toggle[aria-expanded="true"] span::before { transform: translateY(6px) rotate(45deg); }
 .nav-toggle[aria-expanded="true"] span::after { transform: translateY(-6px) rotate(-45deg); }
 
-@media (max-width: 960px) {
+@media (max-width: 1120px) {
   .nav-phone { display: none; }
 }
 .nav-links .mobile-only { display: none; }
