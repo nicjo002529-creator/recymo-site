@@ -114,6 +114,18 @@
     }
     if (params.get("message")) form.elements.message.value = params.get("message");
 
+    // Arrivée depuis l'estimateur : l'estimation est déjà dans le message
+    if (params.get("estimation") === "1" && params.get("message")) {
+      var msg = form.elements.message;
+      msg.style.minHeight = Math.min(420, 60 + msg.value.split("\n").length * 24) + "px";
+      var info = document.createElement("div");
+      info.className = "notice info";
+      info.setAttribute("role", "status");
+      info.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><p><strong>Votre estimation est déjà dans le message.</strong> Il ne reste qu’à indiquer vos coordonnées et à envoyer.</p>';
+      form.parentNode.insertBefore(info, form);
+      setTimeout(function () { form.elements.nom.focus({ preventScroll: true }); }, 50);
+    }
+
     var photo = form.elements.attachment;
     var photoOk = function () {
       return !photo || !photo.files || !photo.files[0] || photo.files[0].size <= 15 * 1024 * 1024;

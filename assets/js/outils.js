@@ -283,14 +283,14 @@
         var m = l.m, site = m.groupe.site ? SITES[m.groupe.site] : null;
         onglets[m.groupe.onglet] = true;
         sujets[m.groupe.sujet] = true;
-        message.push("- " + (m.groupe.achat ? "Achat : " : "Versage : ") + m.label +
-          (l.q ? ", environ " + tonnes(l.q) : "") + (site ? " (site de " + site.nom + ")" : ""));
+        var ligneMsg = "- " + (m.groupe.achat ? "Achat : " : "Versage : ") + m.label + (site ? " (site de " + site.nom + ")" : "");
 
-        if (m.prix === null) { surDemande.push(m.label); return; }
-        if (!l.q) { manqueQte++; return; }
+        if (m.prix === null) { surDemande.push(m.label); message.push(ligneMsg + (l.q ? ", " + tonnes(l.q) : "") + " : prix sur demande"); return; }
+        if (!l.q) { manqueQte++; message.push(ligneMsg + " : quantité à préciser"); return; }
 
         var base = Math.round(m.prix * l.q * 100) / 100;
         var supp = m.groupe.supp && l.q < SEUIL_PETIT ? SUPPLEMENT_PETIT : 0;
+        message.push(ligneMsg + " : " + tonnes(l.q) + " × " + euro(m.prix) + (supp ? " + supplément " + euro(supp) : "") + " = " + euro(base + supp) + " HTVA");
         total += base + supp;
         detail +=
           '<div><dt>' + m.label + (site ? " · " + site.nom : "") +
@@ -302,7 +302,11 @@
       var tva = Math.round(total * TVA * 100) / 100;
       var sujetsListe = Object.keys(sujets);
       var devis = "contact.html?sujet=" + encodeURIComponent(sujetsListe.length === 1 ? sujetsListe[0] : "De devis") +
-        "&message=" + encodeURIComponent("Demande de prix pour :\n" + message.join("\n")) + "#formulaire";
+        "&message=" + encodeURIComponent(
+          (total ? "Estimation faite sur le site :\n" : "Demande de prix pour :\n") + message.join("\n") +
+          (total ? "\n\nTotal estimé : " + euro(total) + " HTVA, soit " + euro(total + tva) + " TVAC." : "") +
+          "\n\nPrécisions (date souhaitée, adresse du chantier…) : ") +
+        "&estimation=1#formulaire";
       var liens = Object.keys(onglets).map(function (o) {
         var nom = { "versage-classe3": "versage classe 3", "versage-terre": "versage terre", "granulats": "granulats" }[o];
         return '<a href="tarifs.html#' + o + '">' + nom + "</a>";
@@ -334,7 +338,7 @@
         (onglets["versage-classe3"] ? " Un versage non conforme est facturé comme classe 2." : "") +
         (onglets["versage-terre"] ? " Terres : sous réserve d'acceptation préalable par notre service qualité." : "") +
         (Object.keys(onglets).length > 1 ? " Tarifs détaillés : " : " Tarif détaillé : ") + liens + ".</p>" +
-        '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">' + (detail ? "Demander un devis" : "Demander un prix") + '</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
+        '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">' + (detail ? "Envoyer cette estimation" : "Demander un prix") + '</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
       out.innerHTML = html;
       animerTotal(detail ? total : null);
       if (detail && !estimationComptee && window.recymoStat) { estimationComptee = true; window.recymoStat("estimation"); }
