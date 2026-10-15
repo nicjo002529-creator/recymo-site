@@ -93,6 +93,17 @@
   majStatuts();
   setInterval(majStatuts, 60000);
 
+  // Guide des classes : les prix affichés suivent le tableau des tarifs
+  var syncPrix = function () {
+    document.querySelectorAll("[data-prix-de]").forEach(function (el) {
+      var cell = document.querySelector('[data-edit="' + el.getAttribute("data-prix-de") + '"]');
+      if (!cell) return;
+      var t = cell.textContent.trim();
+      el.textContent = /€/.test(t) && !/\/t/.test(t) ? t + "/t" : t;
+    });
+  };
+  syncPrix();
+
   // Horaires modifiables depuis l'admin : assets/data/horaires.json remplace les valeurs ci-dessus
   var enMinutes = function (hhmm) { var p = hhmm.split(":"); return +p[0] * 60 + +p[1]; };
   window.recymoHoraires = function (data) {
@@ -259,7 +270,7 @@
       var n = parseFloat(t.replace(/\s/g, "").replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, ""));
       return /\d/.test(t) && !isNaN(n) ? n : null;
     };
-    window.recymoRecalculer = function () { calculer(); };
+    window.recymoRecalculer = function () { calculer(); syncPrix(); };
 
     var calculer = function () {
       var lignes = lireLignes();

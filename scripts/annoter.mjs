@@ -74,7 +74,7 @@ for (const [file, prefix] of Object.entries(PAGES)) {
   const re = new RegExp("<(" + TAGS + ")(\\s[^>]*)?>([^<]+)</\\1>", "g");
   html = html.replace(re, (tout, tag, attrs = "", texte, offset) => {
     if (dansZone(offset)) return tout;
-    if (/data-(edit|statut|year|suggest|horaires)|aria-hidden|class="(sr-only|err)"/.test(attrs)) return tout;
+    if (/data-(edit|statut|year|suggest|horaires|prix-de)|aria-hidden|class="(sr-only|err)"/.test(attrs)) return tout;
     if (!/[A-Za-zÀ-ÿ0-9]/.test(texte)) return tout;
     return "<" + tag + attrs + ' data-edit="' + prefix + "-" + (++compteur) + '">' + texte + "</" + tag + ">";
   });

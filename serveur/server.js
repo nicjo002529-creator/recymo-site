@@ -225,6 +225,12 @@ const enregistrer = async (patches) => {
       const nouveau = remplacerTexte(html, String(p.cle), String(p.valeur).slice(0, 2000));
       if (nouveau === null) throw Object.assign(new Error("Élément introuvable : " + p.cle), { status: 400 });
       pages[p.page] = nouveau;
+      // Le guide des classes reprend le prix du tableau
+      if (/^prix-/.test(p.cle)) {
+        const v = String(p.valeur).slice(0, 200);
+        const affiche = /€/.test(v) && !/\/t/.test(v) ? v + "/t" : v;
+        pages[p.page] = pages[p.page].replace(new RegExp('(<span[^>]*data-prix-de="' + String(p.cle).replace(/[^\w-]/g, "") + '"[^>]*>)[^<]*(</span>)', "g"), (t, o, f) => o + echapper(affiche) + f);
+      }
       resume.push("texte " + p.cle);
     } else if (p.type === "horaires") {
       const h = H.valider(p.horaires);

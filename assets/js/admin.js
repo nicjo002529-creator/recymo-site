@@ -280,7 +280,7 @@
       ]);
       liste.appendChild(el("li", {}, [
         vignette,
-        el("div", {}, [el("strong", { text: NOMS_PHOTOS[slot] || (img.closest("figure") && img.closest("figure").textContent.trim()) || "Photo de la galerie" }), actions])
+        el("div", {}, [el("strong", { text: NOMS_PHOTOS[slot] || (img.closest("figure") && img.closest("figure").textContent.trim()) || (/^classe-/.test(slot) ? "Classe " + slot.slice(7).toUpperCase() + " (illustration à remplacer par une photo)" : "") || img.alt || "Photo" }), actions])
       ]));
     });
     panneauCorps.appendChild(liste);
