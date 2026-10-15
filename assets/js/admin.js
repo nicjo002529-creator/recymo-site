@@ -577,6 +577,25 @@
               .then(function (blob) { b.remove(); photoZone.appendChild(el("img", { src: URL.createObjectURL(blob), alt: "Photo jointe par " + x.nom, class: "adm-d-photo" })); },
                 function () { b.disabled = false; b.textContent = "Réessayer d'afficher la photo"; });
           } }) : null,
+          (x.fichiers && x.fichiers.length) ? el("div", { class: "adm-docs" }, [el("strong", { text: x.fichiers.length + " document" + (x.fichiers.length > 1 ? "s" : "") + " joint" + (x.fichiers.length > 1 ? "s" : "") })].concat(x.fichiers.map(function (f) {
+            var pdf = f.type === "application/pdf";
+            var taille = f.taille < 1048576 ? Math.max(1, Math.round(f.taille / 1024)) + " Ko" : (f.taille / 1048576).toFixed(1).replace(".", ",") + " Mo";
+            return el("button", { type: "button", class: "adm-doc", onclick: function (e) {
+              var b = e.currentTarget; b.disabled = true;
+              fetch(API + "/admin/photo?chemin=" + encodeURIComponent(f.chemin), { headers: { Authorization: "Bearer " + jeton } })
+                .then(function (r) { if (!r.ok) throw new Error(); return r.blob(); })
+                .then(function (blob) {
+                  b.disabled = false;
+                  var url = URL.createObjectURL(blob);
+                  if (pdf) {
+                    var a = el("a", { href: url, download: f.nom.replace(/\.pdf$/i, "") + ".pdf" });
+                    document.body.appendChild(a); a.click(); a.remove();
+                  } else {
+                    photoZone.appendChild(el("img", { src: url, alt: f.nom, class: "adm-d-photo" }));
+                  }
+                }, function () { b.disabled = false; toast("Impossible d'ouvrir ce document. Réessayez.", "erreur"); });
+            } }, [el("span", { class: "adm-doc-type", text: pdf ? "PDF" : "Photo" }), el("span", { class: "adm-doc-nom", text: f.nom }), el("small", { text: taille + (pdf ? " · télécharger" : " · afficher") })]);
+          }))) : null,
           photoZone
         ]);
       })));

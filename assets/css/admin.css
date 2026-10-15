@@ -153,3 +153,17 @@ body.is-admin .mobile-bar { display: none !important; }
 .adm-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
 .adm-toast.is-erreur { background: #8f1c22; }
 @media (max-width: 820px) { .adm-toast { bottom: 160px; } }
+
+/* Documents joints aux demandes */
+.adm-docs { display: grid; gap: 6px; margin-top: 4px; }
+.adm-docs > strong { font-size: .875rem; }
+.adm-doc {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  min-height: 44px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  cursor: pointer; text-align: left; font-size: .9rem;
+}
+.adm-doc:hover { border-color: var(--green-600); }
+.adm-doc:disabled { opacity: .6; cursor: progress; }
+.adm-doc-type { font-size: .7rem; font-weight: 800; letter-spacing: .04em; padding: 3px 7px; border-radius: 6px; background: var(--green-100); color: var(--green-800); }
+.adm-doc-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.adm-doc small { color: var(--muted); white-space: nowrap; }

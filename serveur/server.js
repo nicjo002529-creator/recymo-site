@@ -320,7 +320,7 @@ const routes = {
 
   "POST /demande": async (req) => {
     if (!limite("demande:" + ipDe(req), 5, 3600000)) throw Object.assign(new Error("Trop de demandes envoyées. Appelez-nous au 085 21 74 45."), { status: 429 });
-    const d = JSON.parse(await lireCorps(req, 9 * 1024 * 1024));
+    const d = JSON.parse(await lireCorps(req, 85 * 1024 * 1024));
     if (d._honey) return { ok: true };
     const champ = (k, max) => String(d[k] || "").trim().slice(0, max);
     const demande = {
@@ -339,6 +339,20 @@ const routes = {
         demande.photo = `demandes/photos/${demande.date.slice(0, 10)}-${demande.id.slice(0, 8)}.${m[1] === "jpeg" ? "jpg" : m[1]}`;
         fichiers[demande.photo] = buf;
       }
+    }
+    // Documents joints : analyses de terres, NMT, photos (6 fichiers, 10 Mo chacun au maximum)
+    demande.fichiers = [];
+    const EXT = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    for (const [i, f] of (Array.isArray(d.fichiers) ? d.fichiers.slice(0, 6) : []).entries()) {
+      const mf = String((f && f.data) || "").match(/^data:(application\/pdf|image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+      if (!mf) continue;
+      const buf = Buffer.from(mf[2], "base64");
+      if (buf.length > 10 * 1024 * 1024) continue;
+      if (mf[1] === "application/pdf" && buf.subarray(0, 4).toString() !== "%PDF") continue;
+      const base = String(f.nom || "document").replace(/\.[^.]+$/, "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "-").slice(0, 60) || "document";
+      const chemin = `demandes/fichiers/${demande.date.slice(0, 10)}-${demande.id.slice(0, 8)}-${i + 1}-${base}.${EXT[mf[1]]}`;
+      fichiers[chemin] = buf;
+      demande.fichiers.push({ nom: String(f.nom || base).slice(0, 120), chemin, type: mf[1], taille: buf.length });
     }
     const liste = await chargerDemandes();
     liste.unshift(demande);
@@ -371,10 +385,11 @@ const routes = {
 
   "GET /admin/photo": async (req, url, res) => {
     const chemin = String(url.searchParams.get("chemin") || "");
-    if (!/^demandes\/photos\/[\w.-]+$/.test(chemin)) throw Object.assign(new Error("Chemin invalide"), { status: 400 });
+    if (!/^demandes\/(photos|fichiers)\/[\w.-]+$/.test(chemin)) throw Object.assign(new Error("Chemin invalide"), { status: 400 });
     const buf = await lire(DATA_REPO, chemin);
     if (!buf) throw Object.assign(new Error("Introuvable"), { status: 404 });
-    res.writeHead(200, { "Content-Type": chemin.endsWith(".png") ? "image/png" : chemin.endsWith(".webp") ? "image/webp" : "image/jpeg", "Cache-Control": "private, max-age=3600" });
+    const type = chemin.endsWith(".pdf") ? "application/pdf" : chemin.endsWith(".png") ? "image/png" : chemin.endsWith(".webp") ? "image/webp" : "image/jpeg";
+    res.writeHead(200, { "Content-Type": type, "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff" });
     res.end(buf);
     return undefined;
   },

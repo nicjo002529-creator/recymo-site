@@ -126,26 +126,81 @@
       setTimeout(function () { form.elements.nom.focus({ preventScroll: true }); }, 50);
     }
 
+    // Documents joints : analyses de terres, NMT, photos du chargement (plusieurs fichiers)
     var photo = form.elements.attachment;
-    var photoOk = function () {
-      return !photo || !photo.files || !photo.files[0] || photo.files[0].size <= 15 * 1024 * 1024;
+    var MAX_FICHIERS = 6, MAX_TAILLE = 10 * 1024 * 1024;
+    var TYPES = /^(application\/pdf|image\/(jpeg|png|webp))$/;
+    var fichiers = [];
+    var liste = document.getElementById("docs-liste");
+    var champDocs = photo ? photo.closest(".field") : null;
+    var tailleTxt = function (o) { return o < 1048576 ? Math.max(1, Math.round(o / 1024)) + " Ko" : (o / 1048576).toFixed(1).replace(".", ",") + " Mo"; };
+    var afficherFichiers = function () {
+      if (!liste) return;
+      liste.innerHTML = "";
+      fichiers.forEach(function (f, i) {
+        var li = document.createElement("li");
+        var nom = document.createElement("span");
+        nom.className = "docs-nom";
+        nom.textContent = f.name;
+        var t = document.createElement("small");
+        t.textContent = (f.type === "application/pdf" ? "PDF" : "Image") + " · " + tailleTxt(f.size);
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "docs-del";
+        del.setAttribute("aria-label", "Retirer " + f.name);
+        del.innerHTML = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg>";
+        del.addEventListener("click", function () { fichiers.splice(i, 1); afficherFichiers(); photo.focus(); });
+        li.appendChild(nom); li.appendChild(t); li.appendChild(del);
+        liste.appendChild(li);
+      });
     };
-    // Resize the attached photo before sending (max 1600 px, JPEG)
-    var lirePhoto = function () {
-      if (!photo || !photo.files || !photo.files[0]) return Promise.resolve("");
+    var ajouterFichiers = function (nouveaux) {
+      var refus = false;
+      Array.prototype.forEach.call(nouveaux, function (f) {
+        var type = f.type || (/\.pdf$/i.test(f.name) ? "application/pdf" : "");
+        if (!TYPES.test(type) || f.size > MAX_TAILLE || fichiers.length >= MAX_FICHIERS) { refus = true; return; }
+        if (!fichiers.some(function (x) { return x.name === f.name && x.size === f.size; })) fichiers.push(f);
+      });
+      if (champDocs) champDocs.classList.toggle("invalid", refus);
+      afficherFichiers();
+    };
+    // Un fichier refusé n est simplement pas ajouté : il ne bloque pas l envoi
+    var photoOk = function () { if (champDocs) champDocs.classList.remove("invalid"); return true; };
+    if (photo) {
+      photo.addEventListener("change", function () { ajouterFichiers(photo.files); photo.value = ""; });
+      var zone = photo.closest(".drop");
+      ["dragenter", "dragover"].forEach(function (ev) { zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.add("is-over"); }); });
+      ["dragleave", "drop"].forEach(function (ev) { zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.remove("is-over"); }); });
+      zone.addEventListener("drop", function (e) { ajouterFichiers(e.dataTransfer.files); });
+    }
+    // Rappel pour les terres quand l objet de la demande est « Versage terre »
+    var rappelTerres = document.getElementById("docs-terres");
+    var majRappel = function () { if (rappelTerres) rappelTerres.hidden = form.elements.sujet.value !== "Versage terre"; };
+    form.elements.sujet.addEventListener("change", majRappel);
+    majRappel();
+
+    // Images réduites (1600 px, JPEG), PDF envoyés tels quels
+    var lireFichier = function (f) {
       return new Promise(function (ok) {
+        if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
+          var r = new FileReader();
+          r.onload = function () { ok({ nom: f.name, data: String(r.result).replace(/^data:[^;]*;/, "data:application/pdf;") }); };
+          r.onerror = function () { ok(null); };
+          r.readAsDataURL(f);
+          return;
+        }
         var img = new Image();
-        var url = URL.createObjectURL(photo.files[0]);
+        var url = URL.createObjectURL(f);
         img.onload = function () {
           var max = 1600, w = img.naturalWidth, h = img.naturalHeight;
-          if (w > max || h > max) { var r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+          if (w > max || h > max) { var k = Math.min(max / w, max / h); w = Math.round(w * k); h = Math.round(h * k); }
           var c = document.createElement("canvas");
           c.width = w; c.height = h;
           c.getContext("2d").drawImage(img, 0, 0, w, h);
           URL.revokeObjectURL(url);
-          ok(c.toDataURL("image/jpeg", 0.8));
+          ok({ nom: f.name.replace(/\.[^.]+$/, "") + ".jpg", data: c.toDataURL("image/jpeg", 0.82) });
         };
-        img.onerror = function () { URL.revokeObjectURL(url); ok(""); };
+        img.onerror = function () { URL.revokeObjectURL(url); ok(null); };
         img.src = url;
       });
     };
@@ -165,7 +220,7 @@
         "Société : " + (v("societe") || "-"),
         "Email : " + v("email"),
         "Téléphone : " + v("telephone")
-      ].join("\n");
+      ].concat(fichiers.length ? ["", "Documents à joindre : " + fichiers.map(function (f) { return f.name; }).join(", ") + " (je les ajoute à cet email)."] : []).join("\n");
       window.location.href = "mailto:info@recymo.be?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
       var status = document.getElementById("form-status");
       if (status) status.hidden = false;
@@ -191,7 +246,7 @@
 
       btn.disabled = true;
       btn.firstChild.textContent = "Envoi en cours… ";
-      lirePhoto().then(function (image) {
+      Promise.all(fichiers.map(lireFichier)).then(function (docs) {
         var ctrl = new AbortController();
         var t = setTimeout(function () { ctrl.abort(); }, 75000);
         return fetch(API + "/demande", {
@@ -199,7 +254,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             nom: v("nom"), societe: v("societe"), email: v("email"), telephone: v("telephone"),
-            sujet: v("sujet"), message: v("message"), photo: image, _honey: form.elements._honey.value
+            sujet: v("sujet"), message: v("message"), fichiers: docs.filter(Boolean), _honey: form.elements._honey.value
           }),
           signal: ctrl.signal
         }).then(function (r) {
@@ -207,6 +262,7 @@
           return r.json().catch(function () { return {}; }).then(function (d) {
             if (r.ok) {
               form.reset();
+              fichiers = []; afficherFichiers(); majRappel();
               var sent = document.getElementById("form-sent");
               if (sent) { sent.hidden = false; sent.focus(); }
               return;
@@ -227,7 +283,6 @@
         btn.firstChild.textContent = btnLabel;
       });
     });
-    form.addEventListener("change", function (e) { if (e.target === photo && photoOk()) photo.closest(".field").classList.remove("invalid"); });
     form.addEventListener("input", function (e) {
       var field = e.target.closest(".field");
       if (field && field.classList.contains("invalid") && e.target.checkValidity() && (e.target !== photo || photoOk())) field.classList.remove("invalid");

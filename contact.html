@@ -105,10 +105,19 @@
                 <span class="err">Veuillez écrire votre message.</span>
               </div>
               <div class="field full" data-online-only hidden>
-                <label for="photo">Photo du chargement <span class="opt" data-edit="c-9">(facultatif)</span></label>
-                <input id="photo" name="attachment" type="file" accept="image/*" aria-describedby="photo-aide photo-err">
-                <small class="field-help" id="photo-aide" data-edit="c-10">Une photo nous aide à vous donner le bon prix. Format JPG ou PNG.</small>
-                <span class="err" id="photo-err">Cette photo dépasse 15 Mo : choisissez une image plus légère ou envoyez-la par email.</span>
+                <label for="photo">Documents et photos <span class="opt" data-edit="c-9">(facultatif)</span></label>
+                <div class="notice docs-terres" id="docs-terres" hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                  <p><strong data-edit="c-62">Pour les terres :</strong> les NMT doivent nous être communiquées avant les premiers versages, et certains sites demandent une analyse (RQT, CCQT). Joignez-les ici pour gagner du temps.</p>
+                </div>
+                <label class="drop" for="photo">
+                  <input id="photo" name="attachment" type="file" multiple accept="application/pdf,.pdf,image/jpeg,image/png,image/webp" aria-describedby="photo-aide photo-err">
+                  <span class="drop-btn" data-edit="c-63">Choisir des fichiers</span>
+                  <span class="drop-txt" data-edit="c-64">ou glissez-les ici</span>
+                </label>
+                <small class="field-help" id="photo-aide" data-edit="c-10">Analyses de terres (RQT, CCQT), NMT, photos du chargement… PDF, JPG ou PNG, jusqu'à 6 fichiers de 10 Mo maximum chacun.</small>
+                <ul class="docs-liste" id="docs-liste" aria-live="polite"></ul>
+                <span class="err" id="photo-err">Un fichier n'est pas accepté. Utilisez un PDF, un JPG ou un PNG de moins de 10 Mo (6 fichiers maximum).</span>
               </div>
             </div>
             <input type="text" name="_honey" class="sr-only" tabindex="-1" autocomplete="off" aria-hidden="true">
