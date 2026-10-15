@@ -162,78 +162,150 @@
 
   var calc = document.getElementById("calc");
   if (calc) {
-    var sel = calc.querySelector("#calc-materiau");
-    var qte = calc.querySelector("#calc-qte");
+    var rows = calc.querySelector("#calc-rows");
+    var addBtn = calc.querySelector("#calc-add");
     var out = calc.querySelector("#calc-resultat");
+    var MAX_LIGNES = 10;
     var index = {};
+    var options = '<option value="">Choisir un matériau…</option>';
 
     CALC.forEach(function (g) {
-      var og = document.createElement("optgroup");
-      og.label = g.groupe;
+      options += '<optgroup label="' + g.groupe + '">';
       g.items.forEach(function (it) {
-        var o = document.createElement("option");
-        o.value = it[0];
-        o.textContent = it[1];
-        og.appendChild(o);
+        options += '<option value="' + it[0] + '">' + it[1] + "</option>";
         index[it[0]] = { groupe: g, label: it[1], prix: it[2] };
       });
-      sel.appendChild(og);
+      options += "</optgroup>";
     });
 
-    var calculer = function () {
-      var m = index[sel.value];
-      var q = parseFloat(String(qte.value).replace(",", "."));
-      var field = qte.closest(".field");
-      var valide = !isNaN(q) && q > 0;
-      field.classList.toggle("invalid", qte.value !== "" && !valide);
-      if (!m) { out.innerHTML = ""; return; }
-
-      var site = m.groupe.site ? SITES[m.groupe.site] : null;
-      var lieu = site ? "Site de " + site.nom : (m.groupe.achat ? "Départ du site de Braives" : "Sur nos sites de versage");
-      var lienTarif = '<a href="tarifs.html#' + m.groupe.onglet + '">Voir le tarif détaillé</a>';
-      var devis = "contact.html?sujet=" + encodeURIComponent(m.groupe.sujet) +
-        "&message=" + encodeURIComponent((m.groupe.achat ? "Achat : " : "Versage : ") + m.label + (valide ? ", environ " + tonnes(q) : "") + (site ? " (site de " + site.nom + ")" : "") + ".") +
-        "#formulaire";
-
-      if (m.prix === null) {
-        out.innerHTML =
-          '<p class="calc-total">Prix sur demande</p>' +
-          "<p>Ce matériau est facturé au cas par cas. " + lieu + ".</p>" +
-          '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">Demander un prix</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
-        return;
-      }
-
-      if (!valide) {
-        out.innerHTML =
-          '<p class="calc-unit"><strong>' + euro(m.prix) + "</strong> par tonne, HTVA</p>" +
-          "<p>Indiquez une quantité pour obtenir le total. " + lienTarif + ".</p>";
-        return;
-      }
-
-      var base = m.prix * q;
-      var supp = m.groupe.supp && q < SEUIL_PETIT ? SUPPLEMENT_PETIT : 0;
-      var htva = Math.round((base + supp) * 100) / 100;
-      var tva = Math.round(htva * TVA * 100) / 100;
-      var lignes =
-        "<dl class=\"calc-lines\">" +
-        "<div><dt>" + tonnes(q) + " × " + euro(m.prix) + "</dt><dd>" + euro(base) + "</dd></div>" +
-        (supp ? "<div><dt>Supplément moins de 5 t</dt><dd>" + euro(supp) + "</dd></div>" : "") +
-        "<div><dt>TVA 21 %</dt><dd>" + euro(tva) + "</dd></div>" +
-        "</dl>";
-      out.innerHTML =
-        '<p class="calc-label">Estimation</p>' +
-        '<p class="calc-total">' + euro(htva) + ' <span>HTVA</span></p>' +
-        '<p class="calc-ttc">' + euro(htva + tva) + " TVAC</p>" +
-        lignes +
-        "<p class=\"calc-note\">" + lieu + ". Prix indicatif, établi d'après le tarif en vigueur. Le poids réel est mesuré sur notre bascule." +
-        (m.groupe.onglet === "versage-classe3" ? " Un versage non conforme est facturé comme classe 2." : "") +
-        (m.groupe.onglet === "versage-terre" ? " Sous réserve d'acceptation préalable par notre service qualité." : "") +
-        " " + lienTarif + ".</p>" +
-        '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">Demander un devis</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
+    var uid = 0;
+    var numeroter = function () {
+      var lis = rows.querySelectorAll(".calc-row");
+      lis.forEach(function (li, i) {
+        li.querySelector(".calc-row-num").textContent = "Matériau " + (i + 1);
+        var del = li.querySelector(".calc-del");
+        del.hidden = lis.length === 1;
+        del.setAttribute("aria-label", "Retirer le matériau " + (i + 1));
+      });
+      addBtn.hidden = lis.length >= MAX_LIGNES;
     };
 
-    sel.addEventListener("change", calculer);
-    qte.addEventListener("input", calculer);
+    var ajouterLigne = function (code, quantite) {
+      var n = ++uid;
+      var li = document.createElement("li");
+      li.className = "calc-row";
+      li.innerHTML =
+        '<div class="field calc-mat">' +
+          '<label for="calc-m' + n + '" class="calc-row-num"></label>' +
+          '<select id="calc-m' + n + '">' + options + "</select>" +
+        "</div>" +
+        '<div class="field calc-q">' +
+          '<label for="calc-q' + n + '">Tonnes</label>' +
+          '<input id="calc-q' + n + '" type="number" inputmode="decimal" min="0" step="0.5" placeholder="Ex. 12" aria-describedby="calc-q' + n + '-err">' +
+          '<span class="err" id="calc-q' + n + '-err">Indiquez un nombre de tonnes supérieur à zéro.</span>' +
+        "</div>" +
+        '<button type="button" class="calc-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
+      if (code) li.querySelector("select").value = code;
+      if (quantite) li.querySelector("input").value = quantite;
+      rows.appendChild(li);
+      numeroter();
+      return li;
+    };
+
+    var lireLignes = function () {
+      return Array.prototype.map.call(rows.querySelectorAll(".calc-row"), function (li) {
+        var input = li.querySelector("input");
+        var q = parseFloat(String(input.value).replace(",", "."));
+        var valide = !isNaN(q) && q > 0;
+        input.closest(".field").classList.toggle("invalid", input.value !== "" && !valide);
+        return { m: index[li.querySelector("select").value], q: valide ? q : null };
+      }).filter(function (l) { return l.m; });
+    };
+
+    var calculer = function () {
+      var lignes = lireLignes();
+      if (!lignes.length) { out.innerHTML = ""; return; }
+
+      var total = 0, detail = "", surDemande = [], manqueQte = 0;
+      var onglets = {}, sujets = {}, message = [];
+
+      lignes.forEach(function (l) {
+        var m = l.m, site = m.groupe.site ? SITES[m.groupe.site] : null;
+        onglets[m.groupe.onglet] = true;
+        sujets[m.groupe.sujet] = true;
+        message.push("- " + (m.groupe.achat ? "Achat : " : "Versage : ") + m.label +
+          (l.q ? ", environ " + tonnes(l.q) : "") + (site ? " (site de " + site.nom + ")" : ""));
+
+        if (m.prix === null) { surDemande.push(m.label); return; }
+        if (!l.q) { manqueQte++; return; }
+
+        var base = Math.round(m.prix * l.q * 100) / 100;
+        var supp = m.groupe.supp && l.q < SEUIL_PETIT ? SUPPLEMENT_PETIT : 0;
+        total += base + supp;
+        detail +=
+          '<div><dt>' + m.label + (site ? " · " + site.nom : "") +
+          '<span>' + tonnes(l.q) + " × " + euro(m.prix) + (supp ? " + supplément moins de 5 t " + euro(supp) : "") + "</span></dt>" +
+          "<dd>" + euro(base + supp) + "</dd></div>";
+      });
+
+      total = Math.round(total * 100) / 100;
+      var tva = Math.round(total * TVA * 100) / 100;
+      var sujetsListe = Object.keys(sujets);
+      var devis = "contact.html?sujet=" + encodeURIComponent(sujetsListe.length === 1 ? sujetsListe[0] : "De devis") +
+        "&message=" + encodeURIComponent("Demande de prix pour :\n" + message.join("\n")) + "#formulaire";
+      var liens = Object.keys(onglets).map(function (o) {
+        var nom = { "versage-classe3": "versage classe 3", "versage-terre": "versage terre", "granulats": "granulats" }[o];
+        return '<a href="tarifs.html#' + o + '">' + nom + "</a>";
+      }).join(", ");
+
+      var html = "";
+      if (detail) {
+        html +=
+          '<p class="calc-label">Estimation' + (lignes.length > 1 ? " pour " + lignes.length + " matériaux" : "") + "</p>" +
+          '<p class="calc-total">' + euro(total) + ' <span>HTVA</span></p>' +
+          '<p class="calc-ttc">' + euro(total + tva) + " TVAC</p>" +
+          '<dl class="calc-lines">' + detail + '<div class="calc-tva"><dt>TVA 21 %</dt><dd>' + euro(tva) + "</dd></div></dl>";
+      } else if (surDemande.length) {
+        html += '<p class="calc-total">Prix sur demande</p>';
+      } else {
+        html += '<p class="calc-unit">Indiquez les quantités pour obtenir le total.</p>';
+      }
+      if (detail && surDemande.length) {
+        html += '<p class="calc-warn">Non compris : ' + surDemande.join(", ") + " (prix sur demande).</p>";
+      } else if (!detail && surDemande.length) {
+        html += "<p>" + surDemande.join(", ") + " : facturé au cas par cas.</p>";
+      }
+      if (detail && manqueQte) {
+        html += '<p class="calc-warn">' + (manqueQte === 1 ? "Un matériau n'a pas encore de quantité." : manqueQte + " matériaux n'ont pas encore de quantité.") + "</p>";
+      }
+      html +=
+        '<p class="calc-note">Prix indicatif, établi d\'après le tarif en vigueur. Le poids réel est mesuré sur notre bascule' +
+        (lignes.length > 1 ? " ; le supplément de moins de 5 t s'applique par matériau" : "") + "." +
+        (onglets["versage-classe3"] ? " Un versage non conforme est facturé comme classe 2." : "") +
+        (onglets["versage-terre"] ? " Terres : sous réserve d'acceptation préalable par notre service qualité." : "") +
+        (Object.keys(onglets).length > 1 ? " Tarifs détaillés : " : " Tarif détaillé : ") + liens + ".</p>" +
+        '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">' + (detail ? "Demander un devis" : "Demander un prix") + '</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
+      out.innerHTML = html;
+    };
+
+    rows.addEventListener("change", calculer);
+    rows.addEventListener("input", calculer);
+    rows.addEventListener("click", function (e) {
+      var del = e.target.closest(".calc-del");
+      if (!del) return;
+      var li = del.closest(".calc-row");
+      var prev = li.previousElementSibling || li.nextElementSibling;
+      li.remove();
+      numeroter();
+      calculer();
+      if (prev) prev.querySelector("select").focus();
+    });
+    addBtn.addEventListener("click", function () {
+      ajouterLigne().querySelector("select").focus();
+      calculer();
+    });
+
+    ajouterLigne();
     calculer();
   }
 

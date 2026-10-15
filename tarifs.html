@@ -60,17 +60,13 @@
         <div class="calc" id="calc">
           <div class="calc-form">
             <h2 id="calc-titre">Estimer mon prix</h2>
-            <p class="calc-intro">Choisissez le matériau et la quantité : le total s'affiche tout de suite.</p>
-            <div class="field">
-              <label for="calc-materiau">Matériau</label>
-              <select id="calc-materiau"></select>
-            </div>
-            <div class="field">
-              <label for="calc-qte">Quantité en tonnes</label>
-              <input id="calc-qte" type="number" inputmode="decimal" min="0" step="0.5" placeholder="Ex. 12" aria-describedby="calc-qte-aide calc-qte-err">
-              <small class="field-help" id="calc-qte-aide">Moins de 5 tonnes : supplément de 7,50 € (versage et granulats).</small>
-              <span class="err" id="calc-qte-err">Indiquez un nombre de tonnes supérieur à zéro, par exemple 12.</span>
-            </div>
+            <p class="calc-intro">Choisissez un ou plusieurs matériaux avec leur quantité : le total s'affiche tout de suite.</p>
+            <ol class="calc-rows" id="calc-rows"></ol>
+            <button type="button" class="btn btn-outline btn-sm calc-add" id="calc-add">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              Ajouter un matériau
+            </button>
+            <small class="field-help">Moins de 5 tonnes : supplément de 7,50 € par matériau (versage et granulats).</small>
           </div>
           <div class="calc-result" id="calc-resultat" aria-live="polite"></div>
         </div>
