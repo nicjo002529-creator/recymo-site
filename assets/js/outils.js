@@ -14,20 +14,20 @@
   var SITES = {
     braives: {
       nom: "Braives", code: "WT062991", adresse: "Rue Roua 6, 4260 Braives",
-      dest: "50.5753235,5.2076884",
+      dest: "50.5753235,5.2076884", lat: 50.5753, lon: 5.2077, tel: "+3285217445",
       horaires: { 1: [420, 1020], 2: [420, 1020], 3: [420, 1020], 4: [420, 1020], 5: [420, 1020], 6: [480, 720] }
     },
     sambreville: {
-      nom: "Sambreville", code: "WT050579", adresse: "Rue de la Larronnerie, 5060 Sambreville",
+      nom: "Sambreville", code: "WT050579", adresse: "Rue de la Larronnerie, 5060 Sambreville", lat: 50.4559, lon: 4.6307,
       horaires: { 1: [420, 990], 2: [420, 990], 3: [420, 990], 4: [420, 990], 5: [420, 990] }
     },
     transinnes: {
-      nom: "Transinnes", code: "WT011403", adresse: "Grand Route, 6890 Libin",
+      nom: "Transinnes", code: "WT011403", adresse: "Grand Route, 6890 Libin", lat: 50.0004, lon: 5.2027,
       horaires: { 1: [420, 945], 2: [420, 945], 3: [420, 945] },
       note: "Jeudi et vendredi sur demande (minimum 1000 t par jour)."
     },
     fosses: {
-      nom: "Fosses-la-Ville", code: "WT026437", adresse: "Rue Adelin Beguin, 5070 Fosses-la-Ville",
+      nom: "Fosses-la-Ville", code: "WT026437", adresse: "Rue Adelin Beguin, 5070 Fosses-la-Ville", lat: 50.4044, lon: 4.7375,
       horaires: { 1: [420, 1020], 2: [420, 1020], 3: [420, 1020], 4: [420, 1020], 5: [420, 1020] }
     }
   };
@@ -454,5 +454,80 @@
     finder.querySelectorAll("[data-suggest]").forEach(function (b) {
       b.addEventListener("click", function () { input.value = b.textContent; chercher(); input.focus(); });
     });
+  }
+
+  /* ---------- Site le plus proche ---------- */
+  // Quels sites acceptent quoi : repris de la page Tarifs
+  var ACCEPTE = {
+    "terres-1-2": { nom: "terres de type I et II", sites: ["braives", "fosses", "transinnes", "sambreville"], onglet: "versage-terre" },
+    "terres-3-5": { nom: "terres de type III à V", sites: ["sambreville", "braives"], onglet: "versage-terre",
+      notes: { braives: "Uniquement avec analyse (RQT, CCQT)." } },
+    "invasives": { nom: "terres avec plantes invasives", sites: ["sambreville"], onglet: "versage-terre" },
+    "amiante": { nom: "terres contenant de 100 à 500 mg/kg MS de fibres d'amiante", sites: ["sambreville"], onglet: "versage-terre" },
+    "classe3": { nom: "déchets de construction (bétons, bricaillons, tarmac…)", sites: ["braives"], onglet: "versage-classe3" },
+    "granulats": { nom: "achat de granulats", sites: ["braives"], onglet: "granulats", notes: { braives: "Livraison possible : demandez-nous un prix." } }
+  };
+  var distanceKm = function (a, b, c, d) {
+    var R = 6371, rad = Math.PI / 180;
+    var x = Math.sin((c - a) * rad / 2), y = Math.sin((d - b) * rad / 2);
+    return 2 * R * Math.asin(Math.sqrt(x * x + Math.cos(a * rad) * Math.cos(c * rad) * y * y));
+  };
+
+  var proche = document.getElementById("proche");
+  if (proche) {
+    var cpInput = proche.querySelector("#proche-cp");
+    var typeSel = proche.querySelector("#proche-type");
+    var resultat = proche.querySelector("#proche-resultat");
+    var codes = null;
+    var chargerCodes = function () {
+      if (codes) return Promise.resolve(codes);
+      return fetch("assets/data/codes-postaux.json").then(function (r) { return r.json(); }).then(function (d) { codes = d; return d; });
+    };
+    var esc = function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; };
+    var lienSite = function (k) {
+      var s = SITES[k], dest = encodeURIComponent(s.dest || s.adresse + ", Belgique");
+      return { maps: "https://www.google.com/maps/dir/?api=1&destination=" + dest, waze: s.dest ? "https://waze.com/ul?ll=" + dest + "&navigate=yes" : "https://waze.com/ul?q=" + dest + "&navigate=yes" };
+    };
+
+    proche.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var cp = cpInput.value.replace(/\D/g, "");
+      var champ = cpInput.closest(".field");
+      if (!/^\d{4}$/.test(cp)) { champ.classList.add("invalid"); cpInput.focus(); return; }
+      champ.classList.remove("invalid");
+      resultat.innerHTML = '<p class="proche-chargement">Recherche…</p>';
+      chargerCodes().then(function (liste) {
+        var lieu = liste[cp];
+        if (!lieu) {
+          resultat.innerHTML = '<div class="proche-vide"><p><strong>Code postal ' + esc(cp) + ' introuvable.</strong> Vérifiez le code (4 chiffres, Belgique) ou appelez-nous : on vous oriente vers le bon site.</p><a class="btn btn-dark btn-sm" href="tel:+3285217445">085 21 74 45</a></div>';
+          return;
+        }
+        var type = ACCEPTE[typeSel.value];
+        var tries = type.sites.map(function (k) {
+          return { k: k, km: distanceKm(lieu[0], lieu[1], SITES[k].lat, SITES[k].lon) };
+        }).sort(function (a, b) { return a.km - b.km; });
+        var carte = function (t, premier) {
+          var s = SITES[t.k], l = lienSite(t.k), st = statut(s);
+          var note = type.notes && type.notes[t.k];
+          return '<article class="proche-site' + (premier ? " is-premier" : "") + '">' +
+            (premier ? '<p class="proche-label">Le plus proche de ' + esc(lieu[2]) + " (" + esc(cp) + ")</p>" : "") +
+            '<div class="proche-tete"><h3>' + esc(s.nom) + '</h3><span class="proche-km">' + Math.round(t.km) + " km</span></div>" +
+            '<p class="proche-adresse">' + esc(s.adresse) + "</p>" +
+            '<p class="live ' + (st.ouvert ? "is-open" : "is-closed") + '"><span class="dot" aria-hidden="true"></span><strong>' + st.texte + "</strong>" + (st.detail ? " · " + st.detail : "") + "</p>" +
+            (note ? '<p class="proche-note">' + esc(note) + "</p>" : "") +
+            (premier ? '<div class="proche-actions"><a class="btn btn-primary btn-sm" href="' + l.maps + '" target="_blank" rel="noopener">Itinéraire</a><a class="btn btn-outline btn-sm" href="' + l.waze + '" target="_blank" rel="noopener">Waze</a><a class="btn btn-outline btn-sm" href="tel:+3285217445">Appeler</a></div>'
+              : '<div class="proche-actions"><a class="btn btn-outline btn-sm" href="' + l.maps + '" target="_blank" rel="noopener">Itinéraire</a></div>') +
+            "</article>";
+        };
+        resultat.innerHTML =
+          carte(tries[0], true) +
+          (tries.length > 1 ? '<p class="proche-autres-titre">Autres sites qui acceptent les ' + esc(type.nom) + " :</p>" + '<div class="proche-autres">' + tries.slice(1).map(function (t) { return carte(t, false); }).join("") + "</div>"
+            : '<p class="proche-note">C\'est le seul site qui accepte les ' + esc(type.nom) + ".</p>") +
+          '<p class="proche-info">Distance à vol d\'oiseau : la route peut être plus longue. <a href="tarifs.html#' + type.onglet + '">Voir les tarifs et conditions</a>.</p>';
+      }, function () {
+        resultat.innerHTML = '<div class="proche-vide"><p>La recherche n\'a pas fonctionné. Réessayez, ou appelez-nous au 085 21 74 45.</p></div>';
+      });
+    });
+    cpInput.addEventListener("input", function () { if (/^\d{4}$/.test(cpInput.value.trim())) cpInput.closest(".field").classList.remove("invalid"); });
   }
 })();

@@ -183,6 +183,29 @@
           <h2 class="h2" id="sites-titre" data-edit="c-25">Nos sites de versage</h2>
           <p class="lead" data-edit="c-26">Quatre sites en Wallonie, tous équipés d'une bascule. Les horaires sont ceux d'une semaine normale : en cas de jour férié ou d'intempéries, appelez-nous avant de venir.</p>
         </div>
+        <form class="proche" id="proche" novalidate>
+          <h3 data-edit="c-65">Quel site est le plus proche de chez vous ?</h3>
+          <div class="proche-champs">
+            <div class="field">
+              <label for="proche-cp" data-edit="c-66">Code postal du chantier</label>
+              <input id="proche-cp" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="4" placeholder="Ex. 5000" aria-describedby="proche-cp-err">
+              <span class="err" id="proche-cp-err">Entrez un code postal belge à 4 chiffres.</span>
+            </div>
+            <div class="field">
+              <label for="proche-type" data-edit="c-67">Ce que vous apportez</label>
+              <select id="proche-type">
+                <option value="terres-1-2">Terres de type I ou II</option>
+                <option value="terres-3-5">Terres de type III à V</option>
+                <option value="invasives">Terres avec plantes invasives</option>
+                <option value="amiante">Terres avec fibres d'amiante (100 à 500 mg/kg)</option>
+                <option value="classe3">Déchets de construction (béton, bricaillons, tarmac…)</option>
+                <option value="granulats">Achat de granulats</option>
+              </select>
+            </div>
+            <button class="btn btn-dark" type="submit" data-edit="c-68">Trouver le site</button>
+          </div>
+          <div class="proche-resultat" id="proche-resultat" aria-live="polite"></div>
+        </form>
         <div class="site-photos" data-galerie="sites">
           <figure>
             <img data-photo="site-braives" src="assets/img/site-braives.jpg" alt="Vue aérienne du site Recymo de Braives : stocks de matériaux, engins et hangar au milieu des champs" width="658" height="984" loading="lazy">

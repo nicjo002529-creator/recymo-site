@@ -861,3 +861,37 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
 .docs-del:hover { color: #b4232a; background: #fbecec; }
 .docs-del svg { width: 18px; height: 18px; }
 .docs-terres { margin: 0; }
+
+/* ---------- Site le plus proche ---------- */
+.proche { margin-bottom: 28px; padding: clamp(18px, 3vw, 28px); border-radius: var(--r-lg); background: var(--green-950); color: #c9dad0; }
+.proche h3 { color: #fff; font-size: clamp(1.2rem, 1rem + .8vw, 1.5rem); margin-bottom: 14px; }
+.proche-champs { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr) auto; gap: 12px; align-items: end; }
+.proche .field label { color: #dce9e1; }
+.proche .field input, .proche .field select { background: #fff; color: var(--ink); }
+.proche .field .err { color: #ffb4a8; }
+.proche-champs .btn { min-height: 50px; background: var(--accent); color: var(--green-950); }
+.proche-champs .btn:hover { background: #ffd157; }
+@media (max-width: 760px) { .proche-champs { grid-template-columns: 1fr; } .proche-champs .btn { width: 100%; } }
+.proche-resultat { display: grid; gap: 12px; margin-top: 16px; }
+.proche-resultat:empty { display: none; }
+.proche-site { padding: 16px 18px; border-radius: var(--r-md); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); display: grid; gap: 4px; }
+.proche-site.is-premier { background: #fff; color: var(--ink-2); border-color: #fff; }
+.proche-site.is-premier h3 { color: var(--ink); }
+.proche-label { font-size: .85rem; font-weight: 700; color: var(--green-700); }
+.proche-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.proche-tete h3 { margin: 0; font-size: 1.2rem; color: #fff; }
+.proche-km { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; color: var(--accent); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.proche-site.is-premier .proche-km { color: var(--green-700); font-size: 1.6rem; }
+.proche-adresse { font-size: .95rem; }
+.proche-site:not(.is-premier) .live { color: #c9dad0; }
+.proche-site:not(.is-premier) .live.is-open strong { color: #8fd6a8; }
+.proche-site:not(.is-premier) .live.is-closed strong { color: #ffb4a8; }
+.proche-note { font-size: .9rem; font-weight: 600; }
+.proche-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.proche-site:not(.is-premier) .btn-outline { background: transparent; color: #fff; border-color: rgba(255,255,255,.35); }
+.proche-autres-titre { font-size: .9rem; color: #b9cbc1; margin-top: 4px; }
+.proche-autres { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 10px; }
+.proche-info { font-size: .85rem; color: #9fb8aa; }
+.proche-info a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.proche-vide { padding: 14px 16px; border-radius: var(--r-md); background: #fff8e3; color: #5b4500; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.proche-chargement { color: #9fb8aa; }
