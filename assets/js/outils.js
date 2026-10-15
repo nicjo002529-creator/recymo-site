@@ -93,6 +93,26 @@
   majStatuts();
   setInterval(majStatuts, 60000);
 
+  // Horaires modifiables depuis l'admin : assets/data/horaires.json remplace les valeurs ci-dessus
+  var enMinutes = function (hhmm) { var p = hhmm.split(":"); return +p[0] * 60 + +p[1]; };
+  window.recymoHoraires = function (data) {
+    Object.keys(data).forEach(function (k) {
+      if (!SITES[k]) return;
+      var h = {};
+      Object.keys(data[k].jours || {}).forEach(function (j) {
+        h[j] = [enMinutes(data[k].jours[j][0]), enMinutes(data[k].jours[j][1])];
+      });
+      SITES[k].horaires = h;
+    });
+    majStatuts();
+  };
+  if (window.fetch && document.querySelector("[data-statut]")) {
+    fetch("assets/data/horaires.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d) window.recymoHoraires(d); })
+      .catch(function () {});
+  }
+
   /* ---------- Matériaux et prix ---------- */
   // prix : €/t HTVA, null = à convenir. supp : supplément si moins de 5 t.
   var CALC = [
@@ -223,9 +243,23 @@
         var q = parseFloat(String(input.value).replace(",", "."));
         var valide = !isNaN(q) && q > 0;
         input.closest(".field").classList.toggle("invalid", input.value !== "" && !valide);
-        return { m: index[li.querySelector("select").value], q: valide ? q : null };
+        var code = li.querySelector("select").value;
+        var m = index[code];
+        if (m) m = Object.assign({}, m, { prix: prixAffiche(code, m.prix) });
+        return { m: m, q: valide ? q : null };
       }).filter(function (l) { return l.m; });
     };
+
+    // Le prix affiché dans le tableau de la page (modifiable en mode admin) prime sur la valeur par défaut
+    var prixAffiche = function (code, defaut) {
+      var cell = document.querySelector('[data-edit="prix-' + code + '"]');
+      if (!cell) return defaut;
+      var t = cell.textContent.trim();
+      if (/gratuit/i.test(t)) return 0;
+      var n = parseFloat(t.replace(/\s/g, "").replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, ""));
+      return /\d/.test(t) && !isNaN(n) ? n : null;
+    };
+    window.recymoRecalculer = function () { calculer(); };
 
     var calculer = function () {
       var lignes = lireLignes();
@@ -292,7 +326,9 @@
         '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">' + (detail ? "Demander un devis" : "Demander un prix") + '</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
       out.innerHTML = html;
       animerTotal(detail ? total : null);
+      if (detail && !estimationComptee && window.recymoStat) { estimationComptee = true; window.recymoStat("estimation"); }
     };
+    var estimationComptee = false;
 
     // Le total défile jusqu'à sa nouvelle valeur ; une nouvelle saisie annule l'animation en cours
     var dernierTotal = null, anim = 0;

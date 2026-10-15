@@ -18,7 +18,7 @@
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Aller au contenu principal</a>
+  <a class="skip-link" href="#main" data-edit="f-1">Aller au contenu principal</a>
 
   <header class="site-header">
     <div class="container nav">
@@ -41,6 +41,12 @@
           085 21 74 45
         </a>
         <a class="btn btn-primary btn-sm" href="contact.html#formulaire">Demander un devis</a>
+        <div class="more-menu">
+          <button class="more-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="more-list" aria-label="Plus d’options"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+          <div class="more-list" id="more-list" hidden>
+            <button type="button" data-admin-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Accès admin</button>
+          </div>
+        </div>
         <button class="nav-toggle" type="button" aria-controls="nav-links" aria-expanded="false" aria-label="Ouvrir le menu"><span></span></button>
       </div>
     </div>
@@ -49,31 +55,31 @@
   <main id="main">
     <section class="page-hero">
       <div class="container">
-        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Fiches techniques</span></nav>
-        <h1>Fiches techniques</h1>
-        <p>Déclarations de performances et contrôles qualité de nos granulats recyclés, en PDF.</p>
+        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html" data-edit="f-2">Accueil</a><span aria-hidden="true">/</span><span data-edit="f-3">Fiches techniques</span></nav>
+        <h1 data-edit="f-4">Fiches techniques</h1>
+        <p data-edit="f-5">Déclarations de performances et contrôles qualité de nos granulats recyclés, en PDF.</p>
       </div>
     </section>
 
     <section class="section-tight" aria-labelledby="guide-titre">
       <div class="container">
         <div class="section-head">
-          <h2 class="h2" id="guide-titre">Quel granulat pour quel usage ?</h2>
-          <p class="lead">D'après nos déclarations de performances. En cas de doute pour votre chantier, appelez-nous.</p>
+          <h2 class="h2" id="guide-titre" data-edit="f-6">Quel granulat pour quel usage ?</h2>
+          <p class="lead" data-edit="f-7">D'après nos déclarations de performances. En cas de doute pour votre chantier, appelez-nous.</p>
         </div>
         <div class="table-wrap">
           <table class="price-table guide-table">
-            <thead><tr><th scope="col">Votre usage</th><th scope="col">Granulat conseillé</th><th scope="col">Fiche</th></tr></thead>
+            <thead><tr><th scope="col" data-edit="f-8">Votre usage</th><th scope="col" data-edit="f-9">Granulat conseillé</th><th scope="col" data-edit="f-10">Fiche</th></tr></thead>
             <tbody>
-              <tr><td>Couche de forme, stabilisation</td><td data-label="Granulat">Grave de recyclé béton 0/20</td><td data-label="Fiche"><a href="assets/docs/dop-beton-0-20.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
-              <tr><td>Remblai, fondation</td><td data-label="Granulat">Grave de recyclé béton 0/63 ou 20/63</td><td data-label="Fiche"><span><a href="assets/docs/dop-beton-0-63.pdf" target="_blank" rel="noopener">0/63</a> · <a href="assets/docs/dop-beton-20-63.pdf" target="_blank" rel="noopener">20/63</a></span></td></tr>
-              <tr><td>Remblai technique, à petit prix</td><td data-label="Granulat">Grave de recyclé mixte 0/63</td><td data-label="Fiche"><a href="assets/docs/dop-mixte-0-63.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
-              <tr><td>Fondation et sous-couche routière</td><td data-label="Granulat">Grave de recyclé asphalte 0/40</td><td data-label="Fiche"><a href="assets/docs/dop-asphalte-0-40.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
-              <tr><td>Finition, couche de forme fine</td><td data-label="Granulat">Grave de crible mixte &amp; béton 0/10</td><td data-label="Fiche"><a href="assets/docs/dop-crible-mixte-beton-0-10.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
+              <tr><td data-edit="f-11">Couche de forme, stabilisation</td><td data-label="Granulat" data-edit="f-12">Grave de recyclé béton 0/20</td><td data-label="Fiche"><a href="assets/docs/dop-beton-0-20.pdf" target="_blank" rel="noopener" data-edit="f-13">PDF</a></td></tr>
+              <tr><td data-edit="f-14">Remblai, fondation</td><td data-label="Granulat" data-edit="f-15">Grave de recyclé béton 0/63 ou 20/63</td><td data-label="Fiche"><span><a href="assets/docs/dop-beton-0-63.pdf" target="_blank" rel="noopener" data-edit="f-16">0/63</a> · <a href="assets/docs/dop-beton-20-63.pdf" target="_blank" rel="noopener" data-edit="f-17">20/63</a></span></td></tr>
+              <tr><td data-edit="f-18">Remblai technique, à petit prix</td><td data-label="Granulat" data-edit="f-19">Grave de recyclé mixte 0/63</td><td data-label="Fiche"><a href="assets/docs/dop-mixte-0-63.pdf" target="_blank" rel="noopener" data-edit="f-20">PDF</a></td></tr>
+              <tr><td data-edit="f-21">Fondation et sous-couche routière</td><td data-label="Granulat" data-edit="f-22">Grave de recyclé asphalte 0/40</td><td data-label="Fiche"><a href="assets/docs/dop-asphalte-0-40.pdf" target="_blank" rel="noopener" data-edit="f-23">PDF</a></td></tr>
+              <tr><td data-edit="f-24">Finition, couche de forme fine</td><td data-label="Granulat" data-edit="f-25">Grave de crible mixte &amp; béton 0/10</td><td data-label="Fiche"><a href="assets/docs/dop-crible-mixte-beton-0-10.pdf" target="_blank" rel="noopener" data-edit="f-26">PDF</a></td></tr>
             </tbody>
           </table>
         </div>
-        <p class="guide-note">Prix des granulats : voir le <a href="tarifs.html#granulats">tarif granulats</a> ou <a href="tarifs.html#estimer">estimer votre commande</a>.</p>
+        <p class="guide-note">Prix des granulats : voir le <a href="tarifs.html#granulats" data-edit="f-27">tarif granulats</a> ou <a href="tarifs.html#estimer" data-edit="f-28">estimer votre commande</a>.</p>
       </div>
     </section>
 
@@ -81,24 +87,24 @@
       <div class="container">
         <h2 class="sr-only">Tous les documents</h2>
         <div class="filters tabs" data-filters role="toolbar" aria-label="Filtrer par catégorie">
-          <button class="tab" type="button" data-filter="all" aria-pressed="true">Toutes les catégories</button>
-          <button class="tab" type="button" data-filter="beton" aria-pressed="false">Béton recyclé</button>
-          <button class="tab" type="button" data-filter="mixte" aria-pressed="false">Matériaux mixtes</button>
-          <button class="tab" type="button" data-filter="asphalte" aria-pressed="false">Asphalte recyclé</button>
-          <button class="tab" type="button" data-filter="fpc" aria-pressed="false">Contrôle qualité FPC</button>
-          <button class="tab" type="button" data-filter="officiel" aria-pressed="false">Documentation officielle</button>
+          <button class="tab" type="button" data-filter="all" aria-pressed="true" data-edit="f-29">Toutes les catégories</button>
+          <button class="tab" type="button" data-filter="beton" aria-pressed="false" data-edit="f-30">Béton recyclé</button>
+          <button class="tab" type="button" data-filter="mixte" aria-pressed="false" data-edit="f-31">Matériaux mixtes</button>
+          <button class="tab" type="button" data-filter="asphalte" aria-pressed="false" data-edit="f-32">Asphalte recyclé</button>
+          <button class="tab" type="button" data-filter="fpc" aria-pressed="false" data-edit="f-33">Contrôle qualité FPC</button>
+          <button class="tab" type="button" data-filter="officiel" aria-pressed="false" data-edit="f-34">Documentation officielle</button>
         </div>
 
         <div class="doc-grid">
           <article class="doc-card" data-cat="beton">
-            <div class="doc-top"><span class="tag">Béton recyclé</span><span class="doc-badge">PDF</span></div>
-            <h3>Grave de recyclé béton 0/20</h3>
-            <p>Granulats fins de béton recyclé, adaptés pour les couches de forme et les stabilisations.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-35">Béton recyclé</span><span class="doc-badge" data-edit="f-36">PDF</span></div>
+            <h3 data-edit="f-37">Grave de recyclé béton 0/20</h3>
+            <p data-edit="f-38">Granulats fins de béton recyclé, adaptés pour les couches de forme et les stabilisations.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>0/20 mm</dd></div>
-              <div><dt>N°</dt><dd>2015/0001</dd></div>
-              <div><dt>Utilisation</dt><dd>Couches de forme, stabilisation</dd></div>
-              <div><dt>Norme</dt><dd>Conforme aux spécifications SPW</dd></div>
+              <div><dt data-edit="f-39">Granulométrie</dt><dd data-edit="f-40">0/20 mm</dd></div>
+              <div><dt data-edit="f-41">N°</dt><dd data-edit="f-42">2015/0001</dd></div>
+              <div><dt data-edit="f-43">Utilisation</dt><dd data-edit="f-44">Couches de forme, stabilisation</dd></div>
+              <div><dt data-edit="f-45">Norme</dt><dd data-edit="f-46">Conforme aux spécifications SPW</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/dop-beton-0-20.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -107,14 +113,14 @@
           </article>
 
           <article class="doc-card" data-cat="beton">
-            <div class="doc-top"><span class="tag">Béton recyclé</span><span class="doc-badge">PDF</span></div>
-            <h3>Grave de recyclé béton 0/63</h3>
-            <p>Granulats recyclés de béton de granulométrie 0/63, parfaits pour les travaux de remblai et fondations.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-47">Béton recyclé</span><span class="doc-badge" data-edit="f-48">PDF</span></div>
+            <h3 data-edit="f-49">Grave de recyclé béton 0/63</h3>
+            <p data-edit="f-50">Granulats recyclés de béton de granulométrie 0/63, parfaits pour les travaux de remblai et fondations.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>0/63 mm</dd></div>
-              <div><dt>N°</dt><dd>2015/0002</dd></div>
-              <div><dt>Utilisation</dt><dd>Remblais, fondations</dd></div>
-              <div><dt>Origine</dt><dd>100 % béton recyclé</dd></div>
+              <div><dt data-edit="f-51">Granulométrie</dt><dd data-edit="f-52">0/63 mm</dd></div>
+              <div><dt data-edit="f-53">N°</dt><dd data-edit="f-54">2015/0002</dd></div>
+              <div><dt data-edit="f-55">Utilisation</dt><dd data-edit="f-56">Remblais, fondations</dd></div>
+              <div><dt data-edit="f-57">Origine</dt><dd data-edit="f-58">100 % béton recyclé</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/dop-beton-0-63.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -123,14 +129,14 @@
           </article>
 
           <article class="doc-card" data-cat="mixte">
-            <div class="doc-top"><span class="tag">Matériaux mixtes</span><span class="doc-badge">PDF</span></div>
-            <h3>Grave de recyclé mixte 0/63</h3>
-            <p>Mélange de matériaux de construction recyclés 0/63, solution économique pour divers travaux.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-59">Matériaux mixtes</span><span class="doc-badge" data-edit="f-60">PDF</span></div>
+            <h3 data-edit="f-61">Grave de recyclé mixte 0/63</h3>
+            <p data-edit="f-62">Mélange de matériaux de construction recyclés 0/63, solution économique pour divers travaux.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>0/63 mm</dd></div>
-              <div><dt>N°</dt><dd>2015/0003</dd></div>
-              <div><dt>Utilisation</dt><dd>Remblais techniques</dd></div>
-              <div><dt>Atout</dt><dd>Économique et écologique</dd></div>
+              <div><dt data-edit="f-63">Granulométrie</dt><dd data-edit="f-64">0/63 mm</dd></div>
+              <div><dt data-edit="f-65">N°</dt><dd data-edit="f-66">2015/0003</dd></div>
+              <div><dt data-edit="f-67">Utilisation</dt><dd data-edit="f-68">Remblais techniques</dd></div>
+              <div><dt data-edit="f-69">Atout</dt><dd data-edit="f-70">Économique et écologique</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/dop-mixte-0-63.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -139,14 +145,14 @@
           </article>
 
           <article class="doc-card" data-cat="asphalte">
-            <div class="doc-top"><span class="tag">Asphalte recyclé</span><span class="doc-badge">PDF</span></div>
-            <h3>Grave de recyclé asphalte 0/40</h3>
-            <p>Matériau recyclé issu du traitement des débris d'asphalte, idéal pour les fondations et sous-couches routières.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-71">Asphalte recyclé</span><span class="doc-badge" data-edit="f-72">PDF</span></div>
+            <h3 data-edit="f-73">Grave de recyclé asphalte 0/40</h3>
+            <p data-edit="f-74">Matériau recyclé issu du traitement des débris d'asphalte, idéal pour les fondations et sous-couches routières.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>0/40 mm</dd></div>
-              <div><dt>N°</dt><dd>2015/0004</dd></div>
-              <div><dt>Utilisation</dt><dd>Fondations routières</dd></div>
-              <div><dt>Norme</dt><dd>Conforme aux spécifications SPW</dd></div>
+              <div><dt data-edit="f-75">Granulométrie</dt><dd data-edit="f-76">0/40 mm</dd></div>
+              <div><dt data-edit="f-77">N°</dt><dd data-edit="f-78">2015/0004</dd></div>
+              <div><dt data-edit="f-79">Utilisation</dt><dd data-edit="f-80">Fondations routières</dd></div>
+              <div><dt data-edit="f-81">Norme</dt><dd data-edit="f-82">Conforme aux spécifications SPW</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/dop-asphalte-0-40.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -155,14 +161,14 @@
           </article>
 
           <article class="doc-card" data-cat="beton">
-            <div class="doc-top"><span class="tag">Béton recyclé</span><span class="doc-badge">PDF</span></div>
-            <h3>Grave de recyclé béton 20/63</h3>
-            <p>Granulats recyclés de béton de granulométrie 20/63, adaptés pour les travaux de remblai et fondations.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-83">Béton recyclé</span><span class="doc-badge" data-edit="f-84">PDF</span></div>
+            <h3 data-edit="f-85">Grave de recyclé béton 20/63</h3>
+            <p data-edit="f-86">Granulats recyclés de béton de granulométrie 20/63, adaptés pour les travaux de remblai et fondations.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>20/63 mm</dd></div>
-              <div><dt>N°</dt><dd>2015/0005</dd></div>
-              <div><dt>Utilisation</dt><dd>Remblais, fondations</dd></div>
-              <div><dt>Origine</dt><dd>100 % béton recyclé</dd></div>
+              <div><dt data-edit="f-87">Granulométrie</dt><dd data-edit="f-88">20/63 mm</dd></div>
+              <div><dt data-edit="f-89">N°</dt><dd data-edit="f-90">2015/0005</dd></div>
+              <div><dt data-edit="f-91">Utilisation</dt><dd data-edit="f-92">Remblais, fondations</dd></div>
+              <div><dt data-edit="f-93">Origine</dt><dd data-edit="f-94">100 % béton recyclé</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/dop-beton-20-63.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -171,14 +177,14 @@
           </article>
 
           <article class="doc-card" data-cat="mixte">
-            <div class="doc-top"><span class="tag">Matériaux mixtes</span><span class="doc-badge">PDF</span></div>
-            <h3>Grave de crible recyclé mixte &amp; béton 0/10</h3>
-            <p>Mélange de granulats fins recyclés de béton et matériaux mixtes, idéal pour les applications de finition.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-95">Matériaux mixtes</span><span class="doc-badge" data-edit="f-96">PDF</span></div>
+            <h3 data-edit="f-97">Grave de crible recyclé mixte &amp; béton 0/10</h3>
+            <p data-edit="f-98">Mélange de granulats fins recyclés de béton et matériaux mixtes, idéal pour les applications de finition.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>0/10 mm</dd></div>
-              <div><dt>N°</dt><dd>2015/0006</dd></div>
-              <div><dt>Composition</dt><dd>Mixte &amp; béton</dd></div>
-              <div><dt>Utilisation</dt><dd>Finitions, couches de forme</dd></div>
+              <div><dt data-edit="f-99">Granulométrie</dt><dd data-edit="f-100">0/10 mm</dd></div>
+              <div><dt data-edit="f-101">N°</dt><dd data-edit="f-102">2015/0006</dd></div>
+              <div><dt data-edit="f-103">Composition</dt><dd data-edit="f-104">Mixte &amp; béton</dd></div>
+              <div><dt data-edit="f-105">Utilisation</dt><dd data-edit="f-106">Finitions, couches de forme</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/dop-crible-mixte-beton-0-10.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -187,14 +193,14 @@
           </article>
 
           <article class="doc-card" data-cat="fpc">
-            <div class="doc-top"><span class="tag">Contrôle qualité FPC</span><span class="doc-badge">PDF</span></div>
-            <h3>FPC granulométrie &amp; classification, béton 0/63</h3>
-            <p>Synthèse des résultats de granulométrie (FOR-17) et classification (FOR-18) pour les graves de débris de béton recyclés 0/63 mm.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-107">Contrôle qualité FPC</span><span class="doc-badge" data-edit="f-108">PDF</span></div>
+            <h3 data-edit="f-109">FPC granulométrie &amp; classification, béton 0/63</h3>
+            <p data-edit="f-110">Synthèse des résultats de granulométrie (FOR-17) et classification (FOR-18) pour les graves de débris de béton recyclés 0/63 mm.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>0/63 mm</dd></div>
-              <div><dt>Norme</dt><dd>NBN EN 13242:2002+A1:2008 CE2+</dd></div>
-              <div><dt>Copro n°</dt><dd>2015/20-9103</dd></div>
-              <div><dt>Mise à jour</dt><dd>12/03/2026</dd></div>
+              <div><dt data-edit="f-111">Granulométrie</dt><dd data-edit="f-112">0/63 mm</dd></div>
+              <div><dt data-edit="f-113">Norme</dt><dd data-edit="f-114">NBN EN 13242:2002+A1:2008 CE2+</dd></div>
+              <div><dt data-edit="f-115">Copro n°</dt><dd data-edit="f-116">2015/20-9103</dd></div>
+              <div><dt data-edit="f-117">Mise à jour</dt><dd data-edit="f-118">12/03/2026</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/fpc-beton-0-63.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -203,14 +209,14 @@
           </article>
 
           <article class="doc-card" data-cat="fpc">
-            <div class="doc-top"><span class="tag">Contrôle qualité FPC</span><span class="doc-badge">PDF</span></div>
-            <h3>FPC granulométrie &amp; classification, béton 0/31,5</h3>
-            <p>Synthèse des résultats de granulométrie (FOR-17) et classification (FOR-18) pour les graves de débris de béton recyclés 0/31,5 mm.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-119">Contrôle qualité FPC</span><span class="doc-badge" data-edit="f-120">PDF</span></div>
+            <h3 data-edit="f-121">FPC granulométrie &amp; classification, béton 0/31,5</h3>
+            <p data-edit="f-122">Synthèse des résultats de granulométrie (FOR-17) et classification (FOR-18) pour les graves de débris de béton recyclés 0/31,5 mm.</p>
             <dl class="specs">
-              <div><dt>Granulométrie</dt><dd>0/31,5 mm</dd></div>
-              <div><dt>Norme</dt><dd>NBN EN 13242:2002+A1:2008 CE2+</dd></div>
-              <div><dt>Copro n°</dt><dd>2015/20-9103</dd></div>
-              <div><dt>Mise à jour</dt><dd>10/03/2026</dd></div>
+              <div><dt data-edit="f-123">Granulométrie</dt><dd data-edit="f-124">0/31,5 mm</dd></div>
+              <div><dt data-edit="f-125">Norme</dt><dd data-edit="f-126">NBN EN 13242:2002+A1:2008 CE2+</dd></div>
+              <div><dt data-edit="f-127">Copro n°</dt><dd data-edit="f-128">2015/20-9103</dd></div>
+              <div><dt data-edit="f-129">Mise à jour</dt><dd data-edit="f-130">10/03/2026</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/fpc-beton-0-31-5.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -219,13 +225,13 @@
           </article>
 
           <article class="doc-card" data-cat="officiel">
-            <div class="doc-top"><span class="tag">Documentation officielle</span><span class="doc-badge">PDF</span></div>
-            <h3>Registre des déclarations de performances 2025</h3>
-            <p>Document officiel récapitulatif de toutes les déclarations de performances des matériaux recyclés.</p>
+            <div class="doc-top"><span class="tag" data-edit="f-131">Documentation officielle</span><span class="doc-badge" data-edit="f-132">PDF</span></div>
+            <h3 data-edit="f-133">Registre des déclarations de performances 2025</h3>
+            <p data-edit="f-134">Document officiel récapitulatif de toutes les déclarations de performances des matériaux recyclés.</p>
             <dl class="specs">
-              <div><dt>Année</dt><dd>2025</dd></div>
-              <div><dt>Type</dt><dd>Registre officiel</dd></div>
-              <div><dt>Contenu</dt><dd>Toutes les DoP</dd></div>
+              <div><dt data-edit="f-135">Année</dt><dd data-edit="f-136">2025</dd></div>
+              <div><dt data-edit="f-137">Type</dt><dd data-edit="f-138">Registre officiel</dd></div>
+              <div><dt data-edit="f-139">Contenu</dt><dd data-edit="f-140">Toutes les DoP</dd></div>
             </dl>
             <a class="btn btn-dark btn-sm" href="assets/docs/registre-dop-2025.pdf" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -240,12 +246,12 @@
       <div class="container">
         <div class="cta-band">
           <div>
-            <h2>Besoin d'informations complémentaires ?</h2>
-            <p>Posez-nous vos questions sur nos matériaux et leur utilisation.</p>
+            <h2 data-edit="f-141">Besoin d'informations complémentaires ?</h2>
+            <p data-edit="f-142">Posez-nous vos questions sur nos matériaux et leur utilisation.</p>
           </div>
           <div class="actions">
-            <a class="btn btn-dark" href="contact.html#formulaire">Nous contacter</a>
-            <a class="btn btn-outline" href="tarifs.html">Consulter nos tarifs</a>
+            <a class="btn btn-dark" href="contact.html#formulaire" data-edit="f-143">Nous contacter</a>
+            <a class="btn btn-outline" href="tarifs.html" data-edit="f-144">Consulter nos tarifs</a>
           </div>
         </div>
       </div>
@@ -257,7 +263,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <img src="assets/img/logo-reverse.png" alt="Recymo Wallonie" width="182" height="44" loading="lazy">
-          <p>Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
+          <p data-edit="f-145">Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
           <div class="social">
             <a href="https://www.facebook.com/profile.php?id=61580435163410" target="_blank" rel="noopener" aria-label="Recymo sur Facebook">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-5 2.2-5 5v2H7v4h2v9h4v-9h3l1-4h-4V9c0-.6.4-1 1-1z"/></svg>
@@ -267,33 +273,33 @@
         <div>
           <h4>Navigation</h4>
           <ul>
-            <li><a href="index.html">Accueil</a></li>
-            <li><a href="tarifs.html">Tarifs</a></li>
-            <li><a href="fiches-techniques.html">Fiches techniques</a></li>
-            <li><a href="contact.html">Contact</a></li>
+            <li><a href="index.html" data-edit="f-146">Accueil</a></li>
+            <li><a href="tarifs.html" data-edit="f-147">Tarifs</a></li>
+            <li><a href="fiches-techniques.html" data-edit="f-148">Fiches techniques</a></li>
+            <li><a href="contact.html" data-edit="f-149">Contact</a></li>
           </ul>
         </div>
         <div>
           <h4>Services</h4>
           <ul>
-            <li><a href="tarifs.html#versage-classe3">Versage classe 3</a></li>
-            <li><a href="tarifs.html#versage-terre">Versage terre</a></li>
-            <li><a href="tarifs.html#granulats">Granulats</a></li>
-            <li><a href="tarifs.html#synthetiques-enterres">Synthétiques enterrés</a></li>
+            <li><a href="tarifs.html#versage-classe3" data-edit="f-150">Versage classe 3</a></li>
+            <li><a href="tarifs.html#versage-terre" data-edit="f-151">Versage terre</a></li>
+            <li><a href="tarifs.html#granulats" data-edit="f-152">Granulats</a></li>
+            <li><a href="tarifs.html#synthetiques-enterres" data-edit="f-153">Synthétiques enterrés</a></li>
           </ul>
         </div>
         <div>
           <h4>Contact</h4>
           <ul>
-            <li>Rue Roua 6, 4260 Braives</li>
-            <li><a href="tel:+3285217445">085 21 74 45</a></li>
-            <li><a href="mailto:info@recymo.be">info@recymo.be</a></li>
+            <li data-edit="f-154">Rue Roua 6, 4260 Braives</li>
+            <li><a href="tel:+3285217445" data-edit="f-155">085 21 74 45</a></li>
+            <li><a href="mailto:info@recymo.be" data-edit="f-156">info@recymo.be</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <span>© <span data-year>2026</span> Recymo Wallonie SA. Tous droits réservés.</span>
-        <a href="mentions-legales.html">Mentions légales</a>
+        <a href="mentions-legales.html" data-edit="f-157">Mentions légales</a>
       </div>
     </div>
   </footer>

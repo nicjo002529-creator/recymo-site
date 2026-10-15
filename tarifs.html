@@ -18,7 +18,7 @@
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Aller au contenu principal</a>
+  <a class="skip-link" href="#main" data-edit="t-1">Aller au contenu principal</a>
 
   <header class="site-header">
     <div class="container nav">
@@ -41,6 +41,12 @@
           085 21 74 45
         </a>
         <a class="btn btn-primary btn-sm" href="contact.html#formulaire">Demander un devis</a>
+        <div class="more-menu">
+          <button class="more-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="more-list" aria-label="Plus d’options"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+          <div class="more-list" id="more-list" hidden>
+            <button type="button" data-admin-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Accès admin</button>
+          </div>
+        </div>
         <button class="nav-toggle" type="button" aria-controls="nav-links" aria-expanded="false" aria-label="Ouvrir le menu"><span></span></button>
       </div>
     </div>
@@ -49,9 +55,9 @@
   <main id="main">
     <section class="page-hero">
       <div class="container">
-        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Tarifs</span></nav>
-        <h1>Nos tarifs</h1>
-        <p>Des prix transparents et compétitifs pour tous vos besoins. Tous les prix sont indiqués hors TVA (21 %).</p>
+        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html" data-edit="t-2">Accueil</a><span aria-hidden="true">/</span><span data-edit="t-3">Tarifs</span></nav>
+        <h1 data-edit="t-4">Nos tarifs</h1>
+        <p data-edit="t-5">Des prix transparents et compétitifs pour tous vos besoins. Tous les prix sont indiqués hors TVA (21 %).</p>
       </div>
     </section>
 
@@ -59,14 +65,14 @@
       <div class="container">
         <div class="calc" id="calc">
           <div class="calc-form">
-            <h2 id="calc-titre">Estimer mon prix</h2>
-            <p class="calc-intro">Choisissez un ou plusieurs matériaux avec leur quantité : le total s'affiche tout de suite.</p>
+            <h2 id="calc-titre" data-edit="t-6">Estimer mon prix</h2>
+            <p class="calc-intro" data-edit="t-7">Choisissez un ou plusieurs matériaux avec leur quantité : le total s'affiche tout de suite.</p>
             <ol class="calc-rows" id="calc-rows"></ol>
             <button type="button" class="btn btn-outline btn-sm calc-add" id="calc-add">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
               Ajouter un matériau
             </button>
-            <small class="field-help">Moins de 5 tonnes : supplément de 7,50 € par matériau (versage et granulats).</small>
+            <small class="field-help" data-edit="t-8">Moins de 5 tonnes : supplément de 7,50 € par matériau (versage et granulats).</small>
           </div>
           <div class="calc-result" id="calc-resultat" aria-live="polite"></div>
         </div>
@@ -90,8 +96,8 @@
       <div class="container">
         <div class="panel-head">
           <div>
-            <h2>Versage de classe 3</h2>
-            <p>Tarif applicable à partir du 01/08/2025. Prix par tonne, HTVA.</p>
+            <h2 data-edit="t-9">Versage de classe 3</h2>
+            <p data-edit="t-10">Tarif applicable à partir du 01/08/2025. Prix par tonne, HTVA.</p>
           </div>
           <button class="btn btn-outline btn-sm no-print" type="button" data-print>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -100,56 +106,56 @@
         </div>
 
         <div class="price-group">
-          <h3>Les bétons</h3>
+          <h3 data-edit="t-11">Les bétons</h3>
           <div class="table-wrap">
             <table class="price-table">
-              <thead><tr><th scope="col">Description</th><th scope="col">Code SPW</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+              <thead><tr><th scope="col" data-edit="t-12">Description</th><th scope="col" data-edit="t-13">Code SPW</th><th scope="col" data-edit="t-14">Unité</th><th scope="col" class="num" data-edit="t-15">Prix HTVA</th></tr></thead>
               <tbody>
-                <tr><td><span class="ref">B0</span>Béton non armé, dimension max 50×50×150, sans terre ni fines</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num free">0,00 €</td></tr>
-                <tr><td><span class="ref">B1</span>Béton légèrement armé, ou hors dimensions, ou avec fines</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">5,00 €</td></tr>
-                <tr><td><span class="ref">B2</span>Béton légèrement armé et/ou légèrement terreux</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">8,00 €</td></tr>
-                <tr><td><span class="ref">B3</span>Béton fortement armé et/ou fortement terreux</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">10,00 €</td></tr>
-                <tr><td><span class="ref">B4</span>Béton-tarmac terreux</td><td data-label="Code SPW" class="code">170302</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">12,00 €</td></tr>
-                <tr><td><span class="ref">B5</span>Béton très fortement armé, ou sale, ou terreux</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num tbd">À convenir</td></tr>
-                <tr><td><span class="ref">B6</span>Petites pierrailles terreuses</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">14,00 €</td></tr>
-                <tr><td><span class="ref">Poteaux</span>Poteaux, hourdis, piquets et dalles de clôture…</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">22,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-16">B0</span>Béton non armé, dimension max 50×50×150, sans terre ni fines</td><td data-label="Code SPW" class="code" data-edit="t-17">170101</td><td data-label="Unité" data-edit="t-18">Tonne</td><td data-label="Prix HTVA" data-edit="prix-B0" class="num free">0,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-19">B1</span>Béton légèrement armé, ou hors dimensions, ou avec fines</td><td data-label="Code SPW" class="code" data-edit="t-20">170101</td><td data-label="Unité" data-edit="t-21">Tonne</td><td data-label="Prix HTVA" data-edit="prix-B1" class="num">5,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-22">B2</span>Béton légèrement armé et/ou légèrement terreux</td><td data-label="Code SPW" class="code" data-edit="t-23">170101</td><td data-label="Unité" data-edit="t-24">Tonne</td><td data-label="Prix HTVA" data-edit="prix-B2" class="num">8,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-25">B3</span>Béton fortement armé et/ou fortement terreux</td><td data-label="Code SPW" class="code" data-edit="t-26">170101</td><td data-label="Unité" data-edit="t-27">Tonne</td><td data-label="Prix HTVA" data-edit="prix-B3" class="num">10,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-28">B4</span>Béton-tarmac terreux</td><td data-label="Code SPW" class="code" data-edit="t-29">170302</td><td data-label="Unité" data-edit="t-30">Tonne</td><td data-label="Prix HTVA" data-edit="prix-B4" class="num">12,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-31">B5</span>Béton très fortement armé, ou sale, ou terreux</td><td data-label="Code SPW" class="code" data-edit="t-32">170101</td><td data-label="Unité" data-edit="t-33">Tonne</td><td data-label="Prix HTVA" data-edit="prix-B5" class="num tbd">À convenir</td></tr>
+                <tr><td><span class="ref" data-edit="t-34">B6</span>Petites pierrailles terreuses</td><td data-label="Code SPW" class="code" data-edit="t-35">170101</td><td data-label="Unité" data-edit="t-36">Tonne</td><td data-label="Prix HTVA" data-edit="prix-B6" class="num">14,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-37">Poteaux</span>Poteaux, hourdis, piquets et dalles de clôture…</td><td data-label="Code SPW" class="code" data-edit="t-38">170101</td><td data-label="Unité" data-edit="t-39">Tonne</td><td data-label="Prix HTVA" data-edit="prix-POT" class="num">22,00 €</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="price-group">
-          <h3>Les bricaillons mixtes</h3>
+          <h3 data-edit="t-40">Les bricaillons mixtes</h3>
           <div class="table-wrap">
             <table class="price-table">
-              <thead><tr><th scope="col">Description</th><th scope="col">Code SPW</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+              <thead><tr><th scope="col" data-edit="t-41">Description</th><th scope="col" data-edit="t-42">Code SPW</th><th scope="col" data-edit="t-43">Unité</th><th scope="col" class="num" data-edit="t-44">Prix HTVA</th></tr></thead>
               <tbody>
-                <tr><td><span class="ref">BR0</span>Bricaillons propres, sans fines et sans terre</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num free">0,00 €</td></tr>
-                <tr><td><span class="ref">BR1</span>Bricaillons propres</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">5,00 €</td></tr>
-                <tr><td><span class="ref">BR2</span>Bricaillons légèrement sales ou légèrement terreux</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">8,00 €</td></tr>
-                <tr><td><span class="ref">BR3</span>Bricaillons sales ou terreux</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">10,00 €</td></tr>
-                <tr><td><span class="ref">BR4</span>Bricaillons très sales ou très terreux</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">12,00 €</td></tr>
-                <tr><td><span class="ref">BR5</span>Bricaillons terreux, moins de 50 % de terres</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">14,00 €</td></tr>
-                <tr><td><span class="ref">BR6</span>Bricaillons terreux, plus de 50 % de terres</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">18,00 €</td></tr>
-                <tr><td><span class="ref">BR7</span>Déchets classe 3 en mélange</td><td data-label="Code SPW" class="code">170795</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num tbd">À convenir</td></tr>
-                <tr><td><span class="ref">BR8</span>Ardoises naturelles</td><td data-label="Code SPW" class="code">170103</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">20,00 €</td></tr>
-                <tr><td><span class="ref">BR9</span>Carrelages</td><td data-label="Code SPW" class="code">170103</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">12,00 €</td></tr>
-                <tr><td><span class="ref">BR10</span>Bricaillons terreux avec moins de 25 % de bricaillons</td><td data-label="Code SPW" class="code">170107</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">25,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-45">BR0</span>Bricaillons propres, sans fines et sans terre</td><td data-label="Code SPW" class="code" data-edit="t-46">170107</td><td data-label="Unité" data-edit="t-47">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR0" class="num free">0,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-48">BR1</span>Bricaillons propres</td><td data-label="Code SPW" class="code" data-edit="t-49">170107</td><td data-label="Unité" data-edit="t-50">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR1" class="num">5,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-51">BR2</span>Bricaillons légèrement sales ou légèrement terreux</td><td data-label="Code SPW" class="code" data-edit="t-52">170107</td><td data-label="Unité" data-edit="t-53">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR2" class="num">8,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-54">BR3</span>Bricaillons sales ou terreux</td><td data-label="Code SPW" class="code" data-edit="t-55">170107</td><td data-label="Unité" data-edit="t-56">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR3" class="num">10,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-57">BR4</span>Bricaillons très sales ou très terreux</td><td data-label="Code SPW" class="code" data-edit="t-58">170107</td><td data-label="Unité" data-edit="t-59">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR4" class="num">12,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-60">BR5</span>Bricaillons terreux, moins de 50 % de terres</td><td data-label="Code SPW" class="code" data-edit="t-61">170107</td><td data-label="Unité" data-edit="t-62">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR5" class="num">14,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-63">BR6</span>Bricaillons terreux, plus de 50 % de terres</td><td data-label="Code SPW" class="code" data-edit="t-64">170107</td><td data-label="Unité" data-edit="t-65">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR6" class="num">18,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-66">BR7</span>Déchets classe 3 en mélange</td><td data-label="Code SPW" class="code" data-edit="t-67">170795</td><td data-label="Unité" data-edit="t-68">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR7" class="num tbd">À convenir</td></tr>
+                <tr><td><span class="ref" data-edit="t-69">BR8</span>Ardoises naturelles</td><td data-label="Code SPW" class="code" data-edit="t-70">170103</td><td data-label="Unité" data-edit="t-71">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR8" class="num">20,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-72">BR9</span>Carrelages</td><td data-label="Code SPW" class="code" data-edit="t-73">170103</td><td data-label="Unité" data-edit="t-74">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR9" class="num">12,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-75">BR10</span>Bricaillons terreux avec moins de 25 % de bricaillons</td><td data-label="Code SPW" class="code" data-edit="t-76">170107</td><td data-label="Unité" data-edit="t-77">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BR10" class="num">25,00 €</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="price-group">
-          <h3>Autres</h3>
+          <h3 data-edit="t-78">Autres</h3>
           <div class="table-wrap">
             <table class="price-table">
-              <thead><tr><th scope="col">Description</th><th scope="col">Code SPW</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+              <thead><tr><th scope="col" data-edit="t-79">Description</th><th scope="col" data-edit="t-80">Code SPW</th><th scope="col" data-edit="t-81">Unité</th><th scope="col" class="num" data-edit="t-82">Prix HTVA</th></tr></thead>
               <tbody>
-                <tr><td>Béton cellulaire (Ytong…)</td><td data-label="Code SPW" class="code">170101</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">90,00 €</td></tr>
-                <tr><td><span class="ref">TA</span>Tarmac bitumineux</td><td data-label="Code SPW" class="code">170302</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">8,00 €</td></tr>
-                <tr><td><span class="ref">B-T</span>Béton avec tarmac</td><td data-label="Code SPW" class="code">170302</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">8,00 €</td></tr>
-                <tr><td><span class="ref">TN</span>Déchets de classe 3 terreux non criblables en l'état</td><td data-label="Code SPW" class="code">170504</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">30,00 €</td></tr>
+                <tr><td data-edit="t-83">Béton cellulaire (Ytong…)</td><td data-label="Code SPW" class="code" data-edit="t-84">170101</td><td data-label="Unité" data-edit="t-85">Tonne</td><td data-label="Prix HTVA" data-edit="prix-YT" class="num">90,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-86">TA</span>Tarmac bitumineux</td><td data-label="Code SPW" class="code" data-edit="t-87">170302</td><td data-label="Unité" data-edit="t-88">Tonne</td><td data-label="Prix HTVA" data-edit="prix-TA" class="num">8,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-89">B-T</span>Béton avec tarmac</td><td data-label="Code SPW" class="code" data-edit="t-90">170302</td><td data-label="Unité" data-edit="t-91">Tonne</td><td data-label="Prix HTVA" data-edit="prix-BT" class="num">8,00 €</td></tr>
+                <tr><td><span class="ref" data-edit="t-92">TN</span>Déchets de classe 3 terreux non criblables en l'état</td><td data-label="Code SPW" class="code" data-edit="t-93">170504</td><td data-label="Unité" data-edit="t-94">Tonne</td><td data-label="Prix HTVA" data-edit="prix-TN" class="num">30,00 €</td></tr>
               </tbody>
             </table>
           </div>
@@ -158,8 +164,8 @@
         <div class="notice">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.3 3.9-8.1 14A2 2 0 0 0 3.9 21h16.2a2 2 0 0 0 1.7-3.1l-8.1-14a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
           <ul>
-            <li><strong>Attention :</strong> les versages non conformes seront considérés comme classe 2 et facturés comme tels.</li>
-            <li>Supplément de 7,50 € par versage de moins de 5 tonnes.</li>
+            <li><strong data-edit="t-95">Attention :</strong> les versages non conformes seront considérés comme classe 2 et facturés comme tels.</li>
+            <li data-edit="t-96">Supplément de 7,50 € par versage de moins de 5 tonnes.</li>
           </ul>
         </div>
       </div>
@@ -170,8 +176,8 @@
       <div class="container">
         <div class="panel-head">
           <div>
-            <h2>Versage terre</h2>
-            <p>Quatre sites récepteurs en Wallonie. Prix par tonne, HTVA.</p>
+            <h2 data-edit="t-97">Versage terre</h2>
+            <p data-edit="t-98">Quatre sites récepteurs en Wallonie. Prix par tonne, HTVA.</p>
           </div>
           <button class="btn btn-outline btn-sm no-print" type="button" data-print>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -183,22 +189,22 @@
           <!-- Sambreville -->
           <article class="site-card">
             <div class="site-card-head">
-              <span class="tag">Site WT050579</span>
-              <h3>Sambreville</h3>
-              <p>Valorisateur : SMARTUNIT S.A.</p>
+              <span class="tag" data-edit="t-99">Site WT050579</span>
+              <h3 data-edit="t-100">Sambreville</h3>
+              <p data-edit="t-101">Valorisateur : SMARTUNIT S.A.</p>
             </div>
             <div class="site-card-body">
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Rue de la Larronnerie, B-5060 Sambreville</span></div>
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Du lundi au vendredi de 7h00 à 16h30</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span data-edit="t-102">Rue de la Larronnerie, B-5060 Sambreville</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span data-edit="t-103">Du lundi au vendredi de 7h00 à 16h30</span></div>
               <div>
                 <h4>Terres type I à V, sans analyse</h4>
-                <p class="hint">Sous réserve d'acceptation préalable par notre service qualité.</p>
+                <p class="hint" data-edit="t-104">Sous réserve d'acceptation préalable par notre service qualité.</p>
                 <div class="table-wrap">
                   <table class="price-table">
-                    <thead><tr><th scope="col">Catégorie</th><th scope="col">Conditions</th><th scope="col">Code Walterre</th><th scope="col" class="num">Prix</th></tr></thead>
+                    <thead><tr><th scope="col" data-edit="t-105">Catégorie</th><th scope="col" data-edit="t-106">Conditions</th><th scope="col" data-edit="t-107">Code Walterre</th><th scope="col" class="num" data-edit="t-108">Prix</th></tr></thead>
                     <tbody>
-                      <tr><td>Type I à III</td><td data-label="Conditions">&lt; 400 m³</td><td data-label="Code Walterre" class="code">21 – 23</td><td data-label="Prix" class="num">18,00 €/t</td></tr>
-                      <tr><td>Type IV à V</td><td data-label="Conditions">&lt; 400 m³</td><td data-label="Code Walterre" class="code">24 – 25</td><td data-label="Prix" class="num">23,00 €/t</td></tr>
+                      <tr><td data-edit="t-109">Type I à III</td><td data-label="Conditions" data-edit="t-110">&lt; 400 m³</td><td data-label="Code Walterre" class="code" data-edit="t-111">21 – 23</td><td data-label="Prix" data-edit="prix-T-SA-13" class="num">18,00 €/t</td></tr>
+                      <tr><td data-edit="t-112">Type IV à V</td><td data-label="Conditions" data-edit="t-113">&lt; 400 m³</td><td data-label="Code Walterre" class="code" data-edit="t-114">24 – 25</td><td data-label="Prix" data-edit="prix-T-SA-45" class="num">23,00 €/t</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -207,11 +213,11 @@
                 <h4>Avec analyse (RQT, CCQT)</h4>
                 <div class="table-wrap">
                   <table class="price-table">
-                    <thead><tr><th scope="col">Catégorie</th><th scope="col">Conditions</th><th scope="col">Code Walterre</th><th scope="col" class="num">Prix</th></tr></thead>
+                    <thead><tr><th scope="col" data-edit="t-115">Catégorie</th><th scope="col" data-edit="t-116">Conditions</th><th scope="col" data-edit="t-117">Code Walterre</th><th scope="col" class="num" data-edit="t-118">Prix</th></tr></thead>
                     <tbody>
-                      <tr><td>Type I à V</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code">11 – 15</td><td data-label="Prix" class="num">18,00 €/t</td></tr>
-                      <tr><td>Plantes invasives (ex. renouée du Japon)</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code"></td><td data-label="Prix" class="num">40,00 €/t</td></tr>
-                      <tr><td>Teneur en fibres d'amiante de 100 à 500 mg/kg MS</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code"></td><td data-label="Prix" class="num">32,50 €/t</td></tr>
+                      <tr><td data-edit="t-119">Type I à V</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code" data-edit="t-120">11 – 15</td><td data-label="Prix" data-edit="prix-T-SA-AN" class="num">18,00 €/t</td></tr>
+                      <tr><td data-edit="t-121">Plantes invasives (ex. renouée du Japon)</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code"></td><td data-label="Prix" data-edit="prix-T-SA-INV" class="num">40,00 €/t</td></tr>
+                      <tr><td data-edit="t-122">Teneur en fibres d'amiante de 100 à 500 mg/kg MS</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code"></td><td data-label="Prix" data-edit="prix-T-SA-AM" class="num">32,50 €/t</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -222,21 +228,21 @@
           <!-- Transinnes -->
           <article class="site-card">
             <div class="site-card-head">
-              <span class="tag">Site WT011403</span>
-              <h3>Transinnes</h3>
-              <p>Valorisateur : Recymo Wallonie SA</p>
+              <span class="tag" data-edit="t-123">Site WT011403</span>
+              <h3 data-edit="t-124">Transinnes</h3>
+              <p data-edit="t-125">Valorisateur : Recymo Wallonie SA</p>
             </div>
             <div class="site-card-body">
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Grand Route, 6890 Libin</span></div>
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Du lundi au mercredi de 7h00 à 15h45 ; jeudi et vendredi sur demande, pour minimum 1000 t par jour</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span data-edit="t-126">Grand Route, 6890 Libin</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span data-edit="t-127">Du lundi au mercredi de 7h00 à 15h45 ; jeudi et vendredi sur demande, pour minimum 1000 t par jour</span></div>
               <div>
                 <h4>Terres type I à II, sans analyse</h4>
-                <p class="hint">Sous réserve d'acceptation préalable par notre service qualité.</p>
+                <p class="hint" data-edit="t-128">Sous réserve d'acceptation préalable par notre service qualité.</p>
                 <div class="table-wrap">
                   <table class="price-table">
-                    <thead><tr><th scope="col">Catégorie</th><th scope="col">Conditions</th><th scope="col">Code Walterre</th><th scope="col" class="num">Prix</th></tr></thead>
+                    <thead><tr><th scope="col" data-edit="t-129">Catégorie</th><th scope="col" data-edit="t-130">Conditions</th><th scope="col" data-edit="t-131">Code Walterre</th><th scope="col" class="num" data-edit="t-132">Prix</th></tr></thead>
                     <tbody>
-                      <tr><td>Type I et II</td><td data-label="Conditions">&lt; 400 m³</td><td data-label="Code Walterre" class="code">21 – 22</td><td data-label="Prix" class="num">7,45 €/t</td></tr>
+                      <tr><td data-edit="t-133">Type I et II</td><td data-label="Conditions" data-edit="t-134">&lt; 400 m³</td><td data-label="Code Walterre" class="code" data-edit="t-135">21 – 22</td><td data-label="Prix" data-edit="prix-T-TR" class="num">7,45 €/t</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -245,9 +251,9 @@
                 <h4>Avec analyse (RQT, CCQT)</h4>
                 <div class="table-wrap">
                   <table class="price-table">
-                    <thead><tr><th scope="col">Catégorie</th><th scope="col">Conditions</th><th scope="col">Code Walterre</th><th scope="col" class="num">Prix</th></tr></thead>
+                    <thead><tr><th scope="col" data-edit="t-136">Catégorie</th><th scope="col" data-edit="t-137">Conditions</th><th scope="col" data-edit="t-138">Code Walterre</th><th scope="col" class="num" data-edit="t-139">Prix</th></tr></thead>
                     <tbody>
-                      <tr><td>Type I et II</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code">11 – 12</td><td data-label="Prix" class="num">7,45 €/t</td></tr>
+                      <tr><td data-edit="t-140">Type I et II</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code" data-edit="t-141">11 – 12</td><td data-label="Prix" data-edit="prix-T-TR-AN" class="num">7,45 €/t</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -258,22 +264,22 @@
           <!-- Braives -->
           <article class="site-card">
             <div class="site-card-head">
-              <span class="tag">Site WT062991</span>
-              <h3>Braives</h3>
-              <p>Valorisateur : Recymo Wallonie SA</p>
+              <span class="tag" data-edit="t-142">Site WT062991</span>
+              <h3 data-edit="t-143">Braives</h3>
+              <p data-edit="t-144">Valorisateur : Recymo Wallonie SA</p>
             </div>
             <div class="site-card-body">
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Rue Roua 6, B-4260 Braives</span></div>
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Du lundi au vendredi de 7h00 à 17h00</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span data-edit="t-145">Rue Roua 6, B-4260 Braives</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span data-edit="t-146">Du lundi au vendredi de 7h00 à 17h00</span></div>
               <div>
                 <h4>Terres type I et II</h4>
-                <p class="hint">Acceptation des terres type III, IV et V sous conditions, avec analyse (RQT, CCQT) uniquement.</p>
+                <p class="hint" data-edit="t-147">Acceptation des terres type III, IV et V sous conditions, avec analyse (RQT, CCQT) uniquement.</p>
                 <div class="table-wrap">
                   <table class="price-table">
-                    <thead><tr><th scope="col">Catégorie</th><th scope="col">Conditions</th><th scope="col">Code Walterre</th><th scope="col" class="num">Prix</th></tr></thead>
+                    <thead><tr><th scope="col" data-edit="t-148">Catégorie</th><th scope="col" data-edit="t-149">Conditions</th><th scope="col" data-edit="t-150">Code Walterre</th><th scope="col" class="num" data-edit="t-151">Prix</th></tr></thead>
                     <tbody>
-                      <tr><td>Type I à V</td><td data-label="Conditions">Petits versages</td><td data-label="Code Walterre" class="code">11 – 15</td><td data-label="Prix" class="num">25,00 €/t</td></tr>
-                      <tr><td>Type I à V</td><td data-label="Conditions">Gros chantiers : contactez-nous</td><td data-label="Code Walterre" class="code">11 – 15</td><td data-label="Prix" class="num tbd">À convenir</td></tr>
+                      <tr><td data-edit="t-152">Type I à V</td><td data-label="Conditions" data-edit="t-153">Petits versages</td><td data-label="Code Walterre" class="code" data-edit="t-154">11 – 15</td><td data-label="Prix" data-edit="prix-T-BR" class="num">25,00 €/t</td></tr>
+                      <tr><td data-edit="t-155">Type I à V</td><td data-label="Conditions" data-edit="t-156">Gros chantiers : contactez-nous</td><td data-label="Code Walterre" class="code" data-edit="t-157">11 – 15</td><td data-label="Prix" data-edit="prix-T-BR-GROS" class="num tbd">À convenir</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -284,21 +290,21 @@
           <!-- Fosses-la-Ville -->
           <article class="site-card">
             <div class="site-card-head">
-              <span class="tag">Site WT026437</span>
-              <h3>Fosses-la-Ville</h3>
-              <p>Valorisateur : Recymo Wallonie SA</p>
+              <span class="tag" data-edit="t-158">Site WT026437</span>
+              <h3 data-edit="t-159">Fosses-la-Ville</h3>
+              <p data-edit="t-160">Valorisateur : Recymo Wallonie SA</p>
             </div>
             <div class="site-card-body">
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Rue Adelin Beguin, 5070 Fosses-la-Ville</span></div>
-              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Du lundi au vendredi de 7h00 à 17h00</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span data-edit="t-161">Rue Adelin Beguin, 5070 Fosses-la-Ville</span></div>
+              <div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span data-edit="t-162">Du lundi au vendredi de 7h00 à 17h00</span></div>
               <div>
                 <h4>Terres type I et II, sans analyse</h4>
-                <p class="hint">Sous réserve d'acceptation préalable par notre service qualité.</p>
+                <p class="hint" data-edit="t-163">Sous réserve d'acceptation préalable par notre service qualité.</p>
                 <div class="table-wrap">
                   <table class="price-table">
-                    <thead><tr><th scope="col">Catégorie</th><th scope="col">Conditions</th><th scope="col">Code Walterre</th><th scope="col" class="num">Prix</th></tr></thead>
+                    <thead><tr><th scope="col" data-edit="t-164">Catégorie</th><th scope="col" data-edit="t-165">Conditions</th><th scope="col" data-edit="t-166">Code Walterre</th><th scope="col" class="num" data-edit="t-167">Prix</th></tr></thead>
                     <tbody>
-                      <tr><td>Type I et II</td><td data-label="Conditions">&lt; 400 m³</td><td data-label="Code Walterre" class="code">21 – 22</td><td data-label="Prix" class="num">9,85 €/t</td></tr>
+                      <tr><td data-edit="t-168">Type I et II</td><td data-label="Conditions" data-edit="t-169">&lt; 400 m³</td><td data-label="Code Walterre" class="code" data-edit="t-170">21 – 22</td><td data-label="Prix" data-edit="prix-T-FO" class="num">9,85 €/t</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -307,9 +313,9 @@
                 <h4>Avec analyse (RQT, CCQT)</h4>
                 <div class="table-wrap">
                   <table class="price-table">
-                    <thead><tr><th scope="col">Catégorie</th><th scope="col">Conditions</th><th scope="col">Code Walterre</th><th scope="col" class="num">Prix</th></tr></thead>
+                    <thead><tr><th scope="col" data-edit="t-171">Catégorie</th><th scope="col" data-edit="t-172">Conditions</th><th scope="col" data-edit="t-173">Code Walterre</th><th scope="col" class="num" data-edit="t-174">Prix</th></tr></thead>
                     <tbody>
-                      <tr><td>Type I et II</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code">11 – 12</td><td data-label="Prix" class="num">9,85 €/t</td></tr>
+                      <tr><td data-edit="t-175">Type I et II</td><td data-label="Conditions"></td><td data-label="Code Walterre" class="code" data-edit="t-176">11 – 12</td><td data-label="Prix" data-edit="prix-T-FO-AN" class="num">9,85 €/t</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -321,12 +327,12 @@
         <div class="notice info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
           <div>
-            <strong>Conditions de versage</strong>
+            <strong data-edit="t-177">Conditions de versage</strong>
             <ul style="margin-top:6px">
-              <li>Nos sites peuvent accepter environ 2000 tonnes par jour.</li>
-              <li>Les NMT doivent être communiquées avant les premiers versages.</li>
-              <li>Nous nous réservons le droit de fermer le site à tout moment (intempéries, maintenance…).</li>
-              <li>Une bascule est disponible sur tous nos sites récepteurs (relevé Excel fourni à la demande).</li>
+              <li data-edit="t-178">Nos sites peuvent accepter environ 2000 tonnes par jour.</li>
+              <li data-edit="t-179">Les NMT doivent être communiquées avant les premiers versages.</li>
+              <li data-edit="t-180">Nous nous réservons le droit de fermer le site à tout moment (intempéries, maintenance…).</li>
+              <li data-edit="t-181">Une bascule est disponible sur tous nos sites récepteurs (relevé Excel fourni à la demande).</li>
             </ul>
           </div>
         </div>
@@ -338,8 +344,8 @@
       <div class="container">
         <div class="panel-head">
           <div>
-            <h2>Granulats</h2>
-            <p>Tarif HTVA des ventes au départ du site de Braives.</p>
+            <h2 data-edit="t-182">Granulats</h2>
+            <p data-edit="t-183">Tarif HTVA des ventes au départ du site de Braives.</p>
           </div>
           <button class="btn btn-outline btn-sm no-print" type="button" data-print>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -348,24 +354,24 @@
         </div>
         <div class="table-wrap">
           <table class="price-table">
-            <thead><tr><th scope="col">Description</th><th scope="col">Calibre</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+            <thead><tr><th scope="col" data-edit="t-184">Description</th><th scope="col" data-edit="t-185">Calibre</th><th scope="col" data-edit="t-186">Unité</th><th scope="col" class="num" data-edit="t-187">Prix HTVA</th></tr></thead>
             <tbody>
-              <tr><td>Mixte</td><td data-label="Calibre" class="code">0/63</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">5,00 €</td></tr>
-              <tr><td>Tarmac</td><td data-label="Calibre" class="code">0/32</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">7,50 €</td></tr>
-              <tr><td>Tarmac</td><td data-label="Calibre" class="code">0/63</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">5,00 €</td></tr>
-              <tr><td>Béton</td><td data-label="Calibre" class="code">0/32</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">9,80 €</td></tr>
-              <tr><td>Béton</td><td data-label="Calibre" class="code">0/60</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">7,50 €</td></tr>
-              <tr><td>Béton</td><td data-label="Calibre" class="code">25/60</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">10,80 €</td></tr>
-              <tr><td>Sable jaune</td><td data-label="Calibre" class="code"></td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">8,85 €</td></tr>
-              <tr><td>Stabiter</td><td data-label="Calibre" class="code">0/32</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num free">Gratuit</td></tr>
+              <tr><td data-edit="t-188">Mixte</td><td data-label="Calibre" class="code" data-edit="t-189">0/63</td><td data-label="Unité" data-edit="t-190">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-MIX" class="num">5,00 €</td></tr>
+              <tr><td data-edit="t-191">Tarmac</td><td data-label="Calibre" class="code" data-edit="t-192">0/32</td><td data-label="Unité" data-edit="t-193">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-TA32" class="num">7,50 €</td></tr>
+              <tr><td data-edit="t-194">Tarmac</td><td data-label="Calibre" class="code" data-edit="t-195">0/63</td><td data-label="Unité" data-edit="t-196">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-TA63" class="num">5,00 €</td></tr>
+              <tr><td data-edit="t-197">Béton</td><td data-label="Calibre" class="code" data-edit="t-198">0/32</td><td data-label="Unité" data-edit="t-199">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-BE32" class="num">9,80 €</td></tr>
+              <tr><td data-edit="t-200">Béton</td><td data-label="Calibre" class="code" data-edit="t-201">0/60</td><td data-label="Unité" data-edit="t-202">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-BE60" class="num">7,50 €</td></tr>
+              <tr><td data-edit="t-203">Béton</td><td data-label="Calibre" class="code" data-edit="t-204">25/60</td><td data-label="Unité" data-edit="t-205">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-BE2560" class="num">10,80 €</td></tr>
+              <tr><td data-edit="t-206">Sable jaune</td><td data-label="Calibre" class="code"></td><td data-label="Unité" data-edit="t-207">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-SAB" class="num">8,85 €</td></tr>
+              <tr><td data-edit="t-208">Stabiter</td><td data-label="Calibre" class="code" data-edit="t-209">0/32</td><td data-label="Unité" data-edit="t-210">Tonne</td><td data-label="Prix HTVA" data-edit="prix-G-STAB" class="num free">Gratuit</td></tr>
             </tbody>
           </table>
         </div>
         <div class="notice info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           <ul>
-            <li>Nous pouvons aussi vous livrer : <a href="contact.html#formulaire" style="font-weight:600;text-decoration:underline">contactez-nous</a>.</li>
-            <li>Supplément de 7,50 € par enlèvement de moins de 5 tonnes.</li>
+            <li>Nous pouvons aussi vous livrer : <a href="contact.html#formulaire" style="font-weight:600;text-decoration:underline" data-edit="t-211">contactez-nous</a>.</li>
+            <li data-edit="t-212">Supplément de 7,50 € par enlèvement de moins de 5 tonnes.</li>
           </ul>
         </div>
       </div>
@@ -376,8 +382,8 @@
       <div class="container">
         <div class="panel-head">
           <div>
-            <h2>Béton et stabilisé</h2>
-            <p>Gamme Recystab-e pour fondations et stabilisation.</p>
+            <h2 data-edit="t-213">Béton et stabilisé</h2>
+            <p data-edit="t-214">Gamme Recystab-e pour fondations et stabilisation.</p>
           </div>
           <button class="btn btn-outline btn-sm no-print" type="button" data-print>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -386,17 +392,17 @@
         </div>
         <div class="table-wrap">
           <table class="price-table">
-            <thead><tr><th scope="col">Description</th><th scope="col">Code SPW</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+            <thead><tr><th scope="col" data-edit="t-215">Description</th><th scope="col" data-edit="t-216">Code SPW</th><th scope="col" data-edit="t-217">Unité</th><th scope="col" class="num" data-edit="t-218">Prix HTVA</th></tr></thead>
             <tbody>
-              <tr><td>Recystab-e 0/4 <span class="tag tag-soon soon">Prochainement</span></td><td data-label="Code SPW" class="code">-</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">19,50 €</td></tr>
-              <tr><td>Recystab-e 0/32 <span class="tag tag-soon soon">Prochainement</span></td><td data-label="Code SPW" class="code">-</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">23,00 €</td></tr>
-              <tr><td>Recystab-e béton <span class="tag tag-soon soon">Prochainement</span></td><td data-label="Code SPW" class="code">-</td><td data-label="Unité">Tonne</td><td data-label="Prix HTVA" class="num">25,00 €</td></tr>
+              <tr><td>Recystab-e 0/4 <span class="tag tag-soon soon" data-edit="t-219">Prochainement</span></td><td data-label="Code SPW" class="code">-</td><td data-label="Unité" data-edit="t-220">Tonne</td><td data-label="Prix HTVA" data-edit="prix-n1" class="num">19,50 €</td></tr>
+              <tr><td>Recystab-e 0/32 <span class="tag tag-soon soon" data-edit="t-221">Prochainement</span></td><td data-label="Code SPW" class="code">-</td><td data-label="Unité" data-edit="t-222">Tonne</td><td data-label="Prix HTVA" data-edit="prix-n2" class="num">23,00 €</td></tr>
+              <tr><td>Recystab-e béton <span class="tag tag-soon soon" data-edit="t-223">Prochainement</span></td><td data-label="Code SPW" class="code">-</td><td data-label="Unité" data-edit="t-224">Tonne</td><td data-label="Prix HTVA" data-edit="prix-n3" class="num">25,00 €</td></tr>
             </tbody>
           </table>
         </div>
         <div class="notice info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <p>Supplément par 50 kg de ciment/m³ : 5,00 €/t.</p>
+          <p data-edit="t-225">Supplément par 50 kg de ciment/m³ : 5,00 €/t.</p>
         </div>
       </div>
     </section>
@@ -406,8 +412,8 @@
       <div class="container">
         <div class="panel-head">
           <div>
-            <h2>Synthétiques enterrés</h2>
-            <p>Tuyaux PVC, drains, gaines et géotextiles.</p>
+            <h2 data-edit="t-226">Synthétiques enterrés</h2>
+            <p data-edit="t-227">Tuyaux PVC, drains, gaines et géotextiles.</p>
           </div>
           <button class="btn btn-outline btn-sm no-print" type="button" data-print>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -416,63 +422,63 @@
         </div>
 
         <div class="price-group">
-          <h3>PVC 110 mm</h3>
+          <h3 data-edit="t-228">PVC 110 mm</h3>
           <div class="table-wrap">
             <table class="price-table">
-              <thead><tr><th scope="col">Description</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+              <thead><tr><th scope="col" data-edit="t-229">Description</th><th scope="col" data-edit="t-230">Unité</th><th scope="col" class="num" data-edit="t-231">Prix HTVA</th></tr></thead>
               <tbody>
-                <tr><td>PVC 110 manchonné RB-BENOR-SN8, longueur 5 m</td><td data-label="Unité">mètre</td><td data-label="Prix HTVA" class="num">12,70 €</td></tr>
-                <tr><td>Manchon coulissant</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">6,04 €</td></tr>
-                <tr><td>Coude 90°</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">7,12 €</td></tr>
-                <tr><td>Coude 45°</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">6,32 €</td></tr>
-                <tr><td>Y</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">14,24 €</td></tr>
+                <tr><td data-edit="t-232">PVC 110 manchonné RB-BENOR-SN8, longueur 5 m</td><td data-label="Unité" data-edit="t-233">mètre</td><td data-label="Prix HTVA" data-edit="prix-n4" class="num">12,70 €</td></tr>
+                <tr><td data-edit="t-234">Manchon coulissant</td><td data-label="Unité" data-edit="t-235">pièce</td><td data-label="Prix HTVA" data-edit="prix-n5" class="num">6,04 €</td></tr>
+                <tr><td data-edit="t-236">Coude 90°</td><td data-label="Unité" data-edit="t-237">pièce</td><td data-label="Prix HTVA" data-edit="prix-n6" class="num">7,12 €</td></tr>
+                <tr><td data-edit="t-238">Coude 45°</td><td data-label="Unité" data-edit="t-239">pièce</td><td data-label="Prix HTVA" data-edit="prix-n7" class="num">6,32 €</td></tr>
+                <tr><td data-edit="t-240">Y</td><td data-label="Unité" data-edit="t-241">pièce</td><td data-label="Prix HTVA" data-edit="prix-n8" class="num">14,24 €</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="price-group">
-          <h3>PVC 160 mm</h3>
+          <h3 data-edit="t-242">PVC 160 mm</h3>
           <div class="table-wrap">
             <table class="price-table">
-              <thead><tr><th scope="col">Description</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+              <thead><tr><th scope="col" data-edit="t-243">Description</th><th scope="col" data-edit="t-244">Unité</th><th scope="col" class="num" data-edit="t-245">Prix HTVA</th></tr></thead>
               <tbody>
-                <tr><td>PVC 160 manchonné RB-BENOR-SN8, longueur 5 m</td><td data-label="Unité">mètre</td><td data-label="Prix HTVA" class="num">29,29 €</td></tr>
-                <tr><td>Manchon coulissant</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">14,42 €</td></tr>
-                <tr><td>Coude 90°</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">25,86 €</td></tr>
-                <tr><td>Coude 45°</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">22,44 €</td></tr>
-                <tr><td>Y</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">43,73 €</td></tr>
+                <tr><td data-edit="t-246">PVC 160 manchonné RB-BENOR-SN8, longueur 5 m</td><td data-label="Unité" data-edit="t-247">mètre</td><td data-label="Prix HTVA" data-edit="prix-n9" class="num">29,29 €</td></tr>
+                <tr><td data-edit="t-248">Manchon coulissant</td><td data-label="Unité" data-edit="t-249">pièce</td><td data-label="Prix HTVA" data-edit="prix-n10" class="num">14,42 €</td></tr>
+                <tr><td data-edit="t-250">Coude 90°</td><td data-label="Unité" data-edit="t-251">pièce</td><td data-label="Prix HTVA" data-edit="prix-n11" class="num">25,86 €</td></tr>
+                <tr><td data-edit="t-252">Coude 45°</td><td data-label="Unité" data-edit="t-253">pièce</td><td data-label="Prix HTVA" data-edit="prix-n12" class="num">22,44 €</td></tr>
+                <tr><td data-edit="t-254">Y</td><td data-label="Unité" data-edit="t-255">pièce</td><td data-label="Prix HTVA" data-edit="prix-n13" class="num">43,73 €</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="price-group">
-          <h3>Drains, gaines &amp; raccords</h3>
+          <h3 data-edit="t-256">Drains, gaines &amp; raccords</h3>
           <div class="table-wrap">
             <table class="price-table">
-              <thead><tr><th scope="col">Description</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+              <thead><tr><th scope="col" data-edit="t-257">Description</th><th scope="col" data-edit="t-258">Unité</th><th scope="col" class="num" data-edit="t-259">Prix HTVA</th></tr></thead>
               <tbody>
-                <tr><td>Réduction 160/110</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">15,09 €</td></tr>
-                <tr><td>Tuyau de drainage sans enrobage DN 80</td><td data-label="Unité">mètre</td><td data-label="Prix HTVA" class="num">2,56 €</td></tr>
-                <tr><td>Manchons DN 80</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">6,05 €</td></tr>
-                <tr><td>T DN 80</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">20,52 €</td></tr>
-                <tr><td>Tuyau de drainage sans enrobage DN 100</td><td data-label="Unité">mètre</td><td data-label="Prix HTVA" class="num">5,08 €</td></tr>
-                <tr><td>Gaine annelée rouge DN 63 mm, longueur 25 m</td><td data-label="Unité">mètre</td><td data-label="Prix HTVA" class="num">3,02 €</td></tr>
-                <tr><td>Gaine annelée rouge DN 90 mm, longueur 25 m</td><td data-label="Unité">mètre</td><td data-label="Prix HTVA" class="num">5,01 €</td></tr>
+                <tr><td data-edit="t-260">Réduction 160/110</td><td data-label="Unité" data-edit="t-261">pièce</td><td data-label="Prix HTVA" data-edit="prix-n14" class="num">15,09 €</td></tr>
+                <tr><td data-edit="t-262">Tuyau de drainage sans enrobage DN 80</td><td data-label="Unité" data-edit="t-263">mètre</td><td data-label="Prix HTVA" data-edit="prix-n15" class="num">2,56 €</td></tr>
+                <tr><td data-edit="t-264">Manchons DN 80</td><td data-label="Unité" data-edit="t-265">pièce</td><td data-label="Prix HTVA" data-edit="prix-n16" class="num">6,05 €</td></tr>
+                <tr><td data-edit="t-266">T DN 80</td><td data-label="Unité" data-edit="t-267">pièce</td><td data-label="Prix HTVA" data-edit="prix-n17" class="num">20,52 €</td></tr>
+                <tr><td data-edit="t-268">Tuyau de drainage sans enrobage DN 100</td><td data-label="Unité" data-edit="t-269">mètre</td><td data-label="Prix HTVA" data-edit="prix-n18" class="num">5,08 €</td></tr>
+                <tr><td data-edit="t-270">Gaine annelée rouge DN 63 mm, longueur 25 m</td><td data-label="Unité" data-edit="t-271">mètre</td><td data-label="Prix HTVA" data-edit="prix-n19" class="num">3,02 €</td></tr>
+                <tr><td data-edit="t-272">Gaine annelée rouge DN 90 mm, longueur 25 m</td><td data-label="Unité" data-edit="t-273">mètre</td><td data-label="Prix HTVA" data-edit="prix-n20" class="num">5,01 €</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="price-group">
-          <h3>Géotextiles</h3>
+          <h3 data-edit="t-274">Géotextiles</h3>
           <div class="table-wrap">
             <table class="price-table">
-              <thead><tr><th scope="col">Description</th><th scope="col">Unité</th><th scope="col" class="num">Prix HTVA</th></tr></thead>
+              <thead><tr><th scope="col" data-edit="t-275">Description</th><th scope="col" data-edit="t-276">Unité</th><th scope="col" class="num" data-edit="t-277">Prix HTVA</th></tr></thead>
               <tbody>
-                <tr><td>Géotextile de protection Duborain non tissé 200 g/m² (5,25 × 50 m)</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">747,53 €</td></tr>
-                <tr><td>Géotextile de fond de coffre tissé Terralys (5,15 × 100 m)</td><td data-label="Unité">pièce</td><td data-label="Prix HTVA" class="num">684,28 €</td></tr>
+                <tr><td data-edit="t-278">Géotextile de protection Duborain non tissé 200 g/m² (5,25 × 50 m)</td><td data-label="Unité" data-edit="t-279">pièce</td><td data-label="Prix HTVA" data-edit="prix-n21" class="num">747,53 €</td></tr>
+                <tr><td data-edit="t-280">Géotextile de fond de coffre tissé Terralys (5,15 × 100 m)</td><td data-label="Unité" data-edit="t-281">pièce</td><td data-label="Prix HTVA" data-edit="prix-n22" class="num">684,28 €</td></tr>
               </tbody>
             </table>
           </div>
@@ -482,15 +488,15 @@
 
     <section class="section-tight no-print">
       <div class="container">
-        <p style="color:var(--muted);font-size:.9rem;margin-bottom:24px">* Tous les prix sont hors TVA (21 %). Prix valables jusqu'au 31/12/2025, sous réserve de modification.</p>
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:24px" data-edit="t-282">* Tous les prix sont hors TVA (21 %). Prix valables jusqu'au 31/12/2025, sous réserve de modification.</p>
         <div class="cta-band">
           <div>
-            <h2>Gros volume ou cas particulier ?</h2>
-            <p>Contactez-nous, on vous fait un prix selon les quantités et les matériaux.</p>
+            <h2 data-edit="t-283">Gros volume ou cas particulier ?</h2>
+            <p data-edit="t-284">Contactez-nous, on vous fait un prix selon les quantités et les matériaux.</p>
           </div>
           <div class="actions">
-            <a class="btn btn-dark" href="contact.html#formulaire">Demander un devis</a>
-            <a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a>
+            <a class="btn btn-dark" href="contact.html#formulaire" data-edit="t-285">Demander un devis</a>
+            <a class="btn btn-outline" href="tel:+3285217445" data-edit="t-286">085 21 74 45</a>
           </div>
         </div>
       </div>
@@ -502,7 +508,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <img src="assets/img/logo-reverse.png" alt="Recymo Wallonie" width="182" height="44" loading="lazy">
-          <p>Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
+          <p data-edit="t-287">Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
           <div class="social">
             <a href="https://www.facebook.com/profile.php?id=61580435163410" target="_blank" rel="noopener" aria-label="Recymo sur Facebook">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-5 2.2-5 5v2H7v4h2v9h4v-9h3l1-4h-4V9c0-.6.4-1 1-1z"/></svg>
@@ -512,33 +518,33 @@
         <div>
           <h4>Navigation</h4>
           <ul>
-            <li><a href="index.html">Accueil</a></li>
-            <li><a href="tarifs.html">Tarifs</a></li>
-            <li><a href="fiches-techniques.html">Fiches techniques</a></li>
-            <li><a href="contact.html">Contact</a></li>
+            <li><a href="index.html" data-edit="t-288">Accueil</a></li>
+            <li><a href="tarifs.html" data-edit="t-289">Tarifs</a></li>
+            <li><a href="fiches-techniques.html" data-edit="t-290">Fiches techniques</a></li>
+            <li><a href="contact.html" data-edit="t-291">Contact</a></li>
           </ul>
         </div>
         <div>
           <h4>Services</h4>
           <ul>
-            <li><a href="tarifs.html#versage-classe3">Versage classe 3</a></li>
-            <li><a href="tarifs.html#versage-terre">Versage terre</a></li>
-            <li><a href="tarifs.html#granulats">Granulats</a></li>
-            <li><a href="tarifs.html#synthetiques-enterres">Synthétiques enterrés</a></li>
+            <li><a href="tarifs.html#versage-classe3" data-edit="t-292">Versage classe 3</a></li>
+            <li><a href="tarifs.html#versage-terre" data-edit="t-293">Versage terre</a></li>
+            <li><a href="tarifs.html#granulats" data-edit="t-294">Granulats</a></li>
+            <li><a href="tarifs.html#synthetiques-enterres" data-edit="t-295">Synthétiques enterrés</a></li>
           </ul>
         </div>
         <div>
           <h4>Contact</h4>
           <ul>
-            <li>Rue Roua 6, 4260 Braives</li>
-            <li><a href="tel:+3285217445">085 21 74 45</a></li>
-            <li><a href="mailto:info@recymo.be">info@recymo.be</a></li>
+            <li data-edit="t-296">Rue Roua 6, 4260 Braives</li>
+            <li><a href="tel:+3285217445" data-edit="t-297">085 21 74 45</a></li>
+            <li><a href="mailto:info@recymo.be" data-edit="t-298">info@recymo.be</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <span>© <span data-year>2026</span> Recymo Wallonie SA. Tous droits réservés.</span>
-        <a href="mentions-legales.html">Mentions légales</a>
+        <a href="mentions-legales.html" data-edit="t-299">Mentions légales</a>
       </div>
     </div>
   </footer>

@@ -18,7 +18,7 @@
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Aller au contenu principal</a>
+  <a class="skip-link" href="#main" data-edit="c-1">Aller au contenu principal</a>
 
   <header class="site-header">
     <div class="container nav">
@@ -41,6 +41,12 @@
           085 21 74 45
         </a>
         <a class="btn btn-primary btn-sm" href="contact.html#formulaire">Demander un devis</a>
+        <div class="more-menu">
+          <button class="more-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="more-list" aria-label="Plus d’options"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+          <div class="more-list" id="more-list" hidden>
+            <button type="button" data-admin-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Accès admin</button>
+          </div>
+        </div>
         <button class="nav-toggle" type="button" aria-controls="nav-links" aria-expanded="false" aria-label="Ouvrir le menu"><span></span></button>
       </div>
     </div>
@@ -49,19 +55,18 @@
   <main id="main">
     <section class="page-hero">
       <div class="container">
-        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Contact</span></nav>
-        <h1>Contactez-nous</h1>
-        <p>Pour un versage, un achat de granulats ou un devis, appelez-nous ou remplissez le formulaire.</p>
+        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html" data-edit="c-2">Accueil</a><span aria-hidden="true">/</span><span data-edit="c-3">Contact</span></nav>
+        <h1 data-edit="c-4">Contactez-nous</h1>
+        <p data-edit="c-5">Pour un versage, un achat de granulats ou un devis, appelez-nous ou remplissez le formulaire.</p>
       </div>
     </section>
 
     <section class="section-tight">
       <div class="container contact-grid form-layout">
         <div class="form-card" id="formulaire">
-          <h2 style="font-size:1.6rem">Envoyez-nous un message</h2>
+          <h2 style="font-size:1.6rem" data-edit="c-6">Envoyez-nous un message</h2>
           <p style="margin-top:6px;color:var(--muted)">Les champs marqués d'un <span style="color:#b4232a">*</span> sont obligatoires.</p>
-          <!-- data-endpoint : laisser vide tant que l envoi direct (FormSubmit) n est pas activé ; ensuite mettre https://formsubmit.co/info@recymo.be -->
-          <form id="contact-form" style="margin-top:24px" method="post" enctype="multipart/form-data" data-endpoint="" novalidate>
+          <form id="contact-form" style="margin-top:24px" novalidate>
             <div class="form-grid">
               <div class="field">
                 <label for="nom">Nom <span class="req">*</span></label>
@@ -69,7 +74,7 @@
                 <span class="err">Veuillez indiquer votre nom.</span>
               </div>
               <div class="field">
-                <label for="societe">Société</label>
+                <label for="societe" data-edit="c-7">Société</label>
                 <input id="societe" name="societe" type="text" autocomplete="organization">
               </div>
               <div class="field">
@@ -83,7 +88,7 @@
                 <span class="err">Veuillez indiquer votre numéro de téléphone.</span>
               </div>
               <div class="field full">
-                <label for="sujet">Objet de la demande</label>
+                <label for="sujet" data-edit="c-8">Objet de la demande</label>
                 <select id="sujet" name="sujet">
                   <option>De devis</option>
                   <option>Versage classe 3</option>
@@ -100,20 +105,16 @@
                 <span class="err">Veuillez écrire votre message.</span>
               </div>
               <div class="field full" data-online-only hidden>
-                <label for="photo">Photo du chargement <span class="opt">(facultatif)</span></label>
+                <label for="photo">Photo du chargement <span class="opt" data-edit="c-9">(facultatif)</span></label>
                 <input id="photo" name="attachment" type="file" accept="image/*" aria-describedby="photo-aide photo-err">
-                <small class="field-help" id="photo-aide">Une photo nous aide à vous donner le bon prix. JPG ou PNG, 5 Mo maximum.</small>
-                <span class="err" id="photo-err">Cette photo dépasse 5 Mo : choisissez une image plus légère ou envoyez-la par email.</span>
+                <small class="field-help" id="photo-aide" data-edit="c-10">Une photo nous aide à vous donner le bon prix. Format JPG ou PNG.</small>
+                <span class="err" id="photo-err">Cette photo dépasse 15 Mo : choisissez une image plus légère ou envoyez-la par email.</span>
               </div>
             </div>
-            <input type="hidden" name="_subject" value="Demande depuis le site">
-            <input type="hidden" name="_template" value="table">
-            <input type="hidden" name="_captcha" value="false">
-            <input type="hidden" name="_next" value="">
             <input type="text" name="_honey" class="sr-only" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="form-foot">
-              <small data-foot-mailto>En envoyant ce formulaire, votre logiciel de messagerie s'ouvre avec votre message pré-rempli à l'adresse info@recymo.be.</small>
-              <small data-foot-online hidden>Votre message nous est envoyé directement à info@recymo.be. Nous vous répondons par email ou par téléphone.</small>
+              <small data-foot-mailto data-edit="c-11">En envoyant ce formulaire, votre logiciel de messagerie s'ouvre avec votre message pré-rempli à l'adresse info@recymo.be.</small>
+              <small data-foot-online hidden data-edit="c-12">Votre demande nous est transmise directement. Vos coordonnées servent uniquement à vous répondre : voir les mentions légales.</small>
               <button class="btn btn-primary" type="submit">
                 Envoyer le message
                 <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -121,11 +122,15 @@
             </div>
             <div class="notice info form-status" id="form-sent" role="status" tabindex="-1" hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              <p><strong>Merci, votre message est bien envoyé.</strong> Nous revenons vers vous rapidement. Pour une demande urgente, appelez le <a href="tel:+3285217445" style="font-weight:600;text-decoration:underline">085 21 74 45</a>.</p>
+              <p><strong data-edit="c-13">Merci, votre message est bien envoyé.</strong> Nous revenons vers vous rapidement. Pour une demande urgente, appelez le <a href="tel:+3285217445" style="font-weight:600;text-decoration:underline" data-edit="c-14">085 21 74 45</a>.</p>
+            </div>
+            <div class="notice form-status" id="form-error" role="alert" tabindex="-1" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <p></p>
             </div>
             <div class="notice info form-status" id="form-status" role="status" hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              <p>Votre messagerie s'est ouverte avec le message prêt à être envoyé. Si rien ne s'est passé, écrivez-nous directement à <a href="mailto:info@recymo.be" style="font-weight:600;text-decoration:underline">info@recymo.be</a> ou appelez le 085 21 74 45.</p>
+              <p>Votre messagerie s'est ouverte avec le message prêt à être envoyé. Si rien ne s'est passé, écrivez-nous directement à <a href="mailto:info@recymo.be" style="font-weight:600;text-decoration:underline" data-edit="c-15">info@recymo.be</a> ou appelez le 085 21 74 45.</p>
             </div>
           </form>
         </div>
@@ -133,20 +138,20 @@
         <aside class="info-list">
           <a class="info-item" href="tel:+3285217445">
             <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-            <span><small>Téléphone</small><strong>085 21 74 45</strong></span>
+            <span><small data-edit="c-16">Téléphone</small><strong data-edit="c-17">085 21 74 45</strong></span>
           </a>
           <a class="info-item" href="mailto:info@recymo.be">
             <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
-            <span><small>Email</small><strong>info@recymo.be</strong></span>
+            <span><small data-edit="c-18">Email</small><strong data-edit="c-19">info@recymo.be</strong></span>
           </a>
           <a class="info-item" href="https://www.google.com/maps/dir/?api=1&amp;destination=50.5753235%2C5.2076884" target="_blank" rel="noopener">
             <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
-            <span><small>Adresse</small><strong>Rue Roua 6, 4260 Braives, Belgique</strong></span>
+            <span><small data-edit="c-20">Adresse</small><strong data-edit="c-21">Rue Roua 6, 4260 Braives, Belgique</strong></span>
           </a>
           <div class="form-card" style="padding:24px">
-            <h3 style="font-size:1.1rem;margin-bottom:8px">Horaires d'ouverture</h3>
+            <h3 style="font-size:1.1rem;margin-bottom:8px" data-edit="c-22">Horaires d'ouverture</h3>
             <p class="live" data-statut="braives"></p>
-            <dl class="hours">
+            <dl class="hours" data-horaires-liste="braives">
               <div><dt>Lundi – Vendredi</dt><dd>7h00 – 17h00</dd></div>
               <div><dt>Samedi</dt><dd>8h00 – 12h00</dd></div>
               <div><dt>Dimanche</dt><dd class="closed">Fermé</dd></div>
@@ -154,7 +159,7 @@
           </div>
           <a class="info-item" href="https://www.google.com/maps/place/Recymo+Wallonie/@50.5753235,5.2076884,17z/data=!4m6!3m5!1s0x47c107007dc46369:0xe5ddd4c9cf1e68e9!8m2!3d50.5753235!4d5.2076884" target="_blank" rel="noopener">
             <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>
-            <span><small>Vous avez travaillé avec nous ?</small><strong>Laissez-nous un avis sur Google</strong></span>
+            <span><small data-edit="c-23">Vous avez travaillé avec nous ?</small><strong data-edit="c-24">Laissez-nous un avis sur Google</strong></span>
           </a>
           <div class="map-frame" style="min-height:260px">
             <iframe title="Carte : Recymo, Rue Roua 6, 4260 Braives" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=5.1927%2C50.5693%2C5.2227%2C50.5813&amp;layer=mapnik&amp;marker=50.5753%2C5.2077"></iframe>
@@ -166,47 +171,48 @@
     <section class="section-tight" id="sites" aria-labelledby="sites-titre">
       <div class="container">
         <div class="section-head">
-          <h2 class="h2" id="sites-titre">Nos sites de versage</h2>
-          <p class="lead">Quatre sites en Wallonie, tous équipés d'une bascule. Les horaires sont ceux d'une semaine normale : en cas de jour férié ou d'intempéries, appelez-nous avant de venir.</p>
+          <h2 class="h2" id="sites-titre" data-edit="c-25">Nos sites de versage</h2>
+          <p class="lead" data-edit="c-26">Quatre sites en Wallonie, tous équipés d'une bascule. Les horaires sont ceux d'une semaine normale : en cas de jour férié ou d'intempéries, appelez-nous avant de venir.</p>
         </div>
-        <div class="site-photos">
+        <div class="site-photos" data-galerie="sites">
           <figure>
-            <img src="assets/img/site-braives.jpg" alt="Vue aérienne du site Recymo de Braives : stocks de matériaux, engins et hangar au milieu des champs" width="658" height="984" loading="lazy">
-            <figcaption>Site de Braives</figcaption>
+            <img data-photo="site-braives" src="assets/img/site-braives.jpg" alt="Vue aérienne du site Recymo de Braives : stocks de matériaux, engins et hangar au milieu des champs" width="658" height="984" loading="lazy">
+            <figcaption data-edit="c-27">Site de Braives</figcaption>
           </figure>
           <figure>
-            <img src="assets/img/site-charleroi.jpg" alt="Vue aérienne du site Recymo de Charleroi : stocks de bois et de sable, conteneurs et camions" width="684" height="984" loading="lazy">
-            <figcaption>Site de Charleroi</figcaption>
+            <img data-photo="site-charleroi" src="assets/img/site-charleroi.jpg" alt="Vue aérienne du site Recymo de Charleroi : stocks de bois et de sable, conteneurs et camions" width="684" height="984" loading="lazy">
+            <figcaption data-edit="c-28">Site de Charleroi</figcaption>
           </figure>
+          <!-- fin galerie -->
         </div>
         <ul class="sites-grid">
           <li class="site-tile">
-            <h3>Braives</h3>
-            <p class="site-meta">Site WT062991 · Terres, déchets de construction, granulats</p>
+            <h3 data-edit="c-29">Braives</h3>
+            <p class="site-meta" data-edit="c-30">Site WT062991 · Terres, déchets de construction, granulats</p>
             <p class="live" data-statut="braives"></p>
-            <p>Rue Roua 6, 4260 Braives<br>Lun–Ven 7h00–17h00 · Sam 8h00–12h00</p>
-            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="braives" href="https://www.google.com/maps/dir/?api=1&amp;destination=50.5753235%2C5.2076884" target="_blank" rel="noopener">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="braives" data-app="waze" href="https://waze.com/ul?ll=50.5753235%2C5.2076884&amp;navigate=yes" target="_blank" rel="noopener">Waze</a></div>
+            <p><span data-edit="c-31">Rue Roua 6, 4260 Braives</span><br><span data-horaires-texte="braives">Lun–Ven 7h00–17h00 · Sam 8h00–12h00</span></p>
+            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="braives" href="https://www.google.com/maps/dir/?api=1&amp;destination=50.5753235%2C5.2076884" target="_blank" rel="noopener" data-edit="c-32">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="braives" data-app="waze" href="https://waze.com/ul?ll=50.5753235%2C5.2076884&amp;navigate=yes" target="_blank" rel="noopener" data-edit="c-33">Waze</a></div>
           </li>
           <li class="site-tile">
-            <h3>Fosses-la-Ville</h3>
-            <p class="site-meta">Site WT026437 · Terres type I et II</p>
+            <h3 data-edit="c-34">Fosses-la-Ville</h3>
+            <p class="site-meta" data-edit="c-35">Site WT026437 · Terres type I et II</p>
             <p class="live" data-statut="fosses"></p>
-            <p>Rue Adelin Beguin, 5070 Fosses-la-Ville<br>Lun–Ven 7h00–17h00</p>
-            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="fosses" href="https://www.google.com/maps/dir/?api=1&amp;destination=Rue%20Adelin%20Beguin%2C%205070%20Fosses-la-Ville" target="_blank" rel="noopener">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="fosses" data-app="waze" href="https://waze.com/ul?q=Rue%20Adelin%20Beguin%2C%205070%20Fosses-la-Ville&amp;navigate=yes" target="_blank" rel="noopener">Waze</a></div>
+            <p><span data-edit="c-36">Rue Adelin Beguin, 5070 Fosses-la-Ville</span><br><span data-horaires-texte="fosses">Lun–Ven 7h00–17h00</span></p>
+            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="fosses" href="https://www.google.com/maps/dir/?api=1&amp;destination=Rue%20Adelin%20Beguin%2C%205070%20Fosses-la-Ville" target="_blank" rel="noopener" data-edit="c-37">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="fosses" data-app="waze" href="https://waze.com/ul?q=Rue%20Adelin%20Beguin%2C%205070%20Fosses-la-Ville&amp;navigate=yes" target="_blank" rel="noopener" data-edit="c-38">Waze</a></div>
           </li>
           <li class="site-tile">
-            <h3>Transinnes</h3>
-            <p class="site-meta">Site WT011403 · Terres type I et II</p>
+            <h3 data-edit="c-39">Transinnes</h3>
+            <p class="site-meta" data-edit="c-40">Site WT011403 · Terres type I et II</p>
             <p class="live" data-statut="transinnes"></p>
-            <p>Grand Route, 6890 Libin<br>Lun–Mer 7h00–15h45 · Jeu–Ven sur demande (min. 1000 t par jour)</p>
-            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="transinnes" href="https://www.google.com/maps/dir/?api=1&amp;destination=Grand%20Route%2C%206890%20Libin" target="_blank" rel="noopener">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="transinnes" data-app="waze" href="https://waze.com/ul?q=Grand%20Route%2C%206890%20Libin&amp;navigate=yes" target="_blank" rel="noopener">Waze</a></div>
+            <p><span data-edit="c-41">Grand Route, 6890 Libin</span><br><span data-horaires-texte="transinnes">Lun–Mer 7h00–15h45 · Jeu–Ven sur demande (min. 1000 t par jour)</span></p>
+            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="transinnes" href="https://www.google.com/maps/dir/?api=1&amp;destination=Grand%20Route%2C%206890%20Libin" target="_blank" rel="noopener" data-edit="c-42">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="transinnes" data-app="waze" href="https://waze.com/ul?q=Grand%20Route%2C%206890%20Libin&amp;navigate=yes" target="_blank" rel="noopener" data-edit="c-43">Waze</a></div>
           </li>
           <li class="site-tile">
-            <h3>Sambreville</h3>
-            <p class="site-meta">Site WT050579 · Valorisateur SMARTUNIT · Terres type I à V</p>
+            <h3 data-edit="c-44">Sambreville</h3>
+            <p class="site-meta" data-edit="c-45">Site WT050579 · Valorisateur SMARTUNIT · Terres type I à V</p>
             <p class="live" data-statut="sambreville"></p>
-            <p>Rue de la Larronnerie, 5060 Sambreville<br>Lun–Ven 7h00–16h30</p>
-            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="sambreville" href="https://www.google.com/maps/dir/?api=1&amp;destination=Rue%20de%20la%20Larronnerie%2C%205060%20Sambreville" target="_blank" rel="noopener">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="sambreville" data-app="waze" href="https://waze.com/ul?q=Rue%20de%20la%20Larronnerie%2C%205060%20Sambreville&amp;navigate=yes" target="_blank" rel="noopener">Waze</a></div>
+            <p><span data-edit="c-46">Rue de la Larronnerie, 5060 Sambreville</span><br><span data-horaires-texte="sambreville">Lun–Ven 7h00–16h30</span></p>
+            <div class="site-actions"><a class="btn btn-dark btn-sm" data-itineraire="sambreville" href="https://www.google.com/maps/dir/?api=1&amp;destination=Rue%20de%20la%20Larronnerie%2C%205060%20Sambreville" target="_blank" rel="noopener" data-edit="c-47">Itinéraire</a><a class="btn btn-outline btn-sm" data-itineraire="sambreville" data-app="waze" href="https://waze.com/ul?q=Rue%20de%20la%20Larronnerie%2C%205060%20Sambreville&amp;navigate=yes" target="_blank" rel="noopener" data-edit="c-48">Waze</a></div>
           </li>
         </ul>
       </div>
@@ -218,7 +224,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <img src="assets/img/logo-reverse.png" alt="Recymo Wallonie" width="182" height="44" loading="lazy">
-          <p>Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
+          <p data-edit="c-49">Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
           <div class="social">
             <a href="https://www.facebook.com/profile.php?id=61580435163410" target="_blank" rel="noopener" aria-label="Recymo sur Facebook">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-5 2.2-5 5v2H7v4h2v9h4v-9h3l1-4h-4V9c0-.6.4-1 1-1z"/></svg>
@@ -228,33 +234,33 @@
         <div>
           <h4>Navigation</h4>
           <ul>
-            <li><a href="index.html">Accueil</a></li>
-            <li><a href="tarifs.html">Tarifs</a></li>
-            <li><a href="fiches-techniques.html">Fiches techniques</a></li>
-            <li><a href="contact.html">Contact</a></li>
+            <li><a href="index.html" data-edit="c-50">Accueil</a></li>
+            <li><a href="tarifs.html" data-edit="c-51">Tarifs</a></li>
+            <li><a href="fiches-techniques.html" data-edit="c-52">Fiches techniques</a></li>
+            <li><a href="contact.html" data-edit="c-53">Contact</a></li>
           </ul>
         </div>
         <div>
           <h4>Services</h4>
           <ul>
-            <li><a href="tarifs.html#versage-classe3">Versage classe 3</a></li>
-            <li><a href="tarifs.html#versage-terre">Versage terre</a></li>
-            <li><a href="tarifs.html#granulats">Granulats</a></li>
-            <li><a href="tarifs.html#synthetiques-enterres">Synthétiques enterrés</a></li>
+            <li><a href="tarifs.html#versage-classe3" data-edit="c-54">Versage classe 3</a></li>
+            <li><a href="tarifs.html#versage-terre" data-edit="c-55">Versage terre</a></li>
+            <li><a href="tarifs.html#granulats" data-edit="c-56">Granulats</a></li>
+            <li><a href="tarifs.html#synthetiques-enterres" data-edit="c-57">Synthétiques enterrés</a></li>
           </ul>
         </div>
         <div>
           <h4>Contact</h4>
           <ul>
-            <li>Rue Roua 6, 4260 Braives</li>
-            <li><a href="tel:+3285217445">085 21 74 45</a></li>
-            <li><a href="mailto:info@recymo.be">info@recymo.be</a></li>
+            <li data-edit="c-58">Rue Roua 6, 4260 Braives</li>
+            <li><a href="tel:+3285217445" data-edit="c-59">085 21 74 45</a></li>
+            <li><a href="mailto:info@recymo.be" data-edit="c-60">info@recymo.be</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <span>© <span data-year>2026</span> Recymo Wallonie SA. Tous droits réservés.</span>
-        <a href="mentions-legales.html">Mentions légales</a>
+        <a href="mentions-legales.html" data-edit="c-61">Mentions légales</a>
       </div>
     </div>
   </footer>

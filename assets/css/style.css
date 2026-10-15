@@ -786,3 +786,27 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
 .site-photos figure:first-child img { object-position: 50% 45%; }
 .site-photos figure:last-child img { object-position: 50% 60%; }
 @media (max-width: 600px) { .site-photos { grid-template-columns: 1fr; } }
+
+/* ---------- Menu « ⋯ » (accès admin) ---------- */
+.more-menu { position: relative; }
+.more-btn {
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  transition: border-color var(--dur, .25s), color var(--dur, .25s);
+}
+.more-btn:hover, .more-btn[aria-expanded="true"] { border-color: var(--green-600); color: var(--green-900); }
+.more-btn svg { width: 20px; height: 20px; }
+.more-list {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; min-width: 200px; padding: 6px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-md);
+}
+.more-list button {
+  width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 12px;
+  border: 0; border-radius: 10px; background: transparent; cursor: pointer; font-weight: 600; font-size: .95rem; color: var(--ink);
+  text-align: left;
+}
+.more-list button:hover, .more-list button:focus-visible { background: var(--green-50); }
+.more-list svg { width: 18px; height: 18px; color: var(--green-700); }
+@media (prefers-reduced-motion: no-preference) {
+  .more-list:not([hidden]) { animation: fade-up var(--dur) var(--ease-out); }
+}

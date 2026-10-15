@@ -1,0 +1,8 @@
+{
+  "name": "recymo-admin",
+  "private": true,
+  "description": "Serveur de l'espace admin du site Recymo",
+  "main": "server.js",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js" }
+}

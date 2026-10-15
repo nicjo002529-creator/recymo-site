@@ -18,7 +18,7 @@
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Aller au contenu principal</a>
+  <a class="skip-link" href="#main" data-edit="m-1">Aller au contenu principal</a>
 
   <header class="site-header">
     <div class="container nav">
@@ -41,6 +41,12 @@
           085 21 74 45
         </a>
         <a class="btn btn-primary btn-sm" href="contact.html#formulaire">Demander un devis</a>
+        <div class="more-menu">
+          <button class="more-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="more-list" aria-label="Plus d’options"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+          <div class="more-list" id="more-list" hidden>
+            <button type="button" data-admin-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Accès admin</button>
+          </div>
+        </div>
         <button class="nav-toggle" type="button" aria-controls="nav-links" aria-expanded="false" aria-label="Ouvrir le menu"><span></span></button>
       </div>
     </div>
@@ -49,28 +55,29 @@
   <main id="main">
     <section class="page-hero">
       <div class="container">
-        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Mentions légales</span></nav>
-        <h1>Mentions légales</h1>
+        <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="index.html" data-edit="m-2">Accueil</a><span aria-hidden="true">/</span><span data-edit="m-3">Mentions légales</span></nav>
+        <h1 data-edit="m-4">Mentions légales</h1>
       </div>
     </section>
 
     <section class="section-tight">
       <div class="container prose">
-        <h2>Éditeur du site</h2>
-        <p>Recymo Wallonie SA<br>Rue Roua 6, 4260 Braives, Belgique<br>Email : <a href="mailto:info@recymo.be">info@recymo.be</a><br>Tél. : <a href="tel:+3285217445">085 21 74 45</a></p>
+        <h2 data-edit="m-5">Éditeur du site</h2>
+        <p>Recymo Wallonie SA<br>Rue Roua 6, 4260 Braives, Belgique<br>Email : <a href="mailto:info@recymo.be" data-edit="m-6">info@recymo.be</a><br>Tél. : <a href="tel:+3285217445" data-edit="m-7">085 21 74 45</a></p>
 
-        <h2>Hébergement</h2>
-        <p>Render Services, Inc.<br>525 Brannan Street, Suite 300, San Francisco, CA 94107, États-Unis<br>Site web : <a href="https://render.com" target="_blank" rel="noopener">render.com</a></p>
+        <h2 data-edit="m-8">Hébergement</h2>
+        <p>Render Services, Inc.<br>525 Brannan Street, Suite 300, San Francisco, CA 94107, États-Unis<br>Site web : <a href="https://render.com" target="_blank" rel="noopener" data-edit="m-9">render.com</a></p>
 
-        <h2>Propriété intellectuelle</h2>
-        <p>L'ensemble du contenu de ce site (textes, images, logos, etc.) est protégé par le droit d'auteur. Toute reproduction, même partielle, est interdite sans autorisation préalable de Recymo Wallonie SA.</p>
+        <h2 data-edit="m-10">Propriété intellectuelle</h2>
+        <p data-edit="m-11">L'ensemble du contenu de ce site (textes, images, logos, etc.) est protégé par le droit d'auteur. Toute reproduction, même partielle, est interdite sans autorisation préalable de Recymo Wallonie SA.</p>
 
-        <h2>Protection des données personnelles</h2>
-        <p>Ce site ne collecte ni ne stocke aucune donnée personnelle. Le formulaire de contact ouvre simplement votre logiciel de messagerie avec un message pré-rempli : les informations que vous y indiquez (nom, email, téléphone, société, message) nous parviennent uniquement si vous envoyez cet email. Elles sont utilisées exclusivement pour répondre à votre demande et ne sont ni vendues, ni transmises à des tiers.</p>
-        <p>Conformément au RGPD, vous pouvez demander l'accès, la rectification ou la suppression de vos données en écrivant à <a href="mailto:info@recymo.be">info@recymo.be</a>.</p>
+        <h2 data-edit="m-12">Protection des données personnelles</h2>
+        <p data-edit="m-13">Les informations envoyées avec le formulaire de contact (nom, société, email, téléphone, objet, message et photo éventuelle) sont enregistrées pour traiter votre demande. Responsable du traitement : Recymo Wallonie SA. Base légale : votre demande de devis ou d'information.</p>
+        <p data-edit="m-30">Ces données sont conservées dans un espace privé hébergé par Render Services, Inc. et GitHub, Inc. (États-Unis), accessible uniquement à Recymo Wallonie SA, pendant 3 ans après le dernier contact. Elles ne sont ni vendues, ni transmises à des tiers.</p>
+        <p>Conformément au RGPD, vous pouvez demander l'accès, la rectification ou la suppression de vos données en écrivant à <a href="mailto:info@recymo.be" data-edit="m-14">info@recymo.be</a>.</p>
 
-        <h2>Cookies</h2>
-        <p>Ce site n'utilise aucun cookie de suivi ni outil de mesure d'audience. La carte intégrée est fournie par OpenStreetMap.</p>
+        <h2 data-edit="m-15">Cookies</h2>
+        <p data-edit="m-16">Ce site n'utilise aucun cookie. Pour connaître sa fréquentation, il compte de façon anonyme les pages vues et certains clics (appel, demande de devis, estimation de prix) : aucune information n'est enregistrée sur votre appareil et aucune donnée ne permet de vous identifier. La carte intégrée est fournie par OpenStreetMap.</p>
       </div>
     </section>
   </main>
@@ -80,7 +87,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <img src="assets/img/logo-reverse.png" alt="Recymo Wallonie" width="182" height="44" loading="lazy">
-          <p>Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
+          <p data-edit="m-17">Recyclage de déchets de construction et de terres à Braives. Vente de granulats recyclés.</p>
           <div class="social">
             <a href="https://www.facebook.com/profile.php?id=61580435163410" target="_blank" rel="noopener" aria-label="Recymo sur Facebook">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-5 2.2-5 5v2H7v4h2v9h4v-9h3l1-4h-4V9c0-.6.4-1 1-1z"/></svg>
@@ -90,33 +97,33 @@
         <div>
           <h4>Navigation</h4>
           <ul>
-            <li><a href="index.html">Accueil</a></li>
-            <li><a href="tarifs.html">Tarifs</a></li>
-            <li><a href="fiches-techniques.html">Fiches techniques</a></li>
-            <li><a href="contact.html">Contact</a></li>
+            <li><a href="index.html" data-edit="m-18">Accueil</a></li>
+            <li><a href="tarifs.html" data-edit="m-19">Tarifs</a></li>
+            <li><a href="fiches-techniques.html" data-edit="m-20">Fiches techniques</a></li>
+            <li><a href="contact.html" data-edit="m-21">Contact</a></li>
           </ul>
         </div>
         <div>
           <h4>Services</h4>
           <ul>
-            <li><a href="tarifs.html#versage-classe3">Versage classe 3</a></li>
-            <li><a href="tarifs.html#versage-terre">Versage terre</a></li>
-            <li><a href="tarifs.html#granulats">Granulats</a></li>
-            <li><a href="tarifs.html#synthetiques-enterres">Synthétiques enterrés</a></li>
+            <li><a href="tarifs.html#versage-classe3" data-edit="m-22">Versage classe 3</a></li>
+            <li><a href="tarifs.html#versage-terre" data-edit="m-23">Versage terre</a></li>
+            <li><a href="tarifs.html#granulats" data-edit="m-24">Granulats</a></li>
+            <li><a href="tarifs.html#synthetiques-enterres" data-edit="m-25">Synthétiques enterrés</a></li>
           </ul>
         </div>
         <div>
           <h4>Contact</h4>
           <ul>
-            <li>Rue Roua 6, 4260 Braives</li>
-            <li><a href="tel:+3285217445">085 21 74 45</a></li>
-            <li><a href="mailto:info@recymo.be">info@recymo.be</a></li>
+            <li data-edit="m-26">Rue Roua 6, 4260 Braives</li>
+            <li><a href="tel:+3285217445" data-edit="m-27">085 21 74 45</a></li>
+            <li><a href="mailto:info@recymo.be" data-edit="m-28">info@recymo.be</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <span>© <span data-year>2026</span> Recymo Wallonie SA. Tous droits réservés.</span>
-        <a href="mentions-legales.html">Mentions légales</a>
+        <a href="mentions-legales.html" data-edit="m-29">Mentions légales</a>
       </div>
     </div>
   </footer>
