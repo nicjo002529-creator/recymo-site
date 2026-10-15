@@ -822,7 +822,7 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
 .classes-groupe:first-of-type { margin-top: 4px; }
 .classes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 12px; }
 .classe { display: flex; flex-direction: column; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
-.classe img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; background: var(--sand); }
+.classe img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; background: #fff; }
 .classe-body { padding: 12px 14px 14px; display: grid; gap: 4px; align-content: start; }
 .classe-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .classe-head .ref { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; color: var(--green-700); }
