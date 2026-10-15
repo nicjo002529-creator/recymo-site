@@ -14,7 +14,7 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
   <script>document.documentElement.classList.add("js")</script>
   <script type="application/ld+json">
@@ -50,7 +50,7 @@
           <li><a href="fiches-techniques.html">Fiches techniques</a></li>
           <li><a href="contact.html">Contact</a></li>
           <li><a class="mobile-only" href="tel:+3285217445">Appeler le 085 21 74 45</a></li>
-          <li><a class="mobile-only btn" href="contact.html#formulaire">Demander un devis</a></li>
+          <li><a class="mobile-only btn btn-primary" href="contact.html#formulaire">Demander un devis</a></li>
         </ul>
       </nav>
       <div class="nav-cta">
@@ -67,189 +67,140 @@
   <main id="main">
     <!-- Hero -->
     <section class="hero">
-      <div class="hero-media">
-        <img src="assets/img/hero.jpg" alt="" width="1920" height="1080" fetchpriority="high">
-      </div>
-      <div class="container hero-inner">
-        <span class="hero-badge">
-          <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-          Experts en recyclage en toute sécurité
-        </span>
-        <h1>Déposez vos déchets, repartez avec des <em>matériaux recyclés</em></h1>
+      <div class="hero-text">
+        <p class="hero-kicker">Experts en recyclage en toute sécurité</p>
+        <h1>Déposez vos déchets, repartez avec des matériaux recyclés</h1>
         <p class="hero-sub">Bétons, bricaillons, tarmac, terres excavées. On les reçoit sur nos sites, on les concasse et on les revend en granulats recyclés pour vos chantiers.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="contact.html#formulaire">
-            Demander un devis
-            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-          </a>
+          <a class="btn btn-primary" href="contact.html#formulaire">Demander un devis</a>
           <a class="btn btn-ghost" href="#dechets-acceptes">Voir les déchets acceptés</a>
         </div>
         <dl class="hero-stats">
-          <div><dt class="sr-only">Expérience</dt><dd style="margin:0"><strong>+30 ans</strong><span>d'expertise</span></dd></div>
-          <div><dt class="sr-only">Sites</dt><dd style="margin:0"><strong>4 sites</strong><span>de versage en Wallonie</span></dd></div>
-          <div><dt class="sr-only">Capacité</dt><dd style="margin:0"><strong>±2000 t</strong><span>acceptées par jour</span></dd></div>
+          <div><dt class="sr-only">Expérience</dt><dd><strong>+30 ans</strong><span>d'expertise</span></dd></div>
+          <div><dt class="sr-only">Sites</dt><dd><strong>4 sites</strong><span>de versage en Wallonie</span></dd></div>
+          <div><dt class="sr-only">Capacité</dt><dd><strong>±2000 t</strong><span>acceptées par jour</span></dd></div>
         </dl>
+      </div>
+      <div class="hero-media">
+        <img src="assets/img/hero.jpg" alt="Vue aérienne du site Recymo à Braives" width="1920" height="1080" fetchpriority="high">
       </div>
     </section>
 
     <!-- Déchets acceptés -->
     <section class="section" id="dechets-acceptes">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow">Déchets acceptés</span>
+      <div class="container section-grid">
+        <p class="section-label">Déchets acceptés</p>
+        <div class="section-body">
           <h2 class="h2">Ce que vous pouvez déposer chez nous</h2>
           <p class="lead">Les déchets inertes de chantier que nous acceptons sur nos sites.</p>
-        </div>
-        <ul class="waste-grid">
-          <li class="waste-card reveal"><span class="icon"><img src="assets/img/icons/terres.png" alt="" width="64" height="64" loading="lazy"></span><h3>Terres</h3></li>
-          <li class="waste-card reveal reveal-d1"><span class="icon"><img src="assets/img/icons/dechet_construction.png" alt="" width="64" height="64" loading="lazy"></span><h3>Déchets de construction</h3></li>
-          <li class="waste-card reveal reveal-d2"><span class="icon"><img src="assets/img/icons/dechet_tarmac.png" alt="" width="64" height="64" loading="lazy"></span><h3>Déchets à base de tarmac</h3></li>
-          <li class="waste-card reveal"><span class="icon"><img src="assets/img/icons/betons_armes.png" alt="" width="64" height="64" loading="lazy"></span><h3>Bétons armés</h3></li>
-          <li class="waste-card reveal reveal-d1"><span class="icon"><img src="assets/img/icons/beton_non_arme.png" alt="" width="64" height="64" loading="lazy"></span><h3>Bétons non armés</h3></li>
-          <li class="waste-card reveal reveal-d2"><span class="icon"><img src="assets/img/icons/terre_vegetale.png" alt="" width="64" height="64" loading="lazy"></span><h3>Terre végétale</h3></li>
-        </ul>
-
-        <div class="help-card reveal">
-          <span class="help-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg></span>
-          <div>
-            <h3>Besoin d'aide pour les terres excavées ?</h3>
-            <p>Retrouvez les informations officielles sur la gestion des terres sur <a href="https://walterre.be/" target="_blank" rel="noopener">Walterre</a>, ou contactez Christophe Matthys, notre commercial terres.</p>
-          </div>
-          <div class="actions">
-            <a class="btn btn-outline btn-sm" href="https://walterre.be/" target="_blank" rel="noopener">Walterre ↗</a>
-            <a class="btn btn-dark btn-sm" href="contact.html#formulaire">Nous contacter</a>
+          <ul class="waste-grid">
+            <li class="waste-card"><span class="icon"><img src="assets/img/icons/terres.png" alt="" width="56" height="56" loading="lazy"></span><h3>Terres</h3></li>
+            <li class="waste-card"><span class="icon"><img src="assets/img/icons/dechet_construction.png" alt="" width="56" height="56" loading="lazy"></span><h3>Déchets de construction</h3></li>
+            <li class="waste-card"><span class="icon"><img src="assets/img/icons/dechet_tarmac.png" alt="" width="56" height="56" loading="lazy"></span><h3>Déchets à base de tarmac</h3></li>
+            <li class="waste-card"><span class="icon"><img src="assets/img/icons/betons_armes.png" alt="" width="56" height="56" loading="lazy"></span><h3>Bétons armés</h3></li>
+            <li class="waste-card"><span class="icon"><img src="assets/img/icons/beton_non_arme.png" alt="" width="56" height="56" loading="lazy"></span><h3>Bétons non armés</h3></li>
+            <li class="waste-card"><span class="icon"><img src="assets/img/icons/terre_vegetale.png" alt="" width="56" height="56" loading="lazy"></span><h3>Terre végétale</h3></li>
+          </ul>
+          <div class="help-card">
+            <div>
+              <h3>Besoin d'aide pour les terres excavées ?</h3>
+              <p>Les règles officielles de gestion des terres sont sur le site de <a href="https://walterre.be/" target="_blank" rel="noopener">Walterre</a>. Vous pouvez aussi contacter Christophe Matthys, notre commercial terres.</p>
+            </div>
+            <div class="actions">
+              <a class="btn btn-outline btn-sm" href="https://walterre.be/" target="_blank" rel="noopener">Walterre</a>
+              <a class="btn btn-dark btn-sm" href="contact.html#formulaire">Nous contacter</a>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Matériaux -->
-    <section class="section bg-sand" id="services">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow">Nos services &amp; matériaux</span>
+    <!-- Services -->
+    <section class="section bg-surface" id="services">
+      <div class="container section-grid">
+        <p class="section-label">Services &amp; matériaux</p>
+        <div class="section-body">
           <h2 class="h2">Nous avons la solution</h2>
           <p class="lead">Vous pouvez déposer vos déchets et repartir avec des granulats, au même endroit.</p>
-        </div>
-        <div class="bento">
-          <a class="tile tile-lg tile-dark reveal" href="tarifs.html#versage-classe3">
-            <span class="tile-icon"><img src="assets/img/icons/dechet_construction.png" alt="" width="46" height="46" loading="lazy"></span>
-            <div>
-              <h3>Versage de classe 3</h3>
-              <p>Bétons, bricaillons mixtes et autres matériaux de construction.</p>
-              <span class="more">Voir les tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
-            </div>
-          </a>
-          <a class="tile tile-lg reveal reveal-d1" href="tarifs.html#versage-terre">
-            <span class="tile-icon"><img src="assets/img/icons/terres.png" alt="" width="46" height="46" loading="lazy"></span>
-            <div>
-              <h3>Versage terre</h3>
-              <p>Acceptation de terres de type I à V sur nos différents sites.</p>
-              <span class="more">Voir les sites &amp; tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
-            </div>
-          </a>
-          <a class="tile tile-md reveal" href="tarifs.html#granulats">
-            <span class="tile-icon"><img src="assets/img/icons/granulat_beton.png" alt="" width="46" height="46" loading="lazy"></span>
-            <div>
-              <h3>Granulats</h3>
-              <p>Mixte, tarmac, béton et sable pour vos projets.</p>
-              <span class="more">Voir les tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
-            </div>
-          </a>
-          <a class="tile tile-md reveal reveal-d1" href="tarifs.html#beton-stabilise">
-            <span class="tile-icon"><img src="assets/img/icons/stabilise_beton_maigre.png" alt="" width="46" height="46" loading="lazy"></span>
-            <div>
-              <h3>Béton et stabilisé</h3>
-              <p>Recystab-e pour fondations et stabilisation.</p>
-              <span class="more">Voir les tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
-            </div>
-          </a>
-          <a class="tile tile-md reveal reveal-d2" href="tarifs.html#synthetiques-enterres">
-            <span class="tile-icon"><img src="assets/img/icons/tuyaux.png" alt="" width="46" height="46" loading="lazy"></span>
-            <div>
-              <h3>Synthétiques enterrés</h3>
-              <p>Tuyaux PVC, drains, gaines et géotextiles.</p>
-              <span class="more">Voir les tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
-            </div>
-          </a>
+          <div class="service-list">
+            <a class="service-row" href="tarifs.html#versage-classe3">
+              <span class="idx">01</span>
+              <img src="assets/img/icons/dechet_construction.png" alt="" width="56" height="56" loading="lazy">
+              <div><h3>Versage de classe 3</h3><p>Bétons, bricaillons mixtes et autres matériaux de construction.</p></div>
+              <span class="go">Tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="service-row" href="tarifs.html#versage-terre">
+              <span class="idx">02</span>
+              <img src="assets/img/icons/terres.png" alt="" width="56" height="56" loading="lazy">
+              <div><h3>Versage terre</h3><p>Terres de type I à V acceptées sur nos différents sites.</p></div>
+              <span class="go">Sites et tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="service-row" href="tarifs.html#granulats">
+              <span class="idx">03</span>
+              <img src="assets/img/icons/granulat_beton.png" alt="" width="56" height="56" loading="lazy">
+              <div><h3>Granulats</h3><p>Mixte, tarmac, béton et sable pour vos projets.</p></div>
+              <span class="go">Tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="service-row" href="tarifs.html#beton-stabilise">
+              <span class="idx">04</span>
+              <img src="assets/img/icons/stabilise_beton_maigre.png" alt="" width="56" height="56" loading="lazy">
+              <div><h3>Béton et stabilisé</h3><p>Recystab-e pour fondations et stabilisation.</p></div>
+              <span class="go">Tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="service-row" href="tarifs.html#synthetiques-enterres">
+              <span class="idx">05</span>
+              <img src="assets/img/icons/tuyaux.png" alt="" width="56" height="56" loading="lazy">
+              <div><h3>Synthétiques enterrés</h3><p>Tuyaux PVC, drains, gaines et géotextiles.</p></div>
+              <span class="go">Tarifs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </a>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Pourquoi nous -->
     <section class="section">
-      <div class="container split">
-        <div class="split-media reveal">
-          <img src="assets/img/worker.jpg" alt="Un opérateur Recymo sur le site de Braives" width="1000" height="667" loading="lazy">
-          <div class="float-card">
-            <strong>+30</strong>
-            <span>années d'expertise<br>dans le recyclage</span>
-          </div>
-        </div>
-        <div class="reveal reveal-d1">
-          <span class="eyebrow">Pourquoi nous choisir</span>
+      <div class="container section-grid">
+        <p class="section-label">Pourquoi nous choisir</p>
+        <div class="section-body">
           <h2 class="h2">Pourquoi travailler avec Recymo</h2>
-          <ul class="checklist">
-            <li>
-              <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-              <div><strong>Expertise de +30 ans</strong><span>Le traitement des déchets inertes de chantier, c'est notre métier.</span></div>
-            </li>
-            <li>
-              <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-              <div><strong>Certification &amp; respect des normes</strong><span>Granulats conformes à la norme NBN EN 13242. Les déclarations de performances sont en ligne.</span></div>
-            </li>
-            <li>
-              <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-              <div><strong>Intervention rapide en Belgique</strong><span>Quatre sites de versage en Wallonie, tous équipés d'une bascule.</span></div>
-            </li>
-          </ul>
-          <div style="margin-top:28px; display:flex; flex-wrap:wrap; gap:12px">
-            <a class="btn btn-dark" href="fiches-techniques.html">Nos fiches techniques</a>
+          <div class="why">
+            <div class="why-media">
+              <img src="assets/img/worker.jpg" alt="Un opérateur Recymo sur le site de Braives" width="1000" height="667" loading="lazy">
+            </div>
+            <div>
+              <ul class="facts">
+                <li><strong>Expertise de +30 ans</strong><span>Le traitement des déchets inertes de chantier, c'est notre métier.</span></li>
+                <li><strong>Certification &amp; respect des normes</strong><span>Granulats conformes à la norme NBN EN 13242. Les déclarations de performances sont en ligne.</span></li>
+                <li><strong>Intervention rapide en Belgique</strong><span>Quatre sites de versage en Wallonie, tous équipés d'une bascule.</span></li>
+              </ul>
+              <a class="btn btn-outline" href="fiches-techniques.html">Nos fiches techniques</a>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Comment ça marche -->
-    <section class="section bg-dark">
-      <div class="container">
-        <div class="section-head center reveal">
-          <span class="eyebrow">Comment ça marche</span>
+    <!-- Étapes -->
+    <section class="section dark">
+      <div class="container section-grid">
+        <p class="section-label">Comment ça marche</p>
+        <div class="section-body">
           <h2 class="h2">Comment ça se passe</h2>
+          <ol class="steps">
+            <li class="step"><span class="step-num">1</span><h3>Prise de contact</h3><p>Vous nous dites ce que vous avez à déposer. On vous indique le site et le tarif.</p></li>
+            <li class="step"><span class="step-num">2</span><h3>Vous déposez vos déchets</h3><p>Le camion est pesé à l'entrée. On vous envoie le relevé si vous le demandez.</p></li>
+            <li class="step"><span class="step-num">3</span><h3>Tri &amp; traitements</h3><p>Les matériaux sont concassés, criblés puis contrôlés.</p></li>
+            <li class="step"><span class="step-num">4</span><h3>Recyclage &amp; valorisation</h3><p>Ils repartent en granulats pour d'autres chantiers.</p></li>
+          </ol>
         </div>
-        <ol class="steps">
-          <li class="step reveal">
-            <span class="step-num">ÉTAPE 01</span>
-            <span class="step-icon"><img src="assets/img/icons/prise_de_contact.png" alt="" width="50" height="50" loading="lazy"></span>
-            <h3>Prise de contact</h3>
-            <p>Vous nous dites ce que vous avez à déposer. On vous indique le site et le tarif.</p>
-          </li>
-          <li class="step reveal reveal-d1">
-            <span class="step-num">ÉTAPE 02</span>
-            <span class="step-icon"><img src="assets/img/icons/depose_dechet.png" alt="" width="50" height="50" loading="lazy"></span>
-            <h3>Vous déposez vos déchets</h3>
-            <p>Le camion est pesé à l'entrée. On vous envoie le relevé si vous le demandez.</p>
-          </li>
-          <li class="step reveal reveal-d2">
-            <span class="step-num">ÉTAPE 03</span>
-            <span class="step-icon"><img src="assets/img/icons/tri_traitements.png" alt="" width="50" height="50" loading="lazy"></span>
-            <h3>Tri &amp; traitements</h3>
-            <p>Les matériaux sont concassés, criblés puis contrôlés.</p>
-          </li>
-          <li class="step reveal reveal-d3">
-            <span class="step-num">ÉTAPE 04</span>
-            <span class="step-icon"><img src="assets/img/icons/recyclage.png" alt="" width="50" height="50" loading="lazy"></span>
-            <h3>Recyclage &amp; valorisation</h3>
-            <p>Ils repartent en granulats pour d'autres chantiers.</p>
-          </li>
-        </ol>
       </div>
     </section>
 
     <!-- CTA -->
     <section class="section-tight">
       <div class="container">
-        <div class="cta-band reveal">
+        <div class="cta-band">
           <div>
             <h2>Vous avez des déchets industriels ?</h2>
             <p>Appelez-nous ou envoyez une demande de devis.</p>
@@ -263,62 +214,62 @@
     </section>
 
     <!-- À venir -->
-    <section class="section-tight">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow">À venir chez Recymo</span>
+    <section class="section">
+      <div class="container section-grid">
+        <p class="section-label">À venir chez Recymo</p>
+        <div class="section-body">
           <h2 class="h2">Nos prochains projets</h2>
-        </div>
-        <div class="upcoming">
-          <article class="up-card reveal">
-            <img src="assets/img/icons/coming1.png" alt="" width="120" height="120" loading="lazy">
-            <div>
-              <span class="tag tag-soon">Bientôt</span>
-              <h3>Partenariat avec un réseau de matériaux</h3>
-              <p>Pierres, tuyaux, blocs, géotextiles…</p>
-            </div>
-          </article>
-          <article class="up-card reveal reveal-d1">
-            <img src="assets/img/icons/coming2.png" alt="" width="120" height="120" loading="lazy">
-            <div>
-              <span class="tag tag-soon">En projet</span>
-              <h3>Centrale à béton</h3>
-              <p>Pour la production de stabilisé et de béton maigre.</p>
-            </div>
-          </article>
+          <div class="upcoming">
+            <article class="up-card">
+              <img src="assets/img/icons/coming1.png" alt="" width="96" height="96" loading="lazy">
+              <div>
+                <span class="tag tag-soon">Bientôt</span>
+                <h3>Partenariat avec un réseau de matériaux</h3>
+                <p>Pierres, tuyaux, blocs, géotextiles…</p>
+              </div>
+            </article>
+            <article class="up-card">
+              <img src="assets/img/icons/coming2.png" alt="" width="96" height="96" loading="lazy">
+              <div>
+                <span class="tag tag-soon">En projet</span>
+                <h3>Centrale à béton</h3>
+                <p>Pour la production de stabilisé et de béton maigre.</p>
+              </div>
+            </article>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Contact -->
-    <section class="section" id="contact">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow">Contactez-nous</span>
+    <section class="section bg-surface" id="contact">
+      <div class="container section-grid">
+        <p class="section-label">Contactez-nous</p>
+        <div class="section-body">
           <h2 class="h2">Où nous trouver</h2>
-        </div>
-        <div class="contact-grid">
-          <div class="info-list reveal">
-            <a class="info-item" href="https://www.openstreetmap.org/?mlat=50.6711&amp;mlon=5.1771#map=16/50.6711/5.1771" target="_blank" rel="noopener">
-              <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
-              <span><small>Adresse</small><strong>Rue Roua 6, 4260 Braives</strong></span>
-            </a>
-            <a class="info-item" href="tel:+3285217445">
-              <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-              <span><small>Téléphone</small><strong>085 21 74 45</strong></span>
-            </a>
-            <a class="info-item" href="mailto:info@recymo.be">
-              <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
-              <span><small>Email</small><strong>info@recymo.be</strong></span>
-            </a>
-            <div class="info-item">
-              <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span><small>Horaires</small><strong>Lun–Ven 7h–17h · Sam 8h–12h</strong></span>
+          <div class="contact-grid">
+            <div class="info-list">
+              <a class="info-item" href="https://www.openstreetmap.org/?mlat=50.6711&amp;mlon=5.1771#map=16/50.6711/5.1771" target="_blank" rel="noopener">
+                <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                <span><small>Adresse</small><strong>Rue Roua 6, 4260 Braives</strong></span>
+              </a>
+              <a class="info-item" href="tel:+3285217445">
+                <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+                <span><small>Téléphone</small><strong>085 21 74 45</strong></span>
+              </a>
+              <a class="info-item" href="mailto:info@recymo.be">
+                <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16"/><path d="m22 6-10 7L2 6"/></svg></span>
+                <span><small>Email</small><strong>info@recymo.be</strong></span>
+              </a>
+              <div class="info-item">
+                <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+                <span><small>Horaires</small><strong>Lun–ven 7h–17h · sam 8h–12h</strong></span>
+              </div>
+              <a class="btn btn-primary" href="contact.html#formulaire">Notre formulaire de contact</a>
             </div>
-            <a class="btn btn-primary" href="contact.html#formulaire" style="margin-top:4px">Notre formulaire de contact</a>
-          </div>
-          <div class="map-frame reveal reveal-d1">
-            <iframe title="Carte : Recymo, Rue Roua 6, 4260 Braives" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=5.1621%2C50.6651%2C5.1921%2C50.6771&amp;layer=mapnik&amp;marker=50.6711%2C5.1771"></iframe>
+            <div class="map-frame">
+              <iframe title="Carte : Recymo, Rue Roua 6, 4260 Braives" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=5.1621%2C50.6651%2C5.1921%2C50.6771&amp;layer=mapnik&amp;marker=50.6711%2C5.1771"></iframe>
+            </div>
           </div>
         </div>
       </div>
