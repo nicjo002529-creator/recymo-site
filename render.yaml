@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: recymo
+    runtime: static
+    plan: free
+    buildCommand: "echo static site"
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=604800
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    routes:
+      # Anciennes URLs du site (sans .html)
+      - type: rewrite
+        source: /tarifs
+        destination: /tarifs.html
+      - type: rewrite
+        source: /fiches-techniques
+        destination: /fiches-techniques.html
+      - type: rewrite
+        source: /contact
+        destination: /contact.html
+      - type: rewrite
+        source: /mentions-legales
+        destination: /mentions-legales.html
