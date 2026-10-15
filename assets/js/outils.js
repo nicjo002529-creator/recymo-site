@@ -7,6 +7,7 @@
   var TVA = 0.21;
   var SUPPLEMENT_PETIT = 7.5;   // par versage ou enlèvement de moins de 5 tonnes
   var SEUIL_PETIT = 5;
+  var reduit = function () { return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); };
 
   /* ---------- Sites et horaires ---------- */
   // Jours : 1 = lundi … 6 = samedi, 0 = dimanche. Heures en minutes.
@@ -207,6 +208,10 @@
         '<button type="button" class="calc-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
       if (code) li.querySelector("select").value = code;
       if (quantite) li.querySelector("input").value = quantite;
+      if (rows.children.length) {
+        li.classList.add("is-new");
+        li.addEventListener("animationend", function () { li.classList.remove("is-new"); }, { once: true });
+      }
       rows.appendChild(li);
       numeroter();
       return li;
@@ -286,19 +291,45 @@
         (Object.keys(onglets).length > 1 ? " Tarifs détaillés : " : " Tarif détaillé : ") + liens + ".</p>" +
         '<div class="calc-actions"><a class="btn btn-primary" href="' + devis + '">' + (detail ? "Demander un devis" : "Demander un prix") + '</a><a class="btn btn-outline" href="tel:+3285217445">085 21 74 45</a></div>';
       out.innerHTML = html;
+      animerTotal(detail ? total : null);
+    };
+
+    // Le total défile jusqu'à sa nouvelle valeur ; une nouvelle saisie annule l'animation en cours
+    var dernierTotal = null, anim = 0;
+    var animerTotal = function (valeur) {
+      var el = out.querySelector(".calc-total");
+      var depart = dernierTotal;
+      dernierTotal = valeur;
+      cancelAnimationFrame(anim);
+      if (!el || valeur === null || depart === null || depart === valeur || reduit()) return;
+      var span = el.querySelector("span").outerHTML;
+      var t0 = performance.now(), duree = 450;
+      el.classList.add("is-updated");
+      var pas = function (t) {
+        var p = Math.min(1, (t - t0) / duree);
+        var e = 1 - Math.pow(1 - p, 3);
+        el.innerHTML = euro(depart + (valeur - depart) * e) + " " + span;
+        if (p < 1) anim = requestAnimationFrame(pas);
+      };
+      anim = requestAnimationFrame(pas);
     };
 
     rows.addEventListener("change", calculer);
     rows.addEventListener("input", calculer);
     rows.addEventListener("click", function (e) {
       var del = e.target.closest(".calc-del");
-      if (!del) return;
+      if (!del || del.closest(".is-leaving")) return;
       var li = del.closest(".calc-row");
       var prev = li.previousElementSibling || li.nextElementSibling;
-      li.remove();
-      numeroter();
-      calculer();
-      if (prev) prev.querySelector("select").focus();
+      var retirer = function () {
+        li.remove();
+        numeroter();
+        calculer();
+        if (prev) prev.querySelector("select").focus();
+      };
+      if (reduit()) { retirer(); return; }
+      li.classList.add("is-leaving");
+      setTimeout(retirer, 150);
     });
     addBtn.addEventListener("click", function () {
       ajouterLigne().querySelector("select").focus();
@@ -336,9 +367,19 @@
   if (finder) {
     var input = finder.querySelector("input");
     var res = finder.querySelector(".finder-results");
+    // Les résultats n'apparaissent en fondu que lorsque la liste change vraiment
+    var derniere = "";
+    var montrer = function (cle, html) {
+      if (cle === derniere) { res.classList.remove("is-new"); res.innerHTML = html; return; }
+      derniere = cle;
+      res.classList.remove("is-new");
+      res.innerHTML = html;
+      void res.offsetWidth;
+      if (html) res.classList.add("is-new");
+    };
     var chercher = function () {
       var q = plain(input.value);
-      if (q.length < 2) { res.innerHTML = ""; return; }
+      if (q.length < 2) { montrer("", ""); return; }
       var mots = q.split(/\s+/);
       var trouves = DECHETS.filter(function (d) {
         var hay = plain(d.nom) + " " + d.mots;
@@ -346,15 +387,16 @@
       });
       trouves.sort(function (a, b) { return (plain(b.nom).indexOf(q) !== -1) - (plain(a.nom).indexOf(q) !== -1); });
       if (!trouves.length) {
-        res.innerHTML =
+        montrer("?",
           '<div class="finder-item is-unknown"><p><strong>« ' + input.value.replace(/</g, "&lt;") + " » n'est pas dans notre liste.</strong> " +
           "Nous acceptons les déchets inertes de chantier et les terres. Appelez-nous avant de venir, on vous dira tout de suite si c'est possible.</p>" +
-          '<a class="btn btn-dark btn-sm" href="tel:+3285217445">Appeler le 085 21 74 45</a></div>';
+          '<a class="btn btn-dark btn-sm" href="tel:+3285217445">Appeler le 085 21 74 45</a></div>');
         return;
       }
-      res.innerHTML = trouves.slice(0, 4).map(function (d) {
+      trouves = trouves.slice(0, 4);
+      montrer(trouves.map(function (d) { return d.nom; }).join("|"), trouves.map(function (d) {
         return '<div class="finder-item"><p><strong>' + d.nom + "</strong> " + d.rep + '</p><a href="tarifs.html#' + d.lien + '">Voir le tarif</a></div>';
-      }).join("");
+      }).join(""));
     };
     input.addEventListener("input", chercher);
     finder.addEventListener("submit", function (e) { e.preventDefault(); chercher(); });
