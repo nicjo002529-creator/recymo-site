@@ -16,7 +16,7 @@
   var bouton = form.querySelector("button");
   var etat = zone.querySelector(".chat-etat");
   var lienZone = zone.querySelector(".chat-lien");
-  var id = null, attente = false, relecture = null, signature = "";
+  var id = null, attente = false, relecture = null, signature = "", flux = null;
 
   var lire = function () { try { return localStorage.getItem(CLE); } catch (e) { return null; } };
   var garder = function (v) { try { if (v) localStorage.setItem(CLE, v); else localStorage.removeItem(CLE); } catch (e) {} };
@@ -197,8 +197,10 @@
       lienZone.querySelector("input").value = location.origin + location.pathname + "?conv=" + c.id + "#chat";
     }
     // Relecture toutes les 30 secondes tant que la réponse de l'équipe est attendue
+    // Réponse de l'équipe attendue : écoute en direct, et relecture de secours toutes les 15 secondes
     clearInterval(relecture);
-    if (c.statut === "envoye") relecture = setInterval(function () { if (!document.hidden && !attente) charger(); }, 30000);
+    if (c.statut === "envoye") { ecouter(); relecture = setInterval(function () { if (!attente) charger(); }, 15000); }
+    else if (c.statut === "valide" || c.statut === "refuse") couper();
   };
 
   var envoyer = function (corps, texteClient) {
@@ -228,6 +230,19 @@
     });
   };
 
+  // Flux en direct : le serveur envoie la conversation dès qu'elle change (décision de NewTonne)
+  var ecouter = function () {
+    if (flux || !id || !window.EventSource) return;
+    flux = new EventSource(API + "/chat/flux?id=" + encodeURIComponent(id));
+    flux.addEventListener("maj", function (e) {
+      if (attente) return;
+      try { afficher(JSON.parse(e.data)); } catch (err) {}
+    });
+  };
+  var couper = function () { if (flux) { flux.close(); flux = null; } };
+  // Retour sur l'onglet (par exemple après avoir validé dans NewTonne) : relecture immédiate
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && id && !attente) charger(); });
+
   var charger = function () {
     return appel("GET", "/chat?id=" + encodeURIComponent(id)).then(afficher, function (e) {
       if (e.status === 404) { garder(null); id = null; return demarrer(); }
@@ -254,7 +269,7 @@
     }, function () { input.select(); });
   });
   zone.querySelector(".chat-nouveau").addEventListener("click", function () {
-    garder(null); id = null; signature = ""; lienZone.hidden = true; clearInterval(relecture);
+    garder(null); id = null; signature = ""; lienZone.hidden = true; clearInterval(relecture); couper();
     history.replaceState(null, "", location.pathname + "#chat");
     demarrer();
   });

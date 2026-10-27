@@ -693,9 +693,20 @@ const deciderChat = async (c, dec) => {
     c.messages.push({ role: "equipe", texte, at: new Date().toISOString(), ...(dec.status === "valide" && dec.pdf_url ? { pdf: true } : {}) });
     n.annonce = new Date().toISOString();
   }
+  diffuserChat(c); // tout de suite aux pages ouvertes, avant l'enregistrement
   await marquerChat(c, true);
   return true;
 };
+
+// Flux en direct (Server-Sent Events) : les pages ouvertes sur une conversation reçoivent chaque changement
+const abonnes = new Map(); // id de conversation → ensemble de réponses HTTP ouvertes
+const diffuserChat = (c) => {
+  const liste = abonnes.get(c.id);
+  if (!liste || !liste.size) return;
+  const message = "event: maj\ndata: " + JSON.stringify(chatPublic(c)) + "\n\n";
+  for (const res of liste) { try { res.write(message); } catch {} }
+};
+setInterval(() => { for (const liste of abonnes.values()) for (const res of liste) { try { res.write(": ping\n\n"); } catch {} } }, 20000).unref();
 
 const chatPublic = (c) => {
   const n = c.newtonne;
@@ -1003,10 +1014,28 @@ const routes = {
       else c.newtonne = Object.assign(c.newtonne || {}, { statut: "echec", essais: 0, erreur: "NewTonne n'est pas configuré" });
     }
     await marquerChat(c, !!rep.envoyer);
+    diffuserChat(c); // autres onglets ouverts sur la même conversation
     return chatPublic(c);
   },
 
-  // Chat : relire la conversation (la page la relit toutes les 30 secondes)
+  // Chat : flux en direct d'une conversation (la réponse de l'équipe arrive sans recharger la page)
+  "GET /chat/flux": async (req, url, res) => {
+    const c = await chargerChat(String(url.searchParams.get("id") || ""));
+    if (!c) throw Object.assign(new Error("Conversation introuvable."), { status: 404 });
+    if (!limite("flux:" + ipDe(req), 60, 10 * 60000)) throw Object.assign(new Error("Trop de connexions."), { status: 429 });
+    res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-transform", Connection: "keep-alive", "X-Accel-Buffering": "no" });
+    res.write("retry: 5000\n\n");
+    res.write("event: maj\ndata: " + JSON.stringify(chatPublic(c)) + "\n\n");
+    if (!abonnes.has(c.id)) abonnes.set(c.id, new Set());
+    const liste = abonnes.get(c.id);
+    // Au plus 5 onglets ouverts par conversation
+    if (liste.size >= 5) { const ancien = liste.values().next().value; liste.delete(ancien); try { ancien.end(); } catch {} }
+    liste.add(res);
+    req.on("close", () => { liste.delete(res); if (!liste.size) abonnes.delete(c.id); });
+    return undefined;
+  },
+
+  // Chat : relire la conversation (secours si le flux en direct est coupé)
   "GET /chat": async (req, url) => {
     const c = await chargerChat(String(url.searchParams.get("id") || ""));
     if (!c) throw Object.assign(new Error("Conversation introuvable."), { status: 404 });
