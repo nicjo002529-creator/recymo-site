@@ -65,6 +65,32 @@
       </div>
     </section>
 
+    <section class="section-tight chat-section" id="chat" hidden aria-labelledby="chat-titre">
+      <div class="container">
+        <div class="chat">
+          <div class="chat-tete">
+            <div>
+              <h2 id="chat-titre">Uw offerte via de chat</h2>
+              <p>Onze assistent stelt u de juiste vragen. Daarna keurt een medewerker de prijs goed, en het antwoord verschijnt hier.</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm chat-nouveau">Nieuw gesprek</button>
+          </div>
+          <ol class="chat-messages" aria-live="polite"></ol>
+          <form class="chat-form">
+            <label class="sr-only" for="chat-texte">Uw bericht</label>
+            <textarea id="chat-texte" rows="2" maxlength="2000" placeholder="Bv.: 30 ton gewapend beton storten in Braives"></textarea>
+            <button class="btn btn-primary" type="submit">Versturen</button>
+          </form>
+          <p class="chat-etat" role="status"></p>
+          <div class="chat-lien" hidden>
+            <label for="chat-url">Bewaar deze link om het gesprek en het antwoord terug te vinden:</label>
+            <div><input id="chat-url" type="text" readonly><button type="button" class="btn btn-outline btn-sm chat-copier">Kopiëren</button></div>
+          </div>
+          <p class="chat-rgpd">Uw berichten worden verwerkt door een automatische assistent (artificiële intelligentie) en doorgestuurd naar het team van Recymo. De vermelde prijzen zijn indicatief. Zie de <a href="juridische-informatie.html">juridische informatie</a>. Liever een formulier? Dat staat hieronder.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="section-tight">
       <div class="container contact-grid form-layout">
         <div class="form-card" id="formulaire">
@@ -308,5 +334,6 @@
 
   <script src="../assets/js/main.js" defer></script>
   <script src="../assets/js/outils.js" defer></script>
+  <script src="../assets/js/chat.js" defer></script>
 </body>
 </html>

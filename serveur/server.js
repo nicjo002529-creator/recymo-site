@@ -22,6 +22,10 @@
 //   EMAIL_EXPEDITEUR         adresse d'envoi validée dans Brevo (ex. devis@recymo.be)
 //   EMAIL_COPIE              copie cachée de chaque e-mail envoyé au client (facultatif, ex. info@recymo.be)
 //   SMS_EXPEDITEUR           nom affiché des SMS (ex. Recymo) ; absent : pas de SMS
+// Chat de devis sur le site (IA au format OpenAI : Groq, Gemini, OpenRouter, Mistral, Anthropic…) — facultatif :
+//   IA_URL                   adresse de base de l'API (ex. https://api.groq.com/openai/v1)
+//   IA_API_KEY               clé de l'API
+//   IA_MODELE                nom du modèle (ex. llama-3.3-70b-versatile)
 "use strict";
 const http = require("node:http");
 const crypto = require("node:crypto");
@@ -450,6 +454,9 @@ const informerClient = async (d, dec) => {
 const traiterDecision = async (dec) => {
   if (!dec || !["valide", "refuse", "abandonne"].includes(dec.status)) return false;
   const id = String(dec.external_id || "").replace(/^recymo-/, "");
+  // Conversation du chat : la réponse est ajoutée dans la conversation (pas d'e-mail)
+  const chat = await chargerChat(id);
+  if (chat) return deciderChat(chat, dec);
   const d = (await chargerDemandes()).find((x) => x.id === id);
   if (!d) return false;
   const n = d.newtonne || (d.newtonne = { essais: 0 });
@@ -496,6 +503,15 @@ const tacheNewtonne = async () => {
       const { status, data } = await appelNewtonne("GET", "/api/devis/" + encodeURIComponent("recymo-" + d.id) + "/").catch(() => ({ status: 0 }));
       if (status === 200) await traiterDecision(data);
     }
+    // Conversations du chat : renvoi des échecs, puis vérification des devis transmis
+    for (const e of (await chargerIndexChats()).filter((x) => ["echec", "envoye"].includes(x.statut) && new Date(x.cree) >= limite60j)) {
+      const c = await chargerChat(e.id);
+      if (!c || !c.newtonne) continue;
+      if (c.newtonne.statut === "echec" && (c.newtonne.essais || 0) < ESSAIS_MAX) { await envoyerChatNewtonne(c); marquerChat(c); continue; }
+      if (c.newtonne.statut !== "envoye") continue;
+      const { status, data } = await appelNewtonne("GET", "/api/devis/" + encodeURIComponent("recymo-" + c.id) + "/").catch(() => ({ status: 0 }));
+      if (status === 200) await traiterDecision(data);
+    }
   } catch (e) { console.error("Tâche NewTonne :", e.message); }
   tacheEnCours = false;
 };
@@ -503,6 +519,243 @@ if (NEWTONNE_ACTIF) {
   setTimeout(tacheNewtonne, 30000).unref();
   setInterval(tacheNewtonne, 30 * 60000).unref();
 }
+
+/* ------------------------------------------------------------ Chat de devis */
+// Une IA discute avec le client sur la page Contact et remplit une fiche (contact, site, matières, quantités).
+// Fiche complète : le devis part dans NewTonne (« à valider »). La décision de NewTonne est ensuite ajoutée
+// à la conversation, avec un lien vers le PDF servi par ce serveur. Les conversations sont dans le dépôt des
+// données (chats/<id>.json) ; l'identifiant aléatoire de la conversation sert de clé d'accès au client.
+
+const IA_URL = (process.env.IA_URL || "").replace(/\/+$/, "");
+const IA_CLE = process.env.IA_API_KEY || "";
+const IA_MODELE = process.env.IA_MODELE || "";
+const CHAT_ACTIF = !!(IA_URL && IA_CLE && IA_MODELE);
+const MAX_MESSAGES_CLIENT = 60;
+
+// Catalogue pour l'IA : code estimateur (prix lu dans tarifs.html), libellé
+const LIBELLES = {
+  B0: "Béton non armé, propre, sans terre ni fines (max 50 × 50 × 150 cm)", B1: "Béton légèrement armé, ou hors dimensions, ou avec fines",
+  B2: "Béton légèrement armé et/ou légèrement terreux", B3: "Béton fortement armé et/ou fortement terreux", B4: "Béton-tarmac terreux",
+  B5: "Béton très fortement armé, sale ou terreux", B6: "Petites pierrailles terreuses", POT: "Poteaux, hourdis, piquets et dalles de clôture",
+  BR0: "Bricaillons propres, sans fines et sans terre", BR1: "Bricaillons propres", BR2: "Bricaillons légèrement sales ou terreux",
+  BR3: "Bricaillons sales ou terreux", BR4: "Bricaillons très sales ou très terreux", BR5: "Bricaillons terreux, moins de 50 % de terres",
+  BR6: "Bricaillons terreux, plus de 50 % de terres", BR7: "Déchets classe 3 en mélange", BR8: "Ardoises naturelles", BR9: "Carrelages",
+  BR10: "Bricaillons terreux, moins de 25 % de bricaillons", YT: "Béton cellulaire (Ytong…)", TA: "Tarmac bitumineux", BT: "Béton avec tarmac",
+  TN: "Déchets classe 3 terreux non criblables",
+  "T-BR": "Terres type I à V avec analyse (RQT, CCQT), petits versages", "T-BR-GROS": "Terres type I à V avec analyse, gros chantier",
+  "T-FO": "Terres type I et II", "T-TR": "Terres type I et II (lundi à mercredi ; jeudi-vendredi sur demande, min. 1000 t/jour)",
+  "T-SA-13": "Terres type I à III sans analyse, moins de 400 m³", "T-SA-45": "Terres type IV à V sans analyse, moins de 400 m³",
+  "T-SA-AN": "Terres type I à V avec analyse (RQT, CCQT)", "T-SA-INV": "Terres avec plantes invasives (renouée du Japon…)",
+  "T-SA-AM": "Terres avec fibres d'amiante de 100 à 500 mg/kg MS",
+  "G-MIX": "Granulat mixte 0/63", "G-TA32": "Granulat tarmac 0/32", "G-TA63": "Granulat tarmac 0/63", "G-BE32": "Granulat béton 0/32",
+  "G-BE60": "Granulat béton 0/60", "G-BE2560": "Granulat béton 25/60", "G-SAB": "Sable jaune", "G-STAB": "Stabiter 0/32"
+};
+let prixSite = { lu: 0, prix: {} };
+const chargerPrix = async () => {
+  if (Date.now() - prixSite.lu < 3600000) return prixSite.prix;
+  const html = await lireTexte(SITE_REPO, "tarifs.html").catch(() => null);
+  const prix = {};
+  if (html) for (const m of html.matchAll(/data-edit="prix-([\w-]+)"[^>]*>([^<]*)</g)) prix[m[1]] = m[2].trim();
+  prixSite = { lu: Date.now(), prix };
+  return prix;
+};
+const NEWTONNE_VERS_CODE = Object.fromEntries(Object.keys(MATIERES_NEWTONNE).map((c) => [matiere(c).newtonne, c]));
+
+const NOMS_SITES = { BRAIVES: "Braives (Rue Roua 6, 4260 Braives)", FOSSES: "Fosses-la-Ville (Rue Adelin Beguin, 5070)",
+  SAMBREVILLE: "Sambreville (Rue de la Larronnerie, 5060)", TRANSINNES: "Transinnes (Grand Route, 6890 Libin)" };
+
+const consignes = async (chat) => {
+  const prix = await chargerPrix();
+  const parSite = {};
+  for (const code of Object.keys(MATIERES_NEWTONNE)) {
+    const m = matiere(code);
+    (parSite[m.site] = parSite[m.site] || []).push(`  ${m.newtonne} | ${m.operation === "retrait" ? "achat" : "dépôt"} | ${LIBELLES[code] || code} | ${prix[code] || "?"}${/€/.test(prix[code] || "") && !/\/t/.test(prix[code]) ? "/t" : ""} HTVA`);
+  }
+  const catalogue = Object.entries(parSite).map(([s, l]) => `${NOMS_SITES[s] || s} :\n${l.join("\n")}`).join("\n");
+  const etat = chat.newtonne && chat.newtonne.statut === "envoye" ? "La demande a DÉJÀ été transmise à l'équipe pour validation. Ne redemande pas les informations ; réponds aux questions et prends note des précisions."
+    : chat.newtonne && ["valide", "refuse"].includes(chat.newtonne.statut) ? "L'équipe a déjà donné sa réponse (voir la conversation). Pour une nouvelle demande, invite le client à recommencer une conversation."
+      : "La demande n'est pas encore transmise.";
+  return `Tu es l'assistant de devis de Recymo Wallonie SA, centre de recyclage de déchets de construction et de terres en Wallonie (Belgique). ` +
+    `Tu aides le client à préparer sa demande de devis. Un membre de l'équipe valide ensuite le prix dans le logiciel NewTonne, et la réponse arrive dans cette conversation.\n` +
+    `Langue : réponds dans la langue du client (${chat.langue === "nl" ? "néerlandais par défaut" : "français par défaut"}). Ton : professionnel, chaleureux, phrases courtes, pas de jargon inutile.\n\n` +
+    `OBJECTIF : remplir la fiche avec (1) nom, (2) e-mail ou téléphone, (3) société si professionnel, (4) ce que le client dépose ou achète, avec les codes du catalogue, ` +
+    `(5) quantités en tonnes (si le client parle en m³, convertis : terres ≈ 1,8 t/m³, béton/bricaillons ≈ 1,5 t/m³, en le disant), (6) site, (7) adresse du chantier si utile. ` +
+    `Pose UNE ou DEUX questions à la fois. Si la classe d'un béton ou de bricaillons n'est pas claire, pose des questions (armé ? terreux ? propre ?) ou propose d'envoyer une photo via le formulaire ou à info@recymo.be.\n\n` +
+    `RÈGLES : les prix que tu cites sont INDICATIFS (tarif HTVA, TVA 21 %) ; le prix définitif est fixé par l'équipe. Supplément de 7,50 € par versage ou enlèvement de moins de 5 tonnes. ` +
+    `Un versage non conforme est facturé comme classe 2. Terres : acceptation préalable par le service qualité ; les NMT doivent être communiquées avant les premiers versages ; ` +
+    `Braives accepte les terres type III à V uniquement avec analyse (RQT, CCQT). Les plantes invasives et l'amiante (100 à 500 mg/kg MS) : uniquement Sambreville. ` +
+    `Déchets de construction et granulats : Braives. Livraison des granulats possible sur demande. Horaires de Braives : lundi-vendredi 7h-17h, samedi 8h-12h. ` +
+    `Ne promets jamais un prix ferme, une date ou une acceptation. N'invente aucune matière, aucun site ni aucun prix : si ce n'est pas dans le catalogue, dis que l'équipe reviendra vers lui. ` +
+    `Pour tout autre sujet que Recymo, ramène poliment la conversation au devis. Téléphone : 085 21 74 45.\n\n` +
+    `CATALOGUE (code NewTonne | opération | description | prix indicatif) :\n${catalogue}\n\n` +
+    `ÉTAT : ${etat}\nFICHE ACTUELLE : ${JSON.stringify(chat.fiche || {})}\n\n` +
+    `FORMAT DE RÉPONSE : réponds UNIQUEMENT avec un objet JSON valide, sans texte autour :\n` +
+    `{"reponse": "ton message au client", "fiche": {"nom": "", "societe": "", "email": "", "telephone": "", "site": "BRAIVES|FOSSES|SAMBREVILLE|TRANSINNES ou vide", ` +
+    `"chantier": "", "lignes": [{"code": "code NewTonne", "quantite": nombre de tonnes ou null}], "resume": "résumé en français pour l'équipe (2 à 4 phrases)", ` +
+    `"complet": true si nom, e-mail ou téléphone, au moins une matière avec quantité et le site sont connus et que le client a confirmé le récapitulatif}}\n` +
+    `Avant de mettre "complet" à true, fais un récapitulatif au client et demande-lui de confirmer. Quand c'est complet, dis-lui que sa demande part chez l'équipe et que la réponse arrivera ici (il peut garder le lien de la conversation).`;
+};
+
+const appelIA = async (chat) => {
+  const historique = chat.messages.slice(-30).map((m) => ({ role: m.role === "client" ? "user" : "assistant", content: m.role === "equipe" ? "[Message de l'équipe Recymo] " + m.texte : m.texte }));
+  const r = await fetch(IA_URL + "/chat/completions", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + IA_CLE, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: IA_MODELE, temperature: 0.3, max_tokens: 900, messages: [{ role: "system", content: await consignes(chat) }, ...historique] }),
+    signal: AbortSignal.timeout(45000)
+  });
+  if (!r.ok) throw new Error("IA " + r.status + " " + (await r.text()).slice(0, 150));
+  const data = await r.json();
+  const texte = String((data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "").trim();
+  // Réponse attendue en JSON ; à défaut, le texte brut est montré au client et la fiche ne change pas
+  const json = texte.match(/\{[\s\S]*\}/);
+  try {
+    const o = JSON.parse(json ? json[0] : texte);
+    if (o && typeof o.reponse === "string") return { reponse: o.reponse.trim(), fiche: o.fiche && typeof o.fiche === "object" ? o.fiche : null };
+  } catch {}
+  return { reponse: texte.replace(/^\{[\s\S]*$/, "").trim() || "…", fiche: null };
+};
+
+// Fiche renvoyée par l'IA, nettoyée : seules les matières et sites connus sont gardés
+const nettoyerFiche = (f, ancienne = {}) => {
+  if (!f) return ancienne;
+  const t = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
+  const lignes = (Array.isArray(f.lignes) ? f.lignes : []).slice(0, 20).map((l) => {
+    const code = t(l && l.code, 40).toUpperCase();
+    const q = +String(l && l.quantite != null ? l.quantite : "").replace(",", ".");
+    return NEWTONNE_VERS_CODE[code] ? { code: NEWTONNE_VERS_CODE[code], quantite: q > 0 && q < 100000 ? Math.round(q * 1000) / 1000 : null } : null;
+  }).filter(Boolean);
+  const site = t(f.site, 20).toUpperCase();
+  const email = t(f.email, 160);
+  return {
+    nom: t(f.nom, 120), societe: t(f.societe, 120), email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? email : "",
+    telephone: t(f.telephone, 40), site: NOMS_SITES[site] ? site : "", chantier: t(f.chantier, 200), resume: t(f.resume, 1500),
+    lignes, complet: f.complet === true
+  };
+};
+const ficheComplete = (f) => !!(f && f.complet && f.nom && (f.email || f.telephone) && f.site && f.lignes.some((l) => l.quantite));
+
+const versNewtonneChat = (c) => ({
+  external_id: "recymo-" + c.id,
+  status: ficheComplete(c.fiche) || (c.newtonne && c.newtonne.transmis) ? "a_valider" : "en_cours",
+  contact: { name: c.fiche.nom, company: c.fiche.societe, email: c.fiche.email, phone: c.fiche.telephone },
+  ...(c.fiche.site ? { site: c.fiche.site } : {}),
+  ...(c.fiche.chantier ? { job_site: c.fiche.chantier } : {}),
+  summary: (c.langue === "nl" ? "[NL] Client néerlandophone. " : "") + "Demande faite avec le chat de recymo.be. " + (c.fiche.resume || ""),
+  messages: c.messages.slice(-500).map((m) => ({ role: m.role === "client" ? "client" : m.role === "equipe" ? "humain" : "ia", text: m.texte, at: m.at })),
+  lines: c.fiche.lignes.map((l) => { const m = matiere(l.code); return { material_code: m.newtonne, operation: m.operation, ...(l.quantite ? { quantity: String(l.quantite) } : {}) }; })
+});
+
+// Conversations en mémoire, sauvegardées dans le dépôt des données peu après chaque changement
+const chats = new Map();
+let indexChats = null;
+const chargerIndexChats = async () => {
+  if (!indexChats) {
+    const txt = await lireTexte(DATA_REPO, "chats/index.json").catch(() => null);
+    indexChats = txt ? JSON.parse(txt) : [];
+  }
+  return indexChats;
+};
+const chargerChat = async (id) => {
+  if (!/^[\w-]{20,40}$/.test(id)) return null;
+  if (chats.has(id)) return chats.get(id);
+  const txt = await lireTexte(DATA_REPO, `chats/${id}.json`).catch(() => null);
+  if (!txt) return null;
+  const c = JSON.parse(txt);
+  chats.set(id, c);
+  return c;
+};
+const aSauver = new Set();
+let minuterieChats = null;
+const sauverChats = async () => {
+  clearTimeout(minuterieChats); minuterieChats = null;
+  if (!aSauver.size) return;
+  const ids = [...aSauver]; aSauver.clear();
+  const index = await chargerIndexChats();
+  const fichiers = {};
+  for (const id of ids) {
+    const c = chats.get(id);
+    if (!c) continue;
+    fichiers[`chats/${id}.json`] = JSON.stringify(c, null, 1);
+    const e = index.find((x) => x.id === id);
+    const ligne = { id, cree: c.cree, maj: c.maj, statut: (c.newtonne && c.newtonne.statut) || "brouillon" };
+    if (e) Object.assign(e, ligne); else index.unshift(ligne);
+  }
+  fichiers["chats/index.json"] = JSON.stringify(index, null, 1);
+  try { await commit(DATA_REPO, fichiers, "Chat : " + ids.length + " conversation" + (ids.length > 1 ? "s" : "")); }
+  catch (e) { ids.forEach((id) => aSauver.add(id)); console.error("Sauvegarde des chats :", e.message); }
+};
+const marquerChat = (c, immediat) => {
+  c.maj = new Date().toISOString();
+  aSauver.add(c.id);
+  if (immediat) return sauverChats();
+  if (!minuterieChats) minuterieChats = setTimeout(sauverChats, 15000);
+};
+
+const envoyerChatNewtonne = async (c) => {
+  const n = c.newtonne || (c.newtonne = { statut: "a_envoyer", essais: 0 });
+  n.essais = (n.essais || 0) + 1;
+  try {
+    const { status, data } = await appelNewtonne("POST", "/api/devis/", versNewtonneChat(c));
+    if (status === 200 || status === 201) {
+      Object.assign(n, { statut: "envoye", transmis: true, envoyeLe: new Date().toISOString(), id: data.id || n.id || null, erreur: null, essais: 0 });
+      return true;
+    }
+    if (status === 409) { if (!["valide", "refuse"].includes(n.statut)) n.statut = "envoye"; n.erreur = null; return true; }
+    n.statut = "echec"; n.erreur = `NewTonne ${status} : ${String(data.error || "").slice(0, 200)}`;
+  } catch (e) { n.statut = "echec"; n.erreur = "NewTonne injoignable : " + String(e.message).slice(0, 150); }
+  console.error("Envoi chat NewTonne", c.id.slice(0, 6), n.erreur);
+  return false;
+};
+
+// Lien signé vers le PDF du devis validé (servi par ce serveur : le lien NewTonne demande la clé)
+const lienPdfChat = (c) => {
+  const exp = Math.floor(Date.now() / 1000) + 90 * 86400;
+  return `${URL_PUBLIQUE}/chat/pdf?id=${c.id}&exp=${exp}&sig=${signerLien("chat-pdf:" + c.id, exp)}`;
+};
+const TEXTES_CHAT = {
+  fr: {
+    valide: (n) => `✅ Votre devis ${n.numero || ""} est validé : ${euros(n.totalHtva)} HTVA (${euros(n.totalTvac)} TVAC).`,
+    pdf: "Télécharger le devis (PDF)",
+    refus: (n) => "Nous ne pouvons malheureusement pas donner suite à votre demande." + (n.motif ? " Motif : " + n.motif : ""),
+    suite: "Pour toute question, appelez-nous au 085 21 74 45."
+  },
+  nl: {
+    valide: (n) => `✅ Uw offerte ${n.numero || ""} is goedgekeurd: ${euros(n.totalHtva)} excl. btw (${euros(n.totalTvac)} incl. btw).`,
+    pdf: "Offerte downloaden (pdf)",
+    refus: (n) => "Helaas kunnen we niet ingaan op uw aanvraag." + (n.motif ? " Reden: " + n.motif : ""),
+    suite: "Voor vragen kunt u ons bellen op 085 21 74 45."
+  }
+};
+const deciderChat = async (c, dec) => {
+  const n = c.newtonne || (c.newtonne = { essais: 0 });
+  if (n.statut === dec.status && n.annonce) return false;
+  Object.assign(n, {
+    statut: dec.status, numero: dec.number || null, totalHtva: dec.total_excl_vat || null, totalTvac: dec.total_incl_vat || null,
+    decideLe: dec.decided_at || new Date().toISOString(), decidePar: dec.decided_by || null, motif: dec.refusal_reason || null, erreur: null,
+    pdf: !!dec.pdf_url
+  });
+  if (dec.status !== "abandonne") {
+    const t = TEXTES_CHAT[c.langue] || TEXTES_CHAT.fr;
+    const texte = dec.status === "valide"
+      ? [t.valide(n), dec.message_to_client || "", t.suite].filter(Boolean).join("\n\n")
+      : [t.refus(n), dec.message_to_client || "", t.suite].filter(Boolean).join("\n\n");
+    c.messages.push({ role: "equipe", texte, at: new Date().toISOString(), ...(dec.status === "valide" && dec.pdf_url ? { pdf: true } : {}) });
+    n.annonce = new Date().toISOString();
+  }
+  await marquerChat(c, true);
+  return true;
+};
+
+const chatPublic = (c) => ({
+  id: c.id, langue: c.langue,
+  statut: (c.newtonne && ["envoye", "valide", "refuse"].includes(c.newtonne.statut)) ? c.newtonne.statut : "en_cours",
+  messages: c.messages.map((m) => ({ role: m.role, texte: m.texte, at: m.at, ...(m.pdf ? { pdf: lienPdfChat(c), pdfTexte: (TEXTES_CHAT[c.langue] || TEXTES_CHAT.fr).pdf } : {}) }))
+});
+const ACCUEIL_CHAT = {
+  fr: "Bonjour ! Je prépare votre demande de devis : qu'aimeriez-vous déposer ou acheter, et en quelle quantité environ ?",
+  nl: "Hallo! Ik maak uw offerteaanvraag klaar: wat wilt u storten of kopen, en ongeveer hoeveel?"
+};
 
 /* ---------------------------------------------- Modifications du site */
 
@@ -634,7 +887,7 @@ const envoyer = (res, status, data, type = "application/json; charset=utf-8") =>
 const routes = {
   "GET /sante": async () => ({
     ok: true, mode: LOCAL ? "local" : "github", code: !!ADMIN_CODE,
-    newtonne: NEWTONNE_ACTIF, decisions: !!NEWTONNE_SECRET, email: !!(BREVO_CLE && EMAIL_EXPEDITEUR), sms: !!(BREVO_CLE && SMS_EXPEDITEUR)
+    newtonne: NEWTONNE_ACTIF, decisions: !!NEWTONNE_SECRET, email: !!(BREVO_CLE && EMAIL_EXPEDITEUR), sms: !!(BREVO_CLE && SMS_EXPEDITEUR), chat: CHAT_ACTIF
   }),
 
   "POST /hit": async (req) => {
@@ -740,6 +993,72 @@ const routes = {
     return undefined;
   },
 
+  // Chat : message du client → réponse de l'IA (crée la conversation si besoin)
+  "POST /chat": async (req) => {
+    if (!CHAT_ACTIF) throw Object.assign(new Error("Le chat n'est pas disponible."), { status: 503 });
+    const ip = ipDe(req);
+    if (!limite("chat:" + ip, 20, 10 * 60000) || !limite("chat-jour:" + ip, 150, 86400000)) {
+      throw Object.assign(new Error("Trop de messages. Réessayez plus tard ou appelez-nous au 085 21 74 45."), { status: 429 });
+    }
+    let d = {};
+    try { d = JSON.parse(await lireCorps(req, 8000)); } catch {}
+    let c = d.id ? await chargerChat(String(d.id)) : null;
+    if (d.id && !c) throw Object.assign(new Error("Conversation introuvable."), { status: 404 });
+    const texte = String(d.message || "").trim().slice(0, 2000);
+    if (!c) {
+      const id = crypto.randomBytes(18).toString("base64url");
+      const langue = d.langue === "nl" ? "nl" : "fr";
+      c = { id, cree: new Date().toISOString(), maj: null, langue, fiche: {}, messages: [{ role: "ia", texte: ACCUEIL_CHAT[langue], at: new Date().toISOString() }] };
+      chats.set(id, c);
+      if (!texte) return chatPublic(c); // enregistrée seulement au premier message du client
+    }
+    if (!texte) return chatPublic(c);
+    if (c.messages.filter((m) => m.role === "client").length >= MAX_MESSAGES_CLIENT) {
+      throw Object.assign(new Error("Cette conversation est terminée. Appelez-nous au 085 21 74 45."), { status: 429 });
+    }
+    c.messages.push({ role: "client", texte, at: new Date().toISOString() });
+    try {
+      const r = await appelIA(c);
+      c.messages.push({ role: "ia", texte: r.reponse.slice(0, 4000), at: new Date().toISOString() });
+      c.fiche = nettoyerFiche(r.fiche, c.fiche);
+    } catch (e) {
+      console.error("IA du chat :", e.message);
+      c.messages.push({ role: "ia", texte: c.langue === "nl" ? "Sorry, er is een technisch probleem. Probeer het zo meteen opnieuw of bel 085 21 74 45."
+        : "Désolé, un problème technique m'empêche de répondre. Réessayez dans un instant ou appelez-nous au 085 21 74 45.", at: new Date().toISOString() });
+    }
+    // Fiche complète (ou demande déjà transmise) : le devis est envoyé ou mis à jour dans NewTonne
+    const n = c.newtonne;
+    const decide = n && ["valide", "refuse", "abandonne"].includes(n.statut);
+    if (NEWTONNE_ACTIF && !decide && (ficheComplete(c.fiche) || (n && n.transmis))) await envoyerChatNewtonne(c);
+    marquerChat(c);
+    return chatPublic(c);
+  },
+
+  // Chat : relire la conversation (la page la relit toutes les 30 secondes)
+  "GET /chat": async (req, url) => {
+    const c = await chargerChat(String(url.searchParams.get("id") || ""));
+    if (!c) throw Object.assign(new Error("Conversation introuvable."), { status: 404 });
+    return chatPublic(c);
+  },
+
+  // Chat : PDF du devis validé, téléchargé chez NewTonne avec la clé du serveur
+  "GET /chat/pdf": async (req, url, res) => {
+    const id = String(url.searchParams.get("id") || ""), exp = String(url.searchParams.get("exp") || "");
+    const sig = Buffer.from(String(url.searchParams.get("sig") || ""));
+    if (!/^\d+$/.test(exp) || +exp < Date.now() / 1000 || !LIENS_SECRET) throw Object.assign(new Error("Lien invalide ou expiré."), { status: 403 });
+    const attendu = Buffer.from(signerLien("chat-pdf:" + id, exp));
+    if (attendu.length !== sig.length || !crypto.timingSafeEqual(attendu, sig)) throw Object.assign(new Error("Lien invalide ou expiré."), { status: 403 });
+    const c = await chargerChat(id);
+    if (!c || !c.newtonne || c.newtonne.statut !== "valide" || !NEWTONNE_ACTIF) throw Object.assign(new Error("Devis introuvable."), { status: 404 });
+    const r = await fetch(`${NEWTONNE_URL}/api/devis/${encodeURIComponent("recymo-" + id)}/pdf/`, { headers: { Authorization: "Bearer " + NEWTONNE_CLE }, signal: AbortSignal.timeout(20000) });
+    if (!r.ok) throw Object.assign(new Error("PDF indisponible pour le moment."), { status: 502 });
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.writeHead(200, { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${(c.newtonne.numero || "devis").replace(/[^\w-]/g, "")}.pdf"`,
+      "Cache-Control": "private, max-age=600", "X-Content-Type-Options": "nosniff" });
+    res.end(buf);
+    return undefined;
+  },
+
   // Admin : envoyer (ou renvoyer) une demande à NewTonne
   "POST /admin/newtonne/envoyer": async (req) => {
     if (!NEWTONNE_ACTIF) throw Object.assign(new Error("NewTonne n'est pas configuré sur le serveur."), { status: 400 });
@@ -818,5 +1137,5 @@ serveur.listen(PORT, () => console.log(`Admin Recymo sur le port ${PORT} (mode $
 
 // Render arrête le service après une période sans visite : on sauvegarde les statistiques avant
 for (const sig of ["SIGTERM", "SIGINT"]) {
-  process.on(sig, async () => { await sauverStats().catch(() => {}); process.exit(0); });
+  process.on(sig, async () => { await Promise.all([sauverStats().catch(() => {}), sauverChats().catch(() => {})]); process.exit(0); });
 }

@@ -65,6 +65,32 @@
       </div>
     </section>
 
+    <section class="section-tight chat-section" id="chat" hidden aria-labelledby="chat-titre">
+      <div class="container">
+        <div class="chat">
+          <div class="chat-tete">
+            <div>
+              <h2 id="chat-titre">Votre devis en discutant</h2>
+              <p>Notre assistant vous pose les bonnes questions. Un membre de l’équipe valide ensuite le prix, et la réponse arrive ici.</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm chat-nouveau">Nouvelle conversation</button>
+          </div>
+          <ol class="chat-messages" aria-live="polite"></ol>
+          <form class="chat-form">
+            <label class="sr-only" for="chat-texte">Votre message</label>
+            <textarea id="chat-texte" rows="2" maxlength="2000" placeholder="Ex. : 30 tonnes de béton armé à déposer à Braives"></textarea>
+            <button class="btn btn-primary" type="submit">Envoyer</button>
+          </form>
+          <p class="chat-etat" role="status"></p>
+          <div class="chat-lien" hidden>
+            <label for="chat-url">Gardez ce lien pour retrouver la conversation et la réponse :</label>
+            <div><input id="chat-url" type="text" readonly><button type="button" class="btn btn-outline btn-sm chat-copier">Copier</button></div>
+          </div>
+          <p class="chat-rgpd">Vos messages sont traités par un assistant automatique (intelligence artificielle) et transmis à l’équipe Recymo. Les prix donnés sont indicatifs. Voir les <a href="mentions-legales.html">mentions légales</a>. Vous préférez un formulaire ? Il est juste en dessous.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="section-tight">
       <div class="container contact-grid form-layout">
         <div class="form-card" id="formulaire">
@@ -308,5 +334,6 @@
 
   <script src="assets/js/main.js" defer></script>
   <script src="assets/js/outils.js" defer></script>
+  <script src="assets/js/chat.js" defer></script>
 </body>
 </html>
