@@ -22,10 +22,7 @@
 //   EMAIL_EXPEDITEUR         adresse d'envoi validée dans Brevo (ex. devis@recymo.be)
 //   EMAIL_COPIE              copie cachée de chaque e-mail envoyé au client (facultatif, ex. info@recymo.be)
 //   SMS_EXPEDITEUR           nom affiché des SMS (ex. Recymo) ; absent : pas de SMS
-// Chat de devis sur le site (IA au format OpenAI : Groq, Gemini, OpenRouter, Mistral, Anthropic…) — facultatif :
-//   IA_URL                   adresse de base de l'API (ex. https://api.groq.com/openai/v1)
-//   IA_API_KEY               clé de l'API
-//   IA_MODELE                nom du modèle (ex. llama-3.3-70b-versatile)
+// Chat de devis : robot à règles (serveur/robot.js), sans service d'IA extérieur ni clé.
 "use strict";
 const http = require("node:http");
 const crypto = require("node:crypto");
@@ -240,6 +237,7 @@ const MATIERES_NEWTONNE = {
   YT: "YTONG", TA: "TA", BT: "B-T", TN: "TN",
   "T-BR": ["TERRE-BRAIVES-PETIT", "depot", "BRAIVES"], "T-BR-GROS": ["TERRE-BRAIVES-GROS", "depot", "BRAIVES"],
   "T-FO": ["TERRE-FOSSES-SA", "depot", "FOSSES"], "T-TR": ["TERRE-TRANS-SA", "depot", "TRANSINNES"],
+  "T-FO-AN": ["TERRE-FOSSES-AA", "depot", "FOSSES"], "T-TR-AN": ["TERRE-TRANS-AA", "depot", "TRANSINNES"],
   "T-SA-13": ["TERRE-SAMB-SA-I-III", "depot", "SAMBREVILLE"], "T-SA-45": ["TERRE-SAMB-SA-IV-V", "depot", "SAMBREVILLE"],
   "T-SA-AN": ["TERRE-SAMB-AA", "depot", "SAMBREVILLE"], "T-SA-INV": ["TERRE-SAMB-INVASIVES", "depot", "SAMBREVILLE"],
   "T-SA-AM": ["TERRE-SAMB-AMIANTE", "depot", "SAMBREVILLE"],
@@ -521,130 +519,82 @@ if (NEWTONNE_ACTIF) {
 }
 
 /* ------------------------------------------------------------ Chat de devis */
-// Une IA discute avec le client sur la page Contact et remplit une fiche (contact, site, matières, quantités).
-// Fiche complète : le devis part dans NewTonne (« à valider »). La décision de NewTonne est ensuite ajoutée
-// à la conversation, avec un lien vers le PDF servi par ce serveur. Les conversations sont dans le dépôt des
-// données (chats/<id>.json) ; l'identifiant aléatoire de la conversation sert de clé d'accès au client.
+// Le robot (serveur/robot.js) pose les questions et tient l'état de la conversation. Le serveur calcule les prix
+// d'après la grille de la page Tarifs, garde la conversation et envoie le devis dans NewTonne seulement quand
+// le client clique sur « Oui, j'envoie ma demande ». La décision de NewTonne est ensuite ajoutée à la conversation.
+// Pour passer plus tard à l'API de Claude : remplacer robot.repondre, sans toucher au reste.
 
-const IA_URL = (process.env.IA_URL || "").replace(/\/+$/, "");
-const IA_CLE = process.env.IA_API_KEY || "";
-const IA_MODELE = process.env.IA_MODELE || "";
-const CHAT_ACTIF = !!(IA_URL && IA_CLE && IA_MODELE);
-const MAX_MESSAGES_CLIENT = 60;
+const robot = require("./robot.js");
+const MAX_MESSAGES_CLIENT = 80;
+const SUPPLEMENT_PETIT = 7.5; // par matière de moins de 5 t (versage classe 3 et granulats)
 
-// Catalogue pour l'IA : code estimateur (prix lu dans tarifs.html), libellé
-const LIBELLES = {
-  B0: "Béton non armé, propre, sans terre ni fines (max 50 × 50 × 150 cm)", B1: "Béton légèrement armé, ou hors dimensions, ou avec fines",
-  B2: "Béton légèrement armé et/ou légèrement terreux", B3: "Béton fortement armé et/ou fortement terreux", B4: "Béton-tarmac terreux",
-  B5: "Béton très fortement armé, sale ou terreux", B6: "Petites pierrailles terreuses", POT: "Poteaux, hourdis, piquets et dalles de clôture",
-  BR0: "Bricaillons propres, sans fines et sans terre", BR1: "Bricaillons propres", BR2: "Bricaillons légèrement sales ou terreux",
-  BR3: "Bricaillons sales ou terreux", BR4: "Bricaillons très sales ou très terreux", BR5: "Bricaillons terreux, moins de 50 % de terres",
-  BR6: "Bricaillons terreux, plus de 50 % de terres", BR7: "Déchets classe 3 en mélange", BR8: "Ardoises naturelles", BR9: "Carrelages",
-  BR10: "Bricaillons terreux, moins de 25 % de bricaillons", YT: "Béton cellulaire (Ytong…)", TA: "Tarmac bitumineux", BT: "Béton avec tarmac",
-  TN: "Déchets classe 3 terreux non criblables",
-  "T-BR": "Terres type I à V avec analyse (RQT, CCQT), petits versages", "T-BR-GROS": "Terres type I à V avec analyse, gros chantier",
-  "T-FO": "Terres type I et II", "T-TR": "Terres type I et II (lundi à mercredi ; jeudi-vendredi sur demande, min. 1000 t/jour)",
-  "T-SA-13": "Terres type I à III sans analyse, moins de 400 m³", "T-SA-45": "Terres type IV à V sans analyse, moins de 400 m³",
-  "T-SA-AN": "Terres type I à V avec analyse (RQT, CCQT)", "T-SA-INV": "Terres avec plantes invasives (renouée du Japon…)",
-  "T-SA-AM": "Terres avec fibres d'amiante de 100 à 500 mg/kg MS",
-  "G-MIX": "Granulat mixte 0/63", "G-TA32": "Granulat tarmac 0/32", "G-TA63": "Granulat tarmac 0/63", "G-BE32": "Granulat béton 0/32",
-  "G-BE60": "Granulat béton 0/60", "G-BE2560": "Granulat béton 25/60", "G-SAB": "Sable jaune", "G-STAB": "Stabiter 0/32"
-};
 let prixSite = { lu: 0, prix: {} };
 const chargerPrix = async () => {
-  if (Date.now() - prixSite.lu < 3600000) return prixSite.prix;
+  if (Date.now() - prixSite.lu < 600000) return prixSite.prix;
   const html = await lireTexte(SITE_REPO, "tarifs.html").catch(() => null);
   const prix = {};
   if (html) for (const m of html.matchAll(/data-edit="prix-([\w-]+)"[^>]*>([^<]*)</g)) prix[m[1]] = m[2].trim();
   prixSite = { lu: Date.now(), prix };
   return prix;
 };
-const NEWTONNE_VERS_CODE = Object.fromEntries(Object.keys(MATIERES_NEWTONNE).map((c) => [matiere(c).newtonne, c]));
+// « 18,00 €/t » → 18 ; « Gratuit » → 0 ; « À convenir » → null
+const prixUnitaire = (texte) => {
+  if (texte == null) return null;
+  if (/gratuit|gratis/i.test(texte)) return 0;
+  if (!/\d/.test(texte)) return null;
+  const n = parseFloat(texte.replace(/\s/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".").replace(/[^\d.]/g, ""));
+  return isNaN(n) ? null : n;
+};
 
-const NOMS_SITES = { BRAIVES: "Braives (Rue Roua 6, 4260 Braives)", FOSSES: "Fosses-la-Ville (Rue Adelin Beguin, 5070)",
-  SAMBREVILLE: "Sambreville (Rue de la Larronnerie, 5060)", TRANSINNES: "Transinnes (Grand Route, 6890 Libin)" };
-
-const consignes = async (chat) => {
+// Carte récapitulative : matières, quantités, prix indicatifs calculés ici (jamais par le robot)
+const construireRecap = async (c) => {
   const prix = await chargerPrix();
-  const parSite = {};
-  for (const code of Object.keys(MATIERES_NEWTONNE)) {
-    const m = matiere(code);
-    (parSite[m.site] = parSite[m.site] || []).push(`  ${m.newtonne} | ${m.operation === "retrait" ? "achat" : "dépôt"} | ${LIBELLES[code] || code} | ${prix[code] || "?"}${/€/.test(prix[code] || "") && !/\/t/.test(prix[code]) ? "/t" : ""} HTVA`);
-  }
-  const catalogue = Object.entries(parSite).map(([s, l]) => `${NOMS_SITES[s] || s} :\n${l.join("\n")}`).join("\n");
-  const etat = chat.newtonne && chat.newtonne.statut === "envoye" ? "La demande a DÉJÀ été transmise à l'équipe pour validation. Ne redemande pas les informations ; réponds aux questions et prends note des précisions."
-    : chat.newtonne && ["valide", "refuse"].includes(chat.newtonne.statut) ? "L'équipe a déjà donné sa réponse (voir la conversation). Pour une nouvelle demande, invite le client à recommencer une conversation."
-      : "La demande n'est pas encore transmise.";
-  return `Tu es l'assistant de devis de Recymo Wallonie SA, centre de recyclage de déchets de construction et de terres en Wallonie (Belgique). ` +
-    `Tu aides le client à préparer sa demande de devis. Un membre de l'équipe valide ensuite le prix dans le logiciel NewTonne, et la réponse arrive dans cette conversation.\n` +
-    `Langue : réponds dans la langue du client (${chat.langue === "nl" ? "néerlandais par défaut" : "français par défaut"}). Ton : professionnel, chaleureux, phrases courtes, pas de jargon inutile.\n\n` +
-    `OBJECTIF : remplir la fiche avec (1) nom, (2) e-mail ou téléphone, (3) société si professionnel, (4) ce que le client dépose ou achète, avec les codes du catalogue, ` +
-    `(5) quantités en tonnes (si le client parle en m³, convertis : terres ≈ 1,8 t/m³, béton/bricaillons ≈ 1,5 t/m³, en le disant), (6) site, (7) adresse du chantier si utile. ` +
-    `Pose UNE ou DEUX questions à la fois. Si la classe d'un béton ou de bricaillons n'est pas claire, pose des questions (armé ? terreux ? propre ?) ou propose d'envoyer une photo via le formulaire ou à info@recymo.be.\n\n` +
-    `RÈGLES : les prix que tu cites sont INDICATIFS (tarif HTVA, TVA 21 %) ; le prix définitif est fixé par l'équipe. Supplément de 7,50 € par versage ou enlèvement de moins de 5 tonnes. ` +
-    `Un versage non conforme est facturé comme classe 2. Terres : acceptation préalable par le service qualité ; les NMT doivent être communiquées avant les premiers versages ; ` +
-    `Braives accepte les terres type III à V uniquement avec analyse (RQT, CCQT). Les plantes invasives et l'amiante (100 à 500 mg/kg MS) : uniquement Sambreville. ` +
-    `Déchets de construction et granulats : Braives. Livraison des granulats possible sur demande. Horaires de Braives : lundi-vendredi 7h-17h, samedi 8h-12h. ` +
-    `Ne promets jamais un prix ferme, une date ou une acceptation. N'invente aucune matière, aucun site ni aucun prix : si ce n'est pas dans le catalogue, dis que l'équipe reviendra vers lui. ` +
-    `Pour tout autre sujet que Recymo, ramène poliment la conversation au devis. Téléphone : 085 21 74 45.\n\n` +
-    `CATALOGUE (code NewTonne | opération | description | prix indicatif) :\n${catalogue}\n\n` +
-    `ÉTAT : ${etat}\nFICHE ACTUELLE : ${JSON.stringify(chat.fiche || {})}\n\n` +
-    `FORMAT DE RÉPONSE : réponds UNIQUEMENT avec un objet JSON valide, sans texte autour :\n` +
-    `{"reponse": "ton message au client", "fiche": {"nom": "", "societe": "", "email": "", "telephone": "", "site": "BRAIVES|FOSSES|SAMBREVILLE|TRANSINNES ou vide", ` +
-    `"chantier": "", "lignes": [{"code": "code NewTonne", "quantite": nombre de tonnes ou null}], "resume": "résumé en français pour l'équipe (2 à 4 phrases)", ` +
-    `"complet": true si nom, e-mail ou téléphone, au moins une matière avec quantité et le site sont connus et que le client a confirmé le récapitulatif}}\n` +
-    `Avant de mettre "complet" à true, fais un récapitulatif au client et demande-lui de confirmer. Quand c'est complet, dis-lui que sa demande part chez l'équipe et que la réponse arrivera ici (il peut garder le lien de la conversation).`;
-};
-
-const appelIA = async (chat) => {
-  const historique = chat.messages.slice(-30).map((m) => ({ role: m.role === "client" ? "user" : "assistant", content: m.role === "equipe" ? "[Message de l'équipe Recymo] " + m.texte : m.texte }));
-  const r = await fetch(IA_URL + "/chat/completions", {
-    method: "POST",
-    headers: { Authorization: "Bearer " + IA_CLE, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: IA_MODELE, temperature: 0.3, max_tokens: 900, messages: [{ role: "system", content: await consignes(chat) }, ...historique] }),
-    signal: AbortSignal.timeout(45000)
+  const r = robot.resume(c.robot);
+  let total = 0, aConvenir = false;
+  const lignes = r.lignes.map((l) => {
+    const pu = prixUnitaire(prix[l.code]);
+    const supplement = !l.code.startsWith("T-") && l.quantite < 5 ? SUPPLEMENT_PETIT : 0;
+    const montant = pu === null ? null : Math.round((pu * l.quantite + supplement) * 100) / 100;
+    if (montant === null) aConvenir = true; else total += montant;
+    return { code: matiere(l.code).newtonne, libelle: robot.libelle(l.code, c.langue), quantite: l.quantite, prixUnitaire: pu, supplement, montant, note: l.note };
   });
-  if (!r.ok) throw new Error("IA " + r.status + " " + (await r.text()).slice(0, 150));
-  const data = await r.json();
-  const texte = String((data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "").trim();
-  // Réponse attendue en JSON ; à défaut, le texte brut est montré au client et la fiche ne change pas
-  const json = texte.match(/\{[\s\S]*\}/);
-  try {
-    const o = JSON.parse(json ? json[0] : texte);
-    if (o && typeof o.reponse === "string") return { reponse: o.reponse.trim(), fiche: o.fiche && typeof o.fiche === "object" ? o.fiche : null };
-  } catch {}
-  return { reponse: texte.replace(/^\{[\s\S]*$/, "").trim() || "…", fiche: null };
-};
-
-// Fiche renvoyée par l'IA, nettoyée : seules les matières et sites connus sont gardés
-const nettoyerFiche = (f, ancienne = {}) => {
-  if (!f) return ancienne;
-  const t = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
-  const lignes = (Array.isArray(f.lignes) ? f.lignes : []).slice(0, 20).map((l) => {
-    const code = t(l && l.code, 40).toUpperCase();
-    const q = +String(l && l.quantite != null ? l.quantite : "").replace(",", ".");
-    return NEWTONNE_VERS_CODE[code] ? { code: NEWTONNE_VERS_CODE[code], quantite: q > 0 && q < 100000 ? Math.round(q * 1000) / 1000 : null } : null;
-  }).filter(Boolean);
-  const site = t(f.site, 20).toUpperCase();
-  const email = t(f.email, 160);
+  total = Math.round(total * 100) / 100;
   return {
-    nom: t(f.nom, 120), societe: t(f.societe, 120), email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? email : "",
-    telephone: t(f.telephone, 40), site: NOMS_SITES[site] ? site : "", chantier: t(f.chantier, 200), resume: t(f.resume, 1500),
-    lignes, complet: f.complet === true
+    lignes, site: r.site ? robot.SITES[r.site] : null, libre: r.libre, contact: r.contact, analyse: r.analyse,
+    totalHtva: total, totalTvac: Math.round(total * 121) / 100, aConvenir
   };
 };
-const ficheComplete = (f) => !!(f && f.complet && f.nom && (f.email || f.telephone) && f.site && f.lignes.some((l) => l.quantite));
 
-const versNewtonneChat = (c) => ({
-  external_id: "recymo-" + c.id,
-  status: ficheComplete(c.fiche) || (c.newtonne && c.newtonne.transmis) ? "a_valider" : "en_cours",
-  contact: { name: c.fiche.nom, company: c.fiche.societe, email: c.fiche.email, phone: c.fiche.telephone },
-  ...(c.fiche.site ? { site: c.fiche.site } : {}),
-  ...(c.fiche.chantier ? { job_site: c.fiche.chantier } : {}),
-  summary: (c.langue === "nl" ? "[NL] Client néerlandophone. " : "") + "Demande faite avec le chat de recymo.be. " + (c.fiche.resume || ""),
-  messages: c.messages.slice(-500).map((m) => ({ role: m.role === "client" ? "client" : m.role === "equipe" ? "humain" : "ia", text: m.texte, at: m.at })),
-  lines: c.fiche.lignes.map((l) => { const m = matiere(l.code); return { material_code: m.newtonne, operation: m.operation, ...(l.quantite ? { quantity: String(l.quantite) } : {}) }; })
-});
+const texteRecap = (rc) => [
+  ...rc.lignes.map((l) => `- ${l.code} ${l.libelle} : ${String(l.quantite).replace(".", ",")} t` +
+    (l.montant === null ? " (prix à convenir)" : ` = ${euros(l.montant)} HTVA${l.supplement ? " (supplément moins de 5 t compris)" : ""}`) + (l.note ? ` [${l.note}]` : "")),
+  rc.lignes.length ? `Total indicatif : ${euros(rc.totalHtva)} HTVA${rc.aConvenir ? " + lignes à convenir" : ""}.` : "",
+  rc.libre ? "Demande écrite par le client : " + rc.libre : ""
+].filter(Boolean).join("\n");
+
+const versNewtonneChat = (c) => {
+  const r = robot.resume(c.robot);
+  const contact = r.contact || {};
+  const recapMsg = [...c.messages].reverse().find((m) => m.recap);
+  const resume = [
+    (c.langue === "nl" ? "[NL] Client néerlandophone : répondre en néerlandais. " : "") + "Demande faite avec le chat de recymo.be, récapitulatif accepté par le client.",
+    r.libre ? "Le robot n'a pas reconnu la matière : lignes à compléter. Demande du client : « " + r.libre + " »" : "",
+    recapMsg ? texteRecap(recapMsg.recap) : "",
+    r.analyse ? "Le client annonce une analyse de terres (RQT/CCQT) : à recevoir par e-mail (info@recymo.be) ou par le formulaire." : ""
+  ].filter(Boolean).join("\n");
+  return {
+    external_id: "recymo-" + c.id,
+    status: "a_valider",
+    contact: { name: contact.nom || "", company: contact.societe || "", email: contact.email || "", phone: contact.telephone || "" },
+    ...(r.site ? { site: r.site } : {}),
+    summary: resume,
+    messages: c.messages.slice(-500).map((m) => ({
+      role: m.role === "client" ? "client" : m.role === "equipe" ? "humain" : "ia",
+      text: (m.texte || "") + (m.recap ? "\n" + texteRecap(m.recap) : ""), at: m.at
+    })),
+    lines: r.lignes.map((l) => { const m = matiere(l.code); return { material_code: m.newtonne, operation: m.operation, quantity: String(l.quantite) }; })
+  };
+};
 
 // Conversations en mémoire, sauvegardées dans le dépôt des données peu après chaque changement
 const chats = new Map();
@@ -747,14 +697,20 @@ const deciderChat = async (c, dec) => {
   return true;
 };
 
-const chatPublic = (c) => ({
-  id: c.id, langue: c.langue,
-  statut: (c.newtonne && ["envoye", "valide", "refuse"].includes(c.newtonne.statut)) ? c.newtonne.statut : "en_cours",
-  messages: c.messages.map((m) => ({ role: m.role, texte: m.texte, at: m.at, ...(m.pdf ? { pdf: lienPdfChat(c), pdfTexte: (TEXTES_CHAT[c.langue] || TEXTES_CHAT.fr).pdf } : {}) }))
-});
-const ACCUEIL_CHAT = {
-  fr: "Bonjour ! Je prépare votre demande de devis : qu'aimeriez-vous déposer ou acheter, et en quelle quantité environ ?",
-  nl: "Hallo! Ik maak uw offerteaanvraag klaar: wat wilt u storten of kopen, en ongeveer hoeveel?"
+const chatPublic = (c) => {
+  const n = c.newtonne;
+  const dernier = c.messages.length - 1;
+  return {
+    id: c.id, langue: c.langue,
+    statut: n && ["valide", "refuse"].includes(n.statut) ? n.statut : c.robot && c.robot.etape === "envoye" ? "envoye" : "en_cours",
+    messages: c.messages.map((m, i) => ({
+      role: m.role, texte: m.texte, at: m.at,
+      ...(m.recap ? { recap: m.recap } : {}),
+      // Les boutons et les cases ne sont actifs que sur le dernier message du robot
+      ...(i === dernier && m.role === "ia" ? { boutons: m.boutons || [], champ: m.champ || null } : {}),
+      ...(m.pdf ? { pdf: lienPdfChat(c), pdfTexte: (TEXTES_CHAT[c.langue] || TEXTES_CHAT.fr).pdf } : {})
+    }))
+  };
 };
 
 /* ---------------------------------------------- Modifications du site */
@@ -887,7 +843,7 @@ const envoyer = (res, status, data, type = "application/json; charset=utf-8") =>
 const routes = {
   "GET /sante": async () => ({
     ok: true, mode: LOCAL ? "local" : "github", code: !!ADMIN_CODE,
-    newtonne: NEWTONNE_ACTIF, decisions: !!NEWTONNE_SECRET, email: !!(BREVO_CLE && EMAIL_EXPEDITEUR), sms: !!(BREVO_CLE && SMS_EXPEDITEUR), chat: CHAT_ACTIF
+    newtonne: NEWTONNE_ACTIF, decisions: !!NEWTONNE_SECRET, email: !!(BREVO_CLE && EMAIL_EXPEDITEUR), sms: !!(BREVO_CLE && SMS_EXPEDITEUR), chat: true
   }),
 
   "POST /hit": async (req) => {
@@ -993,44 +949,60 @@ const routes = {
     return undefined;
   },
 
-  // Chat : message du client → réponse de l'IA (crée la conversation si besoin)
+  // Chat : message, bouton, nombre ou coordonnées du client → réponse du robot (crée la conversation si besoin)
   "POST /chat": async (req) => {
-    if (!CHAT_ACTIF) throw Object.assign(new Error("Le chat n'est pas disponible."), { status: 503 });
     const ip = ipDe(req);
-    if (!limite("chat:" + ip, 20, 10 * 60000) || !limite("chat-jour:" + ip, 150, 86400000)) {
+    if (!limite("chat:" + ip, 40, 10 * 60000) || !limite("chat-jour:" + ip, 300, 86400000)) {
       throw Object.assign(new Error("Trop de messages. Réessayez plus tard ou appelez-nous au 085 21 74 45."), { status: 429 });
     }
     let d = {};
     try { d = JSON.parse(await lireCorps(req, 8000)); } catch {}
     let c = d.id ? await chargerChat(String(d.id)) : null;
     if (d.id && !c) throw Object.assign(new Error("Conversation introuvable."), { status: 404 });
-    const texte = String(d.message || "").trim().slice(0, 2000);
+    const maintenant = () => new Date().toISOString();
     if (!c) {
-      const id = crypto.randomBytes(18).toString("base64url");
-      const langue = d.langue === "nl" ? "nl" : "fr";
-      c = { id, cree: new Date().toISOString(), maj: null, langue, fiche: {}, messages: [{ role: "ia", texte: ACCUEIL_CHAT[langue], at: new Date().toISOString() }] };
-      chats.set(id, c);
-      if (!texte) return chatPublic(c); // enregistrée seulement au premier message du client
+      c = { id: crypto.randomBytes(18).toString("base64url"), cree: maintenant(), maj: null, langue: d.langue === "nl" ? "nl" : "fr", messages: [] };
+      const accueil = robot.repondre(c, {});
+      c.messages.push({ role: "ia", texte: accueil.texte, at: maintenant(), boutons: accueil.boutons, champ: accueil.champ });
+      chats.set(c.id, c);
     }
-    if (!texte) return chatPublic(c);
+    // Ce que le client a fait : seul ce que propose le dernier message du robot est accepté
+    const dernier = [...c.messages].reverse().find((m) => m.role === "ia") || {};
+    const t = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
+    let entree = null, affiche = "";
+    if (d.bouton != null) {
+      const btn = (dernier.boutons || []).find((x) => x.v === String(d.bouton));
+      if (btn) { entree = { bouton: btn.v }; affiche = btn.l; }
+    } else if (d.contact && dernier.champ === "contact") {
+      const k = { nom: t(d.contact.nom, 120), societe: t(d.contact.societe, 120), email: t(d.contact.email, 160), telephone: t(d.contact.telephone, 40) };
+      entree = { contact: k };
+      affiche = [k.nom, k.societe, k.email, k.telephone].filter(Boolean).join(" · ");
+    } else if (d.nombre != null && dernier.champ === "nombre") {
+      entree = { nombre: t(d.nombre, 20) };
+      affiche = t(d.nombre, 20).replace(".", ",") + " t";
+    } else if (t(d.message, 2000)) {
+      entree = { texte: t(d.message, 2000) };
+      affiche = entree.texte;
+    }
+    if (!entree || !affiche) return chatPublic(c); // rien à traiter (ouverture, ou bouton périmé)
     if (c.messages.filter((m) => m.role === "client").length >= MAX_MESSAGES_CLIENT) {
       throw Object.assign(new Error("Cette conversation est terminée. Appelez-nous au 085 21 74 45."), { status: 429 });
     }
-    c.messages.push({ role: "client", texte, at: new Date().toISOString() });
-    try {
-      const r = await appelIA(c);
-      c.messages.push({ role: "ia", texte: r.reponse.slice(0, 4000), at: new Date().toISOString() });
-      c.fiche = nettoyerFiche(r.fiche, c.fiche);
-    } catch (e) {
-      console.error("IA du chat :", e.message);
-      c.messages.push({ role: "ia", texte: c.langue === "nl" ? "Sorry, er is een technisch probleem. Probeer het zo meteen opnieuw of bel 085 21 74 45."
-        : "Désolé, un problème technique m'empêche de répondre. Réessayez dans un instant ou appelez-nous au 085 21 74 45.", at: new Date().toISOString() });
+    c.messages.push({ role: "client", texte: affiche, at: maintenant() });
+    const rep = robot.repondre(c, entree);
+    if (rep.texte) {
+      const msg = { role: "ia", texte: rep.texte, at: maintenant(), boutons: rep.boutons || [], champ: rep.champ || null };
+      if (rep.recap) msg.recap = await construireRecap(c);
+      c.messages.push(msg);
     }
-    // Fiche complète (ou demande déjà transmise) : le devis est envoyé ou mis à jour dans NewTonne
+    // Envoi dans NewTonne au clic sur « Oui », puis mise à jour si le client ajoute un message avant la décision
     const n = c.newtonne;
     const decide = n && ["valide", "refuse", "abandonne"].includes(n.statut);
-    if (NEWTONNE_ACTIF && !decide && (ficheComplete(c.fiche) || (n && n.transmis))) await envoyerChatNewtonne(c);
-    marquerChat(c);
+    if (rep.envoyer || (n && n.transmis && !decide)) {
+      if (NEWTONNE_ACTIF) await envoyerChatNewtonne(c);
+      else c.newtonne = Object.assign(c.newtonne || {}, { statut: "echec", essais: 0, erreur: "NewTonne n'est pas configuré" });
+    }
+    await marquerChat(c, !!rep.envoyer);
     return chatPublic(c);
   },
 

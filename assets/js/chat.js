@@ -1,4 +1,5 @@
-/* Chat de devis (page Contact) : la conversation passe par le serveur Recymo, jamais directement par l'IA.
+/* Chat de devis (page Contact) : la conversation passe par le serveur Recymo (robot à règles).
+   Le robot propose des boutons, une case pour les tonnes, les cases des coordonnées et une carte récapitulative.
    L'identifiant de la conversation est gardé dans le navigateur et dans un lien que le client peut garder. */
 (function () {
   "use strict";
@@ -15,10 +16,13 @@
   var bouton = form.querySelector("button");
   var etat = zone.querySelector(".chat-etat");
   var lienZone = zone.querySelector(".chat-lien");
-  var id = null, nb = 0, attente = false, relecture = null;
+  var id = null, attente = false, relecture = null, signature = "";
 
   var lire = function () { try { return localStorage.getItem(CLE); } catch (e) { return null; } };
   var garder = function (v) { try { if (v) localStorage.setItem(CLE, v); else localStorage.removeItem(CLE); } catch (e) {} };
+  var el = function (tag, cls, texte) { var n = document.createElement(tag); if (cls) n.className = cls; if (texte != null) n.textContent = texte; return n; };
+  var euro = function (n) { return Number(n).toLocaleString("fr-BE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"; };
+  var tonnes = function (n) { return Number(n).toLocaleString("fr-BE", { maximumFractionDigits: 3 }) + " t"; };
 
   var appel = function (methode, chemin, corps) {
     return fetch(API + chemin, {
@@ -33,94 +37,212 @@
     });
   };
 
-  // Texte en paragraphes, sans HTML (les messages viennent de l'IA et du client)
-  var bulle = function (m) {
-    var li = document.createElement("li");
-    li.className = "chat-msg chat-" + m.role;
-    if (m.role === "equipe") {
-      var tag = document.createElement("span");
-      tag.className = "chat-tag";
-      tag.textContent = T("Équipe Recymo", "Team Recymo");
-      li.appendChild(tag);
-    }
-    String(m.texte || "").split(/\n{2,}/).forEach(function (p) {
-      var el = document.createElement("p");
-      p.split("\n").forEach(function (ligne, i) {
-        if (i) el.appendChild(document.createElement("br"));
-        el.appendChild(document.createTextNode(ligne));
-      });
-      li.appendChild(el);
+  // Texte en paragraphes, sans HTML
+  var paragraphes = function (parent, texte) {
+    String(texte || "").split(/\n{2,}/).forEach(function (p) {
+      if (!p) return;
+      var n = el("p");
+      p.split("\n").forEach(function (ligne, i) { if (i) n.appendChild(el("br")); n.appendChild(document.createTextNode(ligne)); });
+      parent.appendChild(n);
     });
+  };
+
+  // Carte récapitulative : prix calculés par le serveur d'après la grille tarifaire
+  var carte = function (rc) {
+    var c = el("div", "chat-recap");
+    if (rc.lignes && rc.lignes.length) {
+      var table = el("table");
+      rc.lignes.forEach(function (l) {
+        var tr = el("tr");
+        var td = el("td");
+        td.appendChild(el("span", "chat-code", l.code));
+        td.appendChild(document.createTextNode(" " + l.libelle));
+        if (l.supplement) td.appendChild(el("small", null, T("Supplément moins de 5 t inclus", "Toeslag minder dan 5 t inbegrepen")));
+        if (l.note) td.appendChild(el("small", null, l.note));
+        tr.appendChild(td);
+        tr.appendChild(el("td", "num", tonnes(l.quantite)));
+        tr.appendChild(el("td", "num", l.montant === null ? T("à convenir", "op aanvraag") : euro(l.montant)));
+        table.appendChild(tr);
+      });
+      var tot = el("tr", "chat-total");
+      tot.appendChild(el("td", null, T("Total indicatif HTVA", "Indicatief totaal excl. btw")));
+      tot.appendChild(el("td"));
+      tot.appendChild(el("td", "num", euro(rc.totalHtva) + (rc.aConvenir ? " +" : "")));
+      table.appendChild(tot);
+      var tvac = el("tr", "chat-tvac");
+      tvac.appendChild(el("td", null, T("TVAC (21 %)", "Incl. btw (21 %)")));
+      tvac.appendChild(el("td"));
+      tvac.appendChild(el("td", "num", euro(rc.totalTvac)));
+      table.appendChild(tvac);
+      c.appendChild(table);
+    }
+    if (rc.libre) {
+      c.appendChild(el("p", "chat-recap-titre", T("Votre demande", "Uw aanvraag")));
+      paragraphes(c, rc.libre);
+    }
+    var infos = el("dl");
+    var ajout = function (dt, dd) { if (!dd) return; var d = el("div"); d.appendChild(el("dt", null, dt)); d.appendChild(el("dd", null, dd)); infos.appendChild(d); };
+    ajout(T("Site", "Site"), rc.site);
+    if (rc.contact) {
+      ajout(T("Nom", "Naam"), rc.contact.nom + (rc.contact.societe ? " · " + rc.contact.societe : ""));
+      ajout(T("Contact", "Contact"), [rc.contact.email, rc.contact.telephone].filter(Boolean).join(" · "));
+    }
+    c.appendChild(infos);
+    if (rc.analyse) c.appendChild(el("p", "chat-recap-note", T("Analyse de terres : envoyez-la à info@recymo.be ou avec le formulaire ci-dessous.", "Grondanalyse: stuur ze naar info@recymo.be of via het formulier hieronder.")));
+    c.appendChild(el("p", "chat-recap-note", T("Prix indicatif, confirmé par Recymo après vérification.", "Indicatieve prijs, bevestigd door Recymo na controle.")));
+    return c;
+  };
+
+  // Ce que le robot attend : boutons, nombre de tonnes ou coordonnées
+  var actions = function (m) {
+    var bloc = el("div", "chat-actions");
+    if (m.boutons && m.boutons.length) {
+      var rang = el("div", "chat-boutons");
+      m.boutons.forEach(function (b) {
+        var cls = b.v === "oui" ? "btn btn-primary btn-sm" : b.v === "non" ? "btn btn-outline btn-sm" : "chat-choix";
+        var x = el("button", cls, b.l);
+        x.type = "button";
+        x.addEventListener("click", function () { envoyer({ bouton: b.v }, b.l); });
+        rang.appendChild(x);
+      });
+      bloc.appendChild(rang);
+    }
+    if (m.champ === "nombre") {
+      var f = el("form", "chat-nombre");
+      var label = el("label", "sr-only", T("Nombre de tonnes", "Aantal ton"));
+      var input = el("input");
+      input.type = "number"; input.min = "0.1"; input.step = "0.1"; input.inputMode = "decimal"; input.required = true; input.id = "chat-tonnes";
+      label.htmlFor = input.id;
+      input.placeholder = T("Ex. 12", "Bv. 12");
+      var unite = el("span", null, T("tonnes", "ton"));
+      var ok = el("button", "btn btn-primary btn-sm", T("Valider", "Bevestigen"));
+      ok.type = "submit";
+      f.appendChild(label); f.appendChild(input); f.appendChild(unite); f.appendChild(ok);
+      f.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var v = String(input.value).replace(",", ".");
+        if (!(parseFloat(v) > 0)) { input.focus(); return; }
+        envoyer({ nombre: v }, v.replace(".", ",") + " t");
+      });
+      bloc.appendChild(f);
+      setTimeout(function () { input.focus({ preventScroll: true }); }, 50);
+    }
+    if (m.champ === "contact") {
+      var fc = el("form", "chat-contact");
+      var champs = [["nom", T("Nom", "Naam") + " *", "text", "name"], ["societe", T("Société", "Bedrijf"), "text", "organization"],
+        ["email", "E-mail", "email", "email"], ["telephone", T("Téléphone", "Telefoon"), "tel", "tel"]];
+      champs.forEach(function (c) {
+        var lab = el("label", null, c[1]);
+        var inp = el("input");
+        inp.type = c[2]; inp.name = c[0]; inp.autocomplete = c[3];
+        if (c[0] === "nom") inp.required = true;
+        lab.appendChild(inp);
+        fc.appendChild(lab);
+      });
+      fc.appendChild(el("small", null, T("Nom, et e-mail ou téléphone obligatoires.", "Naam, en e-mail of telefoon verplicht.")));
+      var ok2 = el("button", "btn btn-primary btn-sm", T("Valider mes coordonnées", "Mijn gegevens bevestigen"));
+      ok2.type = "submit";
+      fc.appendChild(ok2);
+      fc.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var v = {};
+        champs.forEach(function (c) { v[c[0]] = fc.elements[c[0]].value.trim(); });
+        if (!v.nom || (!v.email && !v.telephone)) { fc.elements[!v.nom ? "nom" : "email"].focus(); return; }
+        envoyer({ contact: v }, [v.nom, v.societe, v.email, v.telephone].filter(Boolean).join(" · "));
+      });
+      bloc.appendChild(fc);
+    }
+    return bloc.children.length ? bloc : null;
+  };
+
+  var bulle = function (m) {
+    var li = el("li", "chat-msg chat-" + m.role);
+    if (m.role === "equipe") li.appendChild(el("span", "chat-tag", T("Équipe Recymo", "Team Recymo")));
+    paragraphes(li, m.texte);
+    if (m.recap) li.appendChild(carte(m.recap));
     if (m.pdf) {
-      var a = document.createElement("a");
-      a.className = "btn btn-primary btn-sm";
+      var a = el("a", "btn btn-primary btn-sm", m.pdfTexte || T("Télécharger le devis (PDF)", "Offerte downloaden (pdf)"));
       a.href = m.pdf; a.target = "_blank"; a.rel = "noopener";
-      a.textContent = m.pdfTexte || T("Télécharger le devis (PDF)", "Offerte downloaden (pdf)");
       li.appendChild(a);
     }
+    if (m.boutons || m.champ) { var act = actions(m); if (act) li.appendChild(act); }
+    return li;
+  };
+
+  var ecrit = function () {
+    var li = el("li", "chat-msg chat-ia chat-ecrit");
+    li.setAttribute("aria-label", T("Le robot écrit…", "De robot typt…"));
+    li.innerHTML = "<span></span><span></span><span></span>";
     return li;
   };
 
   var afficher = function (c) {
-    if (c.messages.length === nb && !attente) return;
+    var sig = c.messages.length + ":" + c.statut;
+    if (sig === signature) return;
+    signature = sig;
     liste.innerHTML = "";
     c.messages.forEach(function (m) { liste.appendChild(bulle(m)); });
-    if (attente) {
-      var li = document.createElement("li");
-      li.className = "chat-msg chat-ia chat-ecrit";
-      li.setAttribute("aria-label", T("L'assistant écrit…", "De assistent typt…"));
-      li.innerHTML = "<span></span><span></span><span></span>";
-      liste.appendChild(li);
-    }
-    nb = attente ? -1 : c.messages.length;
     liste.scrollTop = liste.scrollHeight;
-    var fini = c.statut === "valide" || c.statut === "refuse";
+    requestAnimationFrame(function () { liste.scrollTop = liste.scrollHeight; });
+    var dernier = c.messages[c.messages.length - 1] || {};
+    // La case de texte reste disponible, sauf quand le robot attend un clic ou des cases précises
+    var bloque = dernier.champ === "contact" || dernier.champ === "nombre" || (dernier.recap && dernier.boutons && dernier.boutons.length);
+    champ.disabled = !!bloque; bouton.disabled = !!bloque;
+    champ.placeholder = dernier.champ === "texte" ? T("Décrivez votre demande…", "Beschrijf uw aanvraag…")
+      : bloque ? T("Répondez avec les boutons ou les cases ci-dessus", "Antwoord met de knoppen of vakjes hierboven") : T("Écrivez votre message…", "Schrijf uw bericht…");
     etat.textContent = c.statut === "envoye" ? T("Demande transmise à l'équipe : la réponse arrivera ici.", "Aanvraag doorgestuurd naar het team: het antwoord verschijnt hier.")
-      : fini ? T("L'équipe a répondu.", "Het team heeft geantwoord.") : "";
-    // Lien pour retrouver la conversation plus tard
+      : (c.statut === "valide" || c.statut === "refuse") ? T("L'équipe a répondu.", "Het team heeft geantwoord.") : "";
     if (c.id && c.messages.some(function (m) { return m.role === "client"; })) {
-      var url = location.origin + location.pathname + "?conv=" + c.id + "#chat";
       lienZone.hidden = false;
-      lienZone.querySelector("input").value = url;
+      lienZone.querySelector("input").value = location.origin + location.pathname + "?conv=" + c.id + "#chat";
     }
     // Relecture toutes les 30 secondes tant que la réponse de l'équipe est attendue
     clearInterval(relecture);
-    if (c.statut === "envoye") relecture = setInterval(function () { if (!document.hidden) charger(); }, 30000);
+    if (c.statut === "envoye") relecture = setInterval(function () { if (!document.hidden && !attente) charger(); }, 30000);
+  };
+
+  var envoyer = function (corps, texteClient) {
+    if (attente) return;
+    attente = true;
+    zone.querySelectorAll(".chat-actions button, .chat-actions input").forEach(function (x) { x.disabled = true; });
+    var li = bulle({ role: "client", texte: texteClient });
+    liste.appendChild(li);
+    var e = ecrit();
+    liste.appendChild(e);
+    liste.scrollTop = liste.scrollHeight;
+    corps.id = id; corps.langue = NL ? "nl" : "fr";
+    return appel("POST", "/chat", corps).then(function (c) {
+      attente = false;
+      id = c.id; garder(id);
+      signature = "";
+      afficher(c);
+    }, function (err) {
+      attente = false;
+      e.remove(); li.remove();
+      zone.querySelectorAll(".chat-actions button, .chat-actions input").forEach(function (x) { x.disabled = false; });
+      var m = bulle({ role: "ia", texte: err.message || T("Le message n'est pas parti. Réessayez.", "Het bericht is niet verstuurd. Probeer opnieuw.") });
+      m.classList.add("chat-erreur");
+      liste.appendChild(m);
+      liste.scrollTop = liste.scrollHeight;
+      throw err;
+    });
   };
 
   var charger = function () {
     return appel("GET", "/chat?id=" + encodeURIComponent(id)).then(afficher, function (e) {
-      if (e.status === 404) { garder(null); id = null; demarrer(); }
+      if (e.status === 404) { garder(null); id = null; return demarrer(); }
     });
   };
   var demarrer = function () {
-    return appel("POST", "/chat", { langue: NL ? "nl" : "fr" }).then(function (c) { id = c.id; afficher(c); });
+    return appel("POST", "/chat", { langue: NL ? "nl" : "fr" }).then(function (c) { id = c.id; signature = ""; afficher(c); });
   };
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     var texte = champ.value.trim();
-    if (!texte || attente) return;
-    var avant = Array.prototype.map.call(liste.children, function (li) { return li; });
-    attente = true; bouton.disabled = true; champ.value = "";
-    liste.appendChild(bulle({ role: "client", texte: texte }));
-    var ecrit = document.createElement("li");
-    ecrit.className = "chat-msg chat-ia chat-ecrit";
-    ecrit.innerHTML = "<span></span><span></span><span></span>";
-    liste.appendChild(ecrit);
-    liste.scrollTop = liste.scrollHeight;
-    appel("POST", "/chat", { id: id, message: texte, langue: NL ? "nl" : "fr" }).then(function (c) {
-      attente = false; nb = 0;
-      id = c.id; garder(id);
-      afficher(c);
-    }, function (err) {
-      attente = false;
-      ecrit.remove();
-      var li = bulle({ role: "ia", texte: err.message || T("Le message n'est pas parti. Réessayez.", "Het bericht is niet verstuurd. Probeer opnieuw.") });
-      li.classList.add("chat-erreur");
-      liste.appendChild(li);
-      if (!avant.length) champ.value = texte;
-    }).then(function () { bouton.disabled = false; champ.focus(); });
+    if (!texte || attente || champ.disabled) return;
+    champ.value = "";
+    envoyer({ message: texte }, texte).catch(function () { champ.value = texte; });
   });
   champ.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event("submit")); }
@@ -132,12 +254,12 @@
     }, function () { input.select(); });
   });
   zone.querySelector(".chat-nouveau").addEventListener("click", function () {
-    garder(null); id = null; nb = 0; lienZone.hidden = true; clearInterval(relecture);
+    garder(null); id = null; signature = ""; lienZone.hidden = true; clearInterval(relecture);
     history.replaceState(null, "", location.pathname + "#chat");
     demarrer();
   });
 
-  // Le chat n'apparaît que si le serveur l'a activé
+  // Le chat n'apparaît que si le serveur répond
   appel("GET", "/sante").then(function (s) {
     if (!s.chat) return;
     zone.hidden = false;

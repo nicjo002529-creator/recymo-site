@@ -958,3 +958,32 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
   .chat-form { grid-template-columns: 1fr; }
   .chat-form .btn { width: 100%; }
 }
+/* Chat : boutons de réponse, case des tonnes, coordonnées, carte récapitulative */
+.chat-actions { margin-top: 10px; display: grid; gap: 10px; }
+.chat-boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-choix { min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--green-600); background: var(--surface); color: var(--green-900); font: inherit; font-size: .925rem; font-weight: 600; cursor: pointer; transition: background-color .2s, color .2s; }
+.chat-choix:hover:not(:disabled) { background: var(--green-900); color: #fff; }
+.chat-choix:disabled, .chat-actions .btn:disabled { opacity: .45; cursor: default; }
+.chat-nombre { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chat-nombre input { width: 110px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: var(--surface); }
+.chat-contact { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.chat-contact label { display: grid; gap: 4px; font-size: .85rem; font-weight: 600; color: var(--ink-2); }
+.chat-contact input { padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-weight: 400; background: var(--bg); }
+.chat-contact small { grid-column: 1 / -1; color: var(--muted); }
+.chat-contact .btn { grid-column: 1 / -1; justify-self: start; }
+.chat-recap { margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; }
+.chat-recap table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.chat-recap td { padding: 7px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.chat-recap td.num { text-align: right; white-space: nowrap; }
+.chat-recap td small { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
+.chat-code { display: inline-block; font-size: .72rem; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--green-100); color: var(--green-700); }
+.chat-recap .chat-total td { font-weight: 700; border-bottom: 0; padding-top: 10px; }
+.chat-recap .chat-tvac td { color: var(--muted); border-bottom: 0; padding-top: 0; }
+.chat-recap dl { margin: 0; display: grid; gap: 4px; font-size: .875rem; }
+.chat-recap dl div { display: flex; gap: 8px; }
+.chat-recap dt { color: var(--muted); min-width: 64px; }
+.chat-recap dd { margin: 0; }
+.chat-recap-titre { font-weight: 700; margin: 0; }
+.chat-recap-note { margin: 0; font-size: .8rem; color: var(--muted); }
+.chat-form textarea:disabled { opacity: .6; }
+@media (max-width: 600px) { .chat-contact { grid-template-columns: 1fr; } }
