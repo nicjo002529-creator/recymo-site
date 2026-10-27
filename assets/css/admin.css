@@ -176,3 +176,10 @@ body.is-admin .mobile-bar { display: none !important; }
 .adm-newtonne.is-refuse, .adm-newtonne.is-abandonne { background: #f3f1ea; }
 .adm-newtonne.is-valide { background: #e3efe8; }
 .adm-newtonne .btn { margin-left: auto; }
+
+/* Suivi en direct des demandes */
+.adm-nouveautes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; margin-bottom: 12px; border-radius: 10px; background: #fdf3d4; border: 1px solid #f1dc9a; font-size: .9rem; }
+.adm-nouveautes[hidden] { display: none; }
+.adm-nouveautes .btn { margin-left: auto; }
+.adm-demandes li.adm-d-nouveau { border-color: #16855a; box-shadow: 0 0 0 3px rgba(22, 133, 90, .15); }
+.adm-d-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #16855a; color: #fff; font-size: .72rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; vertical-align: middle; }

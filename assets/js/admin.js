@@ -546,9 +546,41 @@
     panneauTitre.textContent = "Demandes clients";
     var zone = el("div", {}, [el("p", { text: "Chargement des demandes… (jusqu'à une minute si le serveur était en veille)" })]);
     panneauCorps.appendChild(zone);
-    appel("GET", "/admin/demandes").then(function (d) {
+    // Suivi en direct : toutes les 3 secondes, la page demande au serveur si la liste a changé
+    var vus = null, version = null, verifEnCours = false;
+    var relire = function () {
+      return appel("GET", "/admin/demandes/version").then(function (r) { version = r.v; return appel("GET", "/admin/demandes"); }).then(afficherDemandes);
+    };
+    var verifier = function () {
+      if (!zone.isConnected) { clearInterval(minuterie); return; } // panneau fermé ou remplacé
+      if (!panneau.open || document.hidden || verifEnCours || version === null) return;
+      verifEnCours = true;
+      appel("GET", "/admin/demandes/version").then(function (r) {
+        if (r.v === version) return;
+        version = r.v;
+        // Ne pas effacer ce que l'administrateur regarde : photo ou document ouvert, envoi en cours
+        if (zone.querySelector(".adm-d-photo, button:disabled")) { bandeau.hidden = false; return; }
+        return relire();
+      }).catch(function () {}).then(function () { verifEnCours = false; });
+    };
+    var minuterie = setInterval(verifier, 3000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) verifier(); });
+    var bandeau = el("div", { class: "adm-nouveautes", hidden: true }, [
+      el("span", { text: "La liste a changé (nouvelle demande ou réponse de NewTonne)." }),
+      el("button", { type: "button", class: "btn btn-primary btn-sm", text: "Afficher", onclick: function () { relire(); } })
+    ]);
+
+    var afficherDemandes = function (d) {
+      var defilement = panneauCorps.scrollTop;
       zone.innerHTML = "";
+      bandeau.hidden = true;
+      zone.appendChild(bandeau);
       var liste = d.demandes || [];
+      var anciens = vus;
+      vus = liste.map(function (x) { return x.id; });
+      var nouvelles = anciens ? liste.filter(function (x) { return anciens.indexOf(x.id) === -1; }).length : 0;
+      if (nouvelles) toast(nouvelles > 1 ? nouvelles + " nouvelles demandes reçues." : "Nouvelle demande reçue.");
+      requestAnimationFrame(function () { panneauCorps.scrollTop = defilement; });
       if (!liste.length) {
         zone.appendChild(el("p", { text: "Aucune demande pour l'instant. Les demandes envoyées avec le formulaire de contact apparaîtront ici." }));
         return;
@@ -564,9 +596,10 @@
       zone.appendChild(el("ul", { class: "adm-demandes" }, liste.map(function (x) {
         var date = new Date(x.date);
         var photoZone = el("div");
-        return el("li", {}, [
+        var nouveau = anciens && anciens.indexOf(x.id) === -1;
+        return el("li", nouveau ? { class: "adm-d-nouveau" } : {}, [
           el("div", { class: "adm-d-head" }, [
-            el("strong", { text: x.nom + (x.societe ? " · " + x.societe : "") }),
+            el("strong", { text: x.nom + (x.societe ? " · " + x.societe : "") }, nouveau ? [el("span", { class: "adm-d-tag", text: "Nouveau" })] : []),
             el("time", { datetime: x.date, text: date.toLocaleDateString("fr-BE") + " à " + date.toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }) })
           ]),
           el("p", { class: "adm-d-meta" }, [
@@ -606,7 +639,8 @@
           photoZone
         ]);
       })));
-    }, function (e) { zone.innerHTML = ""; zone.appendChild(el("p", { class: "adm-err", text: e.message })); });
+    };
+    relire().catch(function (e) { zone.innerHTML = ""; zone.appendChild(el("p", { class: "adm-err", text: e.message })); });
   };
 
   // Suivi du devis dans NewTonne : statut, décision, information du client, envoi manuel

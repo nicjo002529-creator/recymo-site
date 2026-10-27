@@ -209,7 +209,10 @@ const chargerDemandes = async () => {
   }
   return demandes;
 };
+// Version de la liste : change à chaque nouvelle demande ou mise à jour (suivi en direct dans l'admin)
+let majDemandes = Date.now();
 const sauverDemandes = async (message) => {
+  majDemandes = Date.now();
   await commit(DATA_REPO, { "demandes/index.json": JSON.stringify(await chargerDemandes(), null, 1) }, message);
 };
 
@@ -917,6 +920,7 @@ const routes = {
     }
     const liste = await chargerDemandes();
     liste.unshift(demande);
+    majDemandes = Date.now();
     fichiers["demandes/index.json"] = JSON.stringify(liste, null, 1);
     await commit(DATA_REPO, fichiers, "Nouvelle demande");
     await compter("demande", req);
@@ -1093,6 +1097,14 @@ const routes = {
   },
 
   "GET /admin/demandes": async () => ({ demandes: await chargerDemandes() }),
+
+  // Admin : « quoi de neuf ? » pour la liste des demandes (appelée toutes les 3 secondes quand le panneau est ouvert)
+  "GET /admin/demandes/version": async (req, url, res) => {
+    if (!limite("version:" + ipDe(req), 60, 60000)) throw Object.assign(new Error("Trop d'appels."), { status: 429 });
+    res.setHeader("Cache-Control", "no-store");
+    const liste = await chargerDemandes();
+    return { v: liste.length + ":" + majDemandes };
+  },
 
   "GET /admin/photo": async (req, url, res) => {
     const chemin = String(url.searchParams.get("chemin") || "");

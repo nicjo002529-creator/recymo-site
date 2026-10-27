@@ -328,13 +328,13 @@
     if (window.recymoAdminCharge) { window.recymoAdminOuvrir(); return; }
     var css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href = RACINE + "assets/css/admin.css";
+    css.href = RACINE + "assets/css/admin.css?v=4";
     document.head.appendChild(css);
     var h = document.createElement("script");
-    h.src = RACINE + "serveur/horaires.js";
+    h.src = RACINE + "serveur/horaires.js?v=4";
     h.onload = function () {
       var s = document.createElement("script");
-      s.src = RACINE + "assets/js/admin.js";
+      s.src = RACINE + "assets/js/admin.js?v=4";
       document.body.appendChild(s);
     };
     document.body.appendChild(h);
