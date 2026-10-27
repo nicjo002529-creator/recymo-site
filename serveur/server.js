@@ -643,7 +643,7 @@ const construireRecap = async (c) => {
     lignes, site: r.siteNom, siteAdresse: site ? site.address : null,
     chantier: r.chantier ? [r.chantier.rue, r.chantier.cp + " " + r.chantier.commune].filter(Boolean).join(", ") : null,
     profil: r.profil, coordonnees: r.coordonnees, facturation: r.facturation,
-    libre: r.libre, analyse: r.analyse, totalHtva: total, totalTvac: Math.round(total * 121) / 100, aConvenir
+    libre: r.libre, analyse: r.analyse, ailleurs: r.ailleurs, totalHtva: total, totalTvac: Math.round(total * 121) / 100, aConvenir
   };
 };
 
@@ -652,7 +652,9 @@ const texteRecap = (rc) => [
     (l.montant === null ? " (prix à convenir)" : ` = ${euros(l.montant)} HTVA${l.supplement ? " (supplément moins de 5 t compris)" : ""}`) + (l.note ? ` [${l.note}]` : "")),
   rc.lignes.length ? `Total indicatif : ${euros(rc.totalHtva)} HTVA${rc.aConvenir ? " + lignes à convenir" : ""}.` : "",
   rc.site ? "Site : " + rc.site + (rc.chantier ? " · chantier : " + rc.chantier : "") : "",
-  rc.libre ? "Demande écrite par le client : " + rc.libre : ""
+  rc.libre ? "Demande écrite par le client : " + rc.libre : "",
+  ...(rc.ailleurs || []).map((a) => "Hors de cette demande (refusé sur ce site) : " + a.nom + (a.quantite ? " " + String(a.quantite).replace(".", ",") + " t" : "") +
+    (a.sites.length ? " → accepté à " + a.sites.map((x) => x.nom).join(", ") : " → aucun site"))
 ].filter(Boolean).join("\n");
 
 const versNewtonneChat = (c) => {

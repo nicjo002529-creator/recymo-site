@@ -999,3 +999,4 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
 @media (max-width: 600px) { .chat-dossier label, .chat-dossier label.court { grid-column: 1 / -1; } }
 .chat-msg:has(.chat-dossier), .chat-msg:has(.chat-recap) { max-width: min(100%, 680px); }
 .chat-maj { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #fdf3d4; border: 1px solid #f1dc9a; } .chat-maj p { margin: 0; } .chat-maj .btn { justify-self: start; }
+.chat-recap-ailleurs { margin: 0; padding: 8px 10px; border-radius: 8px; background: #fdf3d4; font-size: .85rem; }

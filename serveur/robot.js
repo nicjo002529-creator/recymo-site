@@ -308,6 +308,24 @@ const choisirSite = (r, outils, candidats, quoi, prefixe) => {
   return { reponse: reponse(prefixe + texte, { boutons: candidats.map((s) => ({ v: s.code, l: s.nom + kmTexte(s) })) }) };
 };
 
+// Matière refusée au site de la demande : dire où elle est acceptée (le plus proche d'abord)
+const ailleurs = (r, nom, autres, quantite, operation) => {
+  r.ailleurs = r.ailleurs || [];
+  r.ailleurs.push({ nom, quantite: quantite || null, sites: autres.slice(0, 3).map((s) => ({ code: s.code, nom: s.nom, km: s.km })) });
+  if (!autres.length) {
+    return T(r, `« ${nom} » n'est pas accepté à ${r.siteNom}, ni sur un autre site pour le moment : notre équipe vous recontactera à ce sujet. `,
+      `“${nom}” wordt niet aanvaard in ${r.siteNom}, en momenteel ook niet op een andere site: ons team neemt hierover contact met u op. `);
+  }
+  const liste = autres.slice(0, 2).map((x) => x.nom + kmTexte(x)).join(T(r, " ou à ", " of in "));
+  const verbe = operation === "retrait" ? T(r, "le retirer", "het af te halen") : T(r, "le déposer", "het te storten");
+  return T(r, `Attention : « ${nom} » n'est pas accepté à ${r.siteNom}. Il est accepté à ${liste} : vous devrez donc vous y rendre pour ${verbe}, avec une demande séparée (bouton « Nouvelle conversation »). Je continue votre demande pour ${r.siteNom}. `,
+    `Opgelet: “${nom}” wordt niet aanvaard in ${r.siteNom}. Het wordt aanvaard in ${liste}: u moet er dus naartoe om ${verbe}, met een aparte aanvraag (knop “Nieuw gesprek”). Ik ga verder met uw aanvraag voor ${r.siteNom}. `);
+};
+const apresRefus = (r, prefixe) => {
+  r.etape = "plus";
+  return reponse(prefixe + T(r, "Avez-vous autre chose à ajouter pour " + r.siteNom + " ?", "Wilt u nog iets toevoegen voor " + r.siteNom + "?"), { boutons: boutonsPlus(r) });
+};
+
 const avancer = (r, outils, prefixe = "") => {
   for (let garde = 0; garde < 25; garde++) {
     if (!r.courant && r.file.length) r.courant = r.file.shift();
@@ -321,9 +339,13 @@ const avancer = (r, outils, prefixe = "") => {
         if (r.lignes.length && !e.changerSite) {
           // Demande déjà liée à un site : il doit accepter les terres
           const ici = outils.sitesPour(r.chantier.cp).find((s) => s.code === r.site);
-          if (!ici || !sitesPossibles(r, outils, e).some((s) => s.code === r.site)) {
-            r.courant = null; prefixe += T(r, `${r.siteNom} n'accepte pas ces terres : faites une demande séparée (bouton « Nouvelle conversation »). `, `${r.siteNom} aanvaardt deze grond niet: doe een aparte aanvraag (knop “Nieuw gesprek”). `);
-            continue;
+          const possibles = sitesPossibles(r, outils, e);
+          if (!ici || !possibles.some((s) => s.code === r.site)) {
+            const nomTerres = e.famille === "amiante" ? libelle("T-SA-AM", r.langue) : e.famille === "invasives" ? libelle("T-SA-INV", r.langue) : T(r, "Ces terres", "Deze grond");
+            r.courant = null;
+            prefixe += ailleurs(r, nomTerres, possibles.filter((s) => s.code !== r.site), e.quantite, "depot");
+            if (r.file.length) continue;
+            return apresRefus(r, prefixe);
           }
         } else {
           e.changerSite = false;
@@ -346,6 +368,15 @@ const avancer = (r, outils, prefixe = "") => {
       if (res.info) { r.courant = null; prefixe += res.info + " "; continue; }
       if (res.libre) { r.courant = null; r.etape = "libre"; return reponse(prefixe + res.libre, { champ: "texte" }); }
       const nom = res.code ? libelle(res.code, r.langue) : res.nom;
+      if (!terre && r.site) {
+        const ici = outils.sitesPour(r.chantier && r.chantier.cp).find((x) => x.code === r.site);
+        if (ici && !accepteLigne(ici, res, outils)) {
+          r.courant = null;
+          prefixe += ailleurs(r, nom, sitesPossibles(r, outils, e, res).filter((x) => x.code !== r.site), e.quantite, e.operation);
+          if (r.file.length) continue;
+          return apresRefus(r, prefixe);
+        }
+      }
       if (!e.quantite) {
         r.etape = "quantite"; e.res = res;
         const texte = e.m3
@@ -369,13 +400,6 @@ const avancer = (r, outils, prefixe = "") => {
         e.res = res;
         if (ch.reponse) return ch.reponse;
         prefixe += ch.info + (e.operation === "retrait" ? T(r, " Livraison possible sur demande.", " Levering mogelijk op aanvraag.") : "") + " ";
-      } else if (!terre && r.site) {
-        const ici = outils.sitesPour(r.chantier && r.chantier.cp).find((s) => s.code === r.site);
-        if (ici && !accepteLigne(ici, res, outils)) {
-          r.courant = null;
-          prefixe += T(r, `« ${nom} » n'est pas accepté à ${r.siteNom} : faites une demande séparée (bouton « Nouvelle conversation »). `, `“${nom}” wordt niet aanvaard in ${r.siteNom}: doe een aparte aanvraag (knop “Nieuw gesprek”). `);
-          continue;
-        }
       }
       r.lignes.push({ code: res.code || null, nt: res.nt || null, nom: res.nom || null, quantite: e.quantite, ...(e.note ? { note: e.note } : {}) });
       r.courant = null;
@@ -468,7 +492,7 @@ const repondre = (conversation, entree = {}, outils) => {
     if (bouton === "coordonnees") { r.profil = null; r.coordonnees = null; return suiteDossier(r); }
     if (bouton === "facturation") { r.facturation = null; return suiteDossier(r); }
     if (bouton === "matieres" || bouton === "chantier") {
-      Object.assign(r, { lignes: [], file: [], courant: null, libre: null, site: null, siteNom: null, echecs: 0, etape: "accueil", ...(bouton === "chantier" ? { chantier: null } : {}) });
+      Object.assign(r, { lignes: [], file: [], courant: null, libre: null, site: null, siteNom: null, ailleurs: [], echecs: 0, etape: "accueil", ...(bouton === "chantier" ? { chantier: null } : {}) });
       return reponse(T(r, "D'accord. Que voulez-vous déposer ou acheter ?", "Goed. Wat wilt u storten of kopen?"), { boutons: boutonsMatiere(r) });
     }
     if (bouton === "recommencer") { conversation.robot = etatNeuf(r.langue); return reponse(ACCUEIL(conversation.robot), { boutons: boutonsMatiere(conversation.robot) }); }
@@ -595,7 +619,8 @@ const resume = (r) => ({
   site: r.site || null, siteNom: r.siteNom || null,
   chantier: r.chantier || null,
   profil: r.profil || null, coordonnees: r.coordonnees || null, facturation: r.facturation || null,
-  libre: r.libre || null, analyse: !!r.analyseAJoindre
+  libre: r.libre || null, analyse: !!r.analyseAJoindre,
+  ailleurs: r.ailleurs || []
 });
 
 module.exports = { repondre, resume, libelle, nomLigne, tvaBelgeValide, LIBELLES, _analyser: analyser, _norm: norm };

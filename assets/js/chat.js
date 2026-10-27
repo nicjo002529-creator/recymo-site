@@ -96,6 +96,12 @@
     }
     c.appendChild(infos);
     if (rc.analyse) c.appendChild(el("p", "chat-recap-note", T("Analyse de terres : envoyez-la à info@recymo.be ou avec le formulaire ci-dessous.", "Grondanalyse: stuur ze naar info@recymo.be of via het formulier hieronder.")));
+    (rc.ailleurs || []).forEach(function (x) {
+      var dest = x.sites && x.sites.length ? x.sites.map(function (s) { return s.nom + (s.km != null ? " (" + s.km + " km)" : ""); }).join(T(" ou ", " of ")) : null;
+      c.appendChild(el("p", "chat-recap-ailleurs", dest
+        ? T("À déposer ailleurs (demande séparée) : ", "Elders te storten (aparte aanvraag): ") + x.nom + " → " + dest
+        : T("Non compris : ", "Niet inbegrepen: ") + x.nom + T(" (notre équipe vous recontactera)", " (ons team neemt contact met u op)")));
+    });
     c.appendChild(el("p", "chat-recap-note", T("Prix indicatif, confirmé par Recymo après vérification.", "Indicatieve prijs, bevestigd door Recymo na controle.")));
     return c;
   };
