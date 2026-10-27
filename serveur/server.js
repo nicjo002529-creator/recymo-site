@@ -549,22 +549,101 @@ const prixUnitaire = (texte) => {
   return isNaN(n) ? null : n;
 };
 
-// Carte récapitulative : matières, quantités, prix indicatifs calculés ici (jamais par le robot)
-const construireRecap = async (c) => {
+// Codes postaux belges (GeoNames) : { "4260": [latitude, longitude, "Braives"] }, lus une fois sur le disque
+let codesPostaux = null;
+const chargerCodesPostaux = async () => {
+  if (!codesPostaux) {
+    try { codesPostaux = JSON.parse(await fs.readFile(path.join(__dirname, "..", "assets", "data", "codes-postaux.json"), "utf8")); }
+    catch { codesPostaux = {}; }
+  }
+  return codesPostaux;
+};
+const distanceKm = (a, b) => {
+  const R = 6371, rad = Math.PI / 180;
+  const x = Math.sin((b[0] - a[0]) * rad / 2), y = Math.sin((b[1] - a[1]) * rad / 2);
+  return 2 * R * Math.asin(Math.sqrt(x * x + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * y * y));
+};
+
+// Sites et matières : liste à jour de NewTonne (GET /api/devis/sites/, gardée 10 minutes).
+// Secours si NewTonne ne répond pas : les 4 sites connus et les prix de la page Tarifs.
+const SITES_SECOURS = [
+  { code: "BRAIVES", name: "Recymo Braives", address: "Rue Roua 6, 4260 Braives", postal_code: "4260" },
+  { code: "FOSSES", name: "Fosses-la-Ville (WT026437)", address: "Rue Adelin Beguin, 5070 Fosses-la-Ville", postal_code: "5070" },
+  { code: "SAMBREVILLE", name: "Sambreville (WT050579)", address: "Rue de la Larronnerie, 5060 Sambreville", postal_code: "5060" },
+  { code: "TRANSINNES", name: "Transinnes (WT011403)", address: "Grand Route, 6890 Libin", postal_code: "6890" }
+];
+let sitesCache = { lu: 0, duree: 0, sites: null, source: null };
+const chargerSites = async () => {
+  if (sitesCache.sites && Date.now() - sitesCache.lu < sitesCache.duree) return sitesCache;
+  if (NEWTONNE_ACTIF) {
+    try {
+      const { status, data } = await appelNewtonne("GET", "/api/devis/sites/");
+      if (status === 200 && Array.isArray(data.sites) && data.sites.length) {
+        sitesCache = { lu: Date.now(), duree: 600000, source: "newtonne", sites: data.sites.map((x) => ({
+          code: String(x.code), name: String(x.name || x.code), address: String(x.address || ""), postal_code: String(x.postal_code || ""),
+          materials: (Array.isArray(x.materials) ? x.materials : []).map((m) => ({
+            code: String(m.code), name: String(m.name || m.code), operation: m.operation === "retrait" ? "retrait" : "depot",
+            prix: m.price_on_request || m.price_excl_vat == null ? null : Number(m.price_excl_vat)
+          }))
+        })) };
+        return sitesCache;
+      }
+    } catch (e) { console.error("Sites NewTonne :", e.message); }
+  }
   const prix = await chargerPrix();
+  const sites = SITES_SECOURS.map((x) => ({ ...x, materials: [] }));
+  for (const code of Object.keys(MATIERES_NEWTONNE)) {
+    const m = matiere(code);
+    const site = sites.find((x) => x.code === m.site);
+    if (site) site.materials.push({ code: m.newtonne, name: robot.libelle(code, "fr"), operation: m.operation, prix: prixUnitaire(prix[code]) });
+  }
+  sitesCache = { lu: Date.now(), duree: 60000, source: "secours", sites };
+  return sitesCache;
+};
+const nomCourt = (n) => String(n).replace(/^Recymo\s+/i, "").replace(/\s*\(.*\)\s*$/, "").trim();
+
+// Outils donnés au robot : sites triés par distance du chantier, communes, codes NewTonne
+const preparerOutils = async () => {
+  const { sites } = await chargerSites();
+  const cps = await chargerCodesPostaux();
+  return {
+    commune: (cp) => (cps[cp] ? cps[cp][2] : null),
+    newtonne: (code) => { const m = matiere(code); return m ? { code: m.newtonne, operation: m.operation } : null; },
+    sitesPour: (cp) => sites.map((x) => {
+      const a = cps[cp], b = cps[x.postal_code];
+      return {
+        code: x.code, nom: nomCourt(x.name), adresse: x.address,
+        km: a && b ? Math.max(1, Math.round(distanceKm(a, b))) : null,
+        accepte: (code, op) => x.materials.some((m) => m.code === code && m.operation === op),
+        terres: x.materials.filter((m) => /^TERRE/i.test(m.code) && m.operation === "depot").map((m) => ({ code: m.code, nom: m.name }))
+      };
+    }).sort((p, q) => (p.km == null ? 1e9 : p.km) - (q.km == null ? 1e9 : q.km))
+  };
+};
+
+// Carte récapitulative : prix indicatifs du site choisi (NewTonne), calculés ici, jamais par le robot
+const construireRecap = async (c) => {
+  const { sites } = await chargerSites();
+  const prixSecours = await chargerPrix();
   const r = robot.resume(c.robot);
+  const site = sites.find((x) => x.code === r.site);
   let total = 0, aConvenir = false;
   const lignes = r.lignes.map((l) => {
-    const pu = prixUnitaire(prix[l.code]);
-    const supplement = !l.code.startsWith("T-") && l.quantite < 5 ? SUPPLEMENT_PETIT : 0;
+    const m = l.code ? matiere(l.code) : null;
+    const code = l.nt || (m && m.newtonne), operation = m ? m.operation : "depot";
+    const mat = site && site.materials.find((x) => x.code === code && x.operation === operation);
+    const pu = mat ? mat.prix : l.code ? prixUnitaire(prixSecours[l.code]) : null;
+    const supplement = operation === "retrait" || !/^TERRE/i.test(code) ? (l.quantite < 5 ? SUPPLEMENT_PETIT : 0) : 0;
     const montant = pu === null ? null : Math.round((pu * l.quantite + supplement) * 100) / 100;
     if (montant === null) aConvenir = true; else total += montant;
-    return { code: matiere(l.code).newtonne, libelle: robot.libelle(l.code, c.langue), quantite: l.quantite, prixUnitaire: pu, supplement, montant, note: l.note };
+    return { code, libelle: robot.nomLigne(l, c.langue), quantite: l.quantite, prixUnitaire: pu, supplement, montant, note: l.note };
   });
   total = Math.round(total * 100) / 100;
   return {
-    lignes, site: r.site ? robot.SITES[r.site] : null, libre: r.libre, contact: r.contact, analyse: r.analyse,
-    totalHtva: total, totalTvac: Math.round(total * 121) / 100, aConvenir
+    lignes, site: r.siteNom, siteAdresse: site ? site.address : null,
+    chantier: r.chantier ? [r.chantier.rue, r.chantier.cp + " " + r.chantier.commune].filter(Boolean).join(", ") : null,
+    profil: r.profil, coordonnees: r.coordonnees, facturation: r.facturation,
+    libre: r.libre, analyse: r.analyse, totalHtva: total, totalTvac: Math.round(total * 121) / 100, aConvenir
   };
 };
 
@@ -572,15 +651,18 @@ const texteRecap = (rc) => [
   ...rc.lignes.map((l) => `- ${l.code} ${l.libelle} : ${String(l.quantite).replace(".", ",")} t` +
     (l.montant === null ? " (prix à convenir)" : ` = ${euros(l.montant)} HTVA${l.supplement ? " (supplément moins de 5 t compris)" : ""}`) + (l.note ? ` [${l.note}]` : "")),
   rc.lignes.length ? `Total indicatif : ${euros(rc.totalHtva)} HTVA${rc.aConvenir ? " + lignes à convenir" : ""}.` : "",
+  rc.site ? "Site : " + rc.site + (rc.chantier ? " · chantier : " + rc.chantier : "") : "",
   rc.libre ? "Demande écrite par le client : " + rc.libre : ""
 ].filter(Boolean).join("\n");
 
 const versNewtonneChat = (c) => {
   const r = robot.resume(c.robot);
-  const contact = r.contact || {};
+  const co = r.coordonnees || {}, fa = r.facturation || {}, ch = r.chantier || {};
+  const entreprise = r.profil === "entreprise";
   const recapMsg = [...c.messages].reverse().find((m) => m.recap);
   const resume = [
     (c.langue === "nl" ? "[NL] Client néerlandophone : répondre en néerlandais. " : "") + "Demande faite avec le chat de recymo.be, récapitulatif accepté par le client.",
+    entreprise ? "Client : entreprise" + (fa.tva && fa.tvaValide === false ? " — attention, numéro de TVA invalide (contrôle modulo 97)." : ".") : "Client : particulier (paiement avant le code de passage).",
     r.libre ? "Le robot n'a pas reconnu la matière : lignes à compléter. Demande du client : « " + r.libre + " »" : "",
     recapMsg ? texteRecap(recapMsg.recap) : "",
     r.analyse ? "Le client annonce une analyse de terres (RQT/CCQT) : à recevoir par e-mail (info@recymo.be) ou par le formulaire." : ""
@@ -588,14 +670,22 @@ const versNewtonneChat = (c) => {
   return {
     external_id: "recymo-" + c.id,
     status: "a_valider",
-    contact: { name: contact.nom || "", company: contact.societe || "", email: contact.email || "", phone: contact.telephone || "" },
+    contact: {
+      name: co.nom || "", company: entreprise ? co.societe || "" : "", email: co.email || "", billing_email: entreprise ? fa.emailFactures || "" : "",
+      phone: co.telephone || "", vat_number: entreprise ? fa.tva || "" : "", is_private: !entreprise,
+      address: fa.adresse || "", postal_code: fa.cp || "", city: fa.localite || "", country: fa.pays || "BE"
+    },
     ...(r.site ? { site: r.site } : {}),
+    ...(ch.cp ? { job_site: [ch.rue, ch.cp + " " + (ch.commune || "")].filter(Boolean).join(", ").trim(), job_site_postal_code: ch.cp } : {}),
     summary: resume,
     messages: c.messages.slice(-500).map((m) => ({
       role: m.role === "client" ? "client" : m.role === "equipe" ? "humain" : "ia",
       text: (m.texte || "") + (m.recap ? "\n" + texteRecap(m.recap) : ""), at: m.at
     })),
-    lines: r.lignes.map((l) => { const m = matiere(l.code); return { material_code: m.newtonne, operation: m.operation, quantity: String(l.quantite) }; })
+    lines: r.lignes.map((l) => {
+      const m = l.code ? matiere(l.code) : null;
+      return { material_code: l.nt || m.newtonne, operation: m ? m.operation : "depot", quantity: String(l.quantite) };
+    })
   };
 };
 
@@ -666,36 +756,63 @@ const lienPdfChat = (c) => {
   const exp = Math.floor(Date.now() / 1000) + 90 * 86400;
   return `${URL_PUBLIQUE}/chat/pdf?id=${c.id}&exp=${exp}&sig=${signerLien("chat-pdf:" + c.id, exp)}`;
 };
+const dateCourte = (iso) => (iso ? String(iso).slice(0, 10).split("-").reverse().join("/") : "");
 const TEXTES_CHAT = {
   fr: {
-    valide: (n) => `✅ Votre devis ${n.numero || ""} est validé : ${euros(n.totalHtva)} HTVA (${euros(n.totalTvac)} TVAC).`,
+    valide: (n, prive) => prive ? `✅ Votre devis ${n.numero || ""} est validé : ${euros(n.totalTvac)} TVAC.` : `✅ Votre devis ${n.numero || ""} est validé : ${euros(n.totalHtva)} HTVA (${euros(n.totalTvac)} TVAC).`,
+    code: (a) => `🔑 Votre code de passage : ${a.code}, valable jusqu'au ${dateCourte(a.valid_until)}` +
+      (a.sites && a.sites.length ? " à " + a.sites.map((x) => `${x.name}${x.address ? " (" + x.address + ")" : ""}`).join(", ") : "") +
+      (a.operations && a.operations.length ? ", pour " + a.operations.map((o) => (o === "retrait" ? "les enlèvements" : "les dépôts")).join(" et ") : "") +
+      ". Donnez-le à vos chauffeurs : ils le tapent sur la borne à l'entrée du site.",
+    paiement: "💳 Le paiement se fait à l'accueil du site (paiement en ligne bientôt). Dès qu'il est enregistré, votre code de passage apparaîtra ici.",
+    paye: "🔑 Paiement reçu, merci !",
     pdf: "Télécharger le devis (PDF)",
     refus: (n) => "Nous ne pouvons malheureusement pas donner suite à votre demande." + (n.motif ? " Motif : " + n.motif : ""),
     suite: "Pour toute question, appelez-nous au 085 21 74 45."
   },
   nl: {
-    valide: (n) => `✅ Uw offerte ${n.numero || ""} is goedgekeurd: ${euros(n.totalHtva)} excl. btw (${euros(n.totalTvac)} incl. btw).`,
+    valide: (n, prive) => prive ? `✅ Uw offerte ${n.numero || ""} is goedgekeurd: ${euros(n.totalTvac)} incl. btw.` : `✅ Uw offerte ${n.numero || ""} is goedgekeurd: ${euros(n.totalHtva)} excl. btw (${euros(n.totalTvac)} incl. btw).`,
+    code: (a) => `🔑 Uw toegangscode: ${a.code}, geldig tot ${dateCourte(a.valid_until)}` +
+      (a.sites && a.sites.length ? " in " + a.sites.map((x) => `${x.name}${x.address ? " (" + x.address + ")" : ""}`).join(", ") : "") +
+      (a.operations && a.operations.length ? ", voor " + a.operations.map((o) => (o === "retrait" ? "afhalingen" : "stortingen")).join(" en ") : "") +
+      ". Geef hem aan uw chauffeurs: ze tikken hem in op de zuil aan de ingang van de site.",
+    paiement: "💳 U betaalt aan het onthaal van de site (online betalen binnenkort). Zodra de betaling geregistreerd is, verschijnt uw toegangscode hier.",
+    paye: "🔑 Betaling ontvangen, bedankt!",
     pdf: "Offerte downloaden (pdf)",
     refus: (n) => "Helaas kunnen we niet ingaan op uw aanvraag." + (n.motif ? " Reden: " + n.motif : ""),
     suite: "Voor vragen kunt u ons bellen op 085 21 74 45."
   }
 };
+// Le code de passage n'est jamais écrit dans les journaux : seulement dans la conversation (dépôt privé)
 const deciderChat = async (c, dec) => {
   const n = c.newtonne || (c.newtonne = { essais: 0 });
-  if (n.statut === dec.status && n.annonce) return false;
+  const acces = dec.access_code && dec.access_code.code ? dec.access_code : null;
+  const cle = [dec.status, dec.payment_status || "", acces ? acces.code : ""].join("|");
+  if (n.statut === dec.status && n.annonce && n.cleAnnonce === cle) return false; // rien de nouveau
+  const dejaValide = n.statut === "valide" && !!n.annonce;
+  const prive = !!dec.payment_required;
   Object.assign(n, {
-    statut: dec.status, numero: dec.number || null, totalHtva: dec.total_excl_vat || null, totalTvac: dec.total_incl_vat || null,
-    decideLe: dec.decided_at || new Date().toISOString(), decidePar: dec.decided_by || null, motif: dec.refusal_reason || null, erreur: null,
-    pdf: !!dec.pdf_url
+    statut: dec.status, numero: dec.number || n.numero || null, totalHtva: dec.total_excl_vat || null, totalTvac: dec.total_incl_vat || null,
+    decideLe: dec.decided_at || n.decideLe || new Date().toISOString(), decidePar: dec.decided_by || null, motif: dec.refusal_reason || null, erreur: null,
+    pdf: !!dec.pdf_url, client: dec.customer ? { code: dec.customer.code, nom: dec.customer.name } : n.client || null,
+    paiement: dec.payment_required ? dec.payment_status || "en_attente" : null, validJusqua: dec.valid_until || null,
+    acces: acces ? { code: acces.code, valid_until: acces.valid_until, sites: acces.sites || [], operations: acces.operations || [] } : null
   });
   if (dec.status !== "abandonne") {
     const t = TEXTES_CHAT[c.langue] || TEXTES_CHAT.fr;
-    const texte = dec.status === "valide"
-      ? [t.valide(n), dec.message_to_client || "", t.suite].filter(Boolean).join("\n\n")
-      : [t.refus(n), dec.message_to_client || "", t.suite].filter(Boolean).join("\n\n");
-    c.messages.push({ role: "equipe", texte, at: new Date().toISOString(), ...(dec.status === "valide" && dec.pdf_url ? { pdf: true } : {}) });
-    n.annonce = new Date().toISOString();
+    let texte;
+    if (dec.status === "valide" && dejaValide) {
+      // Deuxième notification (paiement enregistré) : seulement le code
+      texte = acces ? [t.paye, t.code(acces)].join("\n\n") : null;
+    } else if (dec.status === "valide") {
+      texte = [t.valide(n, prive), acces ? t.code(acces) : prive ? t.paiement : "", dec.message_to_client || "", t.suite].filter(Boolean).join("\n\n");
+    } else {
+      texte = [t.refus(n), dec.message_to_client || "", t.suite].filter(Boolean).join("\n\n");
+    }
+    if (texte) c.messages.push({ role: "equipe", texte, at: new Date().toISOString(), ...(dec.status === "valide" && dec.pdf_url && !dejaValide ? { pdf: true } : {}) });
+    n.annonce = n.annonce || new Date().toISOString();
   }
+  n.cleAnnonce = cle;
   diffuserChat(c); // tout de suite aux pages ouvertes, avant l'enregistrement
   await marquerChat(c, true);
   return true;
@@ -721,7 +838,7 @@ const chatPublic = (c) => {
       role: m.role, texte: m.texte, at: m.at,
       ...(m.recap ? { recap: m.recap } : {}),
       // Les boutons et les cases ne sont actifs que sur le dernier message du robot
-      ...(i === dernier && m.role === "ia" ? { boutons: m.boutons || [], champ: m.champ || null } : {}),
+      ...(i === dernier && m.role === "ia" ? { boutons: m.boutons || [], champ: m.champ || null, valeurs: m.valeurs || null } : {}),
       ...(m.pdf ? { pdf: lienPdfChat(c), pdfTexte: (TEXTES_CHAT[c.langue] || TEXTES_CHAT.fr).pdf } : {})
     }))
   };
@@ -977,7 +1094,7 @@ const routes = {
     const maintenant = () => new Date().toISOString();
     if (!c) {
       c = { id: crypto.randomBytes(18).toString("base64url"), cree: maintenant(), maj: null, langue: d.langue === "nl" ? "nl" : "fr", messages: [] };
-      const accueil = robot.repondre(c, {});
+      const accueil = robot.repondre(c, {}, await preparerOutils());
       c.messages.push({ role: "ia", texte: accueil.texte, at: maintenant(), boutons: accueil.boutons, champ: accueil.champ });
       chats.set(c.id, c);
     }
@@ -988,10 +1105,19 @@ const routes = {
     if (d.bouton != null) {
       const btn = (dernier.boutons || []).find((x) => x.v === String(d.bouton));
       if (btn) { entree = { bouton: btn.v }; affiche = btn.l; }
-    } else if (d.contact && dernier.champ === "contact") {
-      const k = { nom: t(d.contact.nom, 120), societe: t(d.contact.societe, 120), email: t(d.contact.email, 160), telephone: t(d.contact.telephone, 40) };
-      entree = { contact: k };
-      affiche = [k.nom, k.societe, k.email, k.telephone].filter(Boolean).join(" · ");
+    } else if (d.chantier && dernier.champ === "chantier") {
+      const k = { cp: t(d.chantier.cp, 4), rue: t(d.chantier.rue, 160) };
+      entree = { chantier: k };
+      affiche = [k.rue, k.cp].filter(Boolean).join(", ");
+    } else if (d.coordonnees && dernier.champ === "coordonnees") {
+      const k = { societe: t(d.coordonnees.societe, 120), nom: t(d.coordonnees.nom, 120), email: t(d.coordonnees.email, 160), telephone: t(d.coordonnees.telephone, 40) };
+      entree = { coordonnees: k };
+      affiche = [k.societe, k.nom, k.email, k.telephone].filter(Boolean).join(" · ");
+    } else if (d.facturation && dernier.champ === "facturation") {
+      const k = { adresse: t(d.facturation.adresse, 160), cp: t(d.facturation.cp, 10), localite: t(d.facturation.localite, 80), pays: t(d.facturation.pays, 2),
+        tva: t(d.facturation.tva, 30), emailFactures: t(d.facturation.emailFactures, 160) };
+      entree = { facturation: k };
+      affiche = [k.adresse, [k.cp, k.localite].filter(Boolean).join(" "), k.pays, k.tva && "TVA " + k.tva, k.emailFactures].filter(Boolean).join(" · ");
     } else if (d.nombre != null && dernier.champ === "nombre") {
       entree = { nombre: t(d.nombre, 20) };
       affiche = t(d.nombre, 20).replace(".", ",") + " t";
@@ -1004,9 +1130,9 @@ const routes = {
       throw Object.assign(new Error("Cette conversation est terminée. Appelez-nous au 085 21 74 45."), { status: 429 });
     }
     c.messages.push({ role: "client", texte: affiche, at: maintenant() });
-    const rep = robot.repondre(c, entree);
+    const rep = robot.repondre(c, entree, await preparerOutils());
     if (rep.texte) {
-      const msg = { role: "ia", texte: rep.texte, at: maintenant(), boutons: rep.boutons || [], champ: rep.champ || null };
+      const msg = { role: "ia", texte: rep.texte, at: maintenant(), boutons: rep.boutons || [], champ: rep.champ || null, ...(rep.valeurs ? { valeurs: rep.valeurs } : {}) };
       if (rep.recap) msg.recap = await construireRecap(c);
       c.messages.push(msg);
     }

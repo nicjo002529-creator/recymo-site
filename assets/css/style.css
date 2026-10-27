@@ -987,3 +987,14 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
 .chat-recap-note { margin: 0; font-size: .8rem; color: var(--muted); }
 .chat-form textarea:disabled { opacity: .6; }
 @media (max-width: 600px) { .chat-contact { grid-template-columns: 1fr; } }
+/* Chat : formulaires du dossier (chantier, contact, facturation) */
+.chat-dossier { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.chat-dossier label { grid-column: span 3; display: grid; gap: 4px; font-size: .85rem; font-weight: 600; color: var(--ink-2); }
+.chat-dossier label.large { grid-column: 1 / -1; }
+.chat-dossier label.court { grid-column: span 2; }
+.chat-dossier input, .chat-dossier select { padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-weight: 400; background: var(--bg); color: var(--ink); min-width: 0; }
+.chat-dossier .chat-alerte { color: #a35a00; font-weight: 500; font-size: .8rem; }
+.chat-dossier .chat-obligatoire { grid-column: 1 / -1; color: var(--muted); font-weight: 400; }
+.chat-dossier .btn { grid-column: 1 / -1; justify-self: start; }
+@media (max-width: 600px) { .chat-dossier label, .chat-dossier label.court { grid-column: 1 / -1; } }
+.chat-msg:has(.chat-dossier), .chat-msg:has(.chat-recap) { max-width: min(100%, 680px); }

@@ -82,10 +82,17 @@
     }
     var infos = el("dl");
     var ajout = function (dt, dd) { if (!dd) return; var d = el("div"); d.appendChild(el("dt", null, dt)); d.appendChild(el("dd", null, dd)); infos.appendChild(d); };
-    ajout(T("Site", "Site"), rc.site);
-    if (rc.contact) {
-      ajout(T("Nom", "Naam"), rc.contact.nom + (rc.contact.societe ? " · " + rc.contact.societe : ""));
-      ajout(T("Contact", "Contact"), [rc.contact.email, rc.contact.telephone].filter(Boolean).join(" · "));
+    ajout(T("Chantier", "Werf"), rc.chantier);
+    ajout(T("Site", "Site"), rc.site && (rc.site + (rc.siteAdresse ? " · " + rc.siteAdresse : "")));
+    var co = rc.coordonnees, fa = rc.facturation;
+    if (co) {
+      ajout(rc.profil === "entreprise" ? T("Société", "Bedrijf") : T("Client", "Klant"), rc.profil === "entreprise" ? co.societe : T("Particulier", "Particulier"));
+      ajout(T("Contact", "Contact"), [co.nom, co.email, co.telephone].filter(Boolean).join(" · "));
+    }
+    if (fa) {
+      ajout(T("Facturation", "Facturatie"), [fa.adresse, [fa.cp, fa.localite].filter(Boolean).join(" "), fa.pays].filter(Boolean).join(", "));
+      if (fa.tva) ajout(T("TVA", "Btw"), fa.tva + (fa.tvaValide === false ? T(" (numéro à vérifier)", " (nummer na te kijken)") : ""));
+      if (fa.emailFactures) ajout(T("Factures", "Facturen"), fa.emailFactures);
     }
     c.appendChild(infos);
     if (rc.analyse) c.appendChild(el("p", "chat-recap-note", T("Analyse de terres : envoyez-la à info@recymo.be ou avec le formulaire ci-dessous.", "Grondanalyse: stuur ze naar info@recymo.be of via het formulier hieronder.")));
@@ -127,32 +134,100 @@
       bloc.appendChild(f);
       setTimeout(function () { input.focus({ preventScroll: true }); }, 50);
     }
-    if (m.champ === "contact") {
-      var fc = el("form", "chat-contact");
-      var champs = [["nom", T("Nom", "Naam") + " *", "text", "name"], ["societe", T("Société", "Bedrijf"), "text", "organization"],
-        ["email", "E-mail", "email", "email"], ["telephone", T("Téléphone", "Telefoon"), "tel", "tel"]];
-      champs.forEach(function (c) {
-        var lab = el("label", null, c[1]);
-        var inp = el("input");
-        inp.type = c[2]; inp.name = c[0]; inp.autocomplete = c[3];
-        if (c[0] === "nom") inp.required = true;
-        lab.appendChild(inp);
-        fc.appendChild(lab);
-      });
-      fc.appendChild(el("small", null, T("Nom, et e-mail ou téléphone obligatoires.", "Naam, en e-mail of telefoon verplicht.")));
-      var ok2 = el("button", "btn btn-primary btn-sm", T("Valider mes coordonnées", "Mijn gegevens bevestigen"));
-      ok2.type = "submit";
-      fc.appendChild(ok2);
-      fc.addEventListener("submit", function (e) {
-        e.preventDefault();
-        var v = {};
-        champs.forEach(function (c) { v[c[0]] = fc.elements[c[0]].value.trim(); });
-        if (!v.nom || (!v.email && !v.telephone)) { fc.elements[!v.nom ? "nom" : "email"].focus(); return; }
-        envoyer({ contact: v }, [v.nom, v.societe, v.email, v.telephone].filter(Boolean).join(" · "));
-      });
-      bloc.appendChild(fc);
-    }
+    if (m.champ === "chantier" || m.champ === "coordonnees" || m.champ === "facturation") bloc.appendChild(formulaire(m));
     return bloc.children.length ? bloc : null;
+  };
+
+  // Numéro de TVA belge : 10 chiffres, 97 - (8 premiers % 97) = 2 derniers (avertissement, sans bloquer)
+  var tvaValide = function (v) {
+    var n = String(v || "").toUpperCase().replace(/^BE/, "").replace(/\D/g, "");
+    if (n.length === 9) n = "0" + n;
+    return /^[01]\d{9}$/.test(n) && 97 - (Number(n.slice(0, 8)) % 97) === Number(n.slice(8));
+  };
+
+  // Formulaires du robot, dans l'ordre logique : chantier → personne de contact → facturation
+  var formulaire = function (m) {
+    var v = m.valeurs || {};
+    var entreprise = v.profil === "entreprise";
+    var champs, titre, envoi;
+    if (m.champ === "chantier") {
+      champs = [
+        { n: "cp", l: T("Code postal du chantier", "Postcode van de werf") + " *", type: "text", auto: "postal-code", requis: true, mode: "numeric", max: 4, court: true },
+        { n: "rue", l: T("Rue et numéro (facultatif)", "Straat en nummer (optioneel)"), type: "text", auto: "address-line1" }
+      ];
+      envoi = T("Valider", "Bevestigen");
+    } else if (m.champ === "coordonnees") {
+      champs = (entreprise ? [{ n: "societe", l: T("Nom de la société", "Naam van het bedrijf") + " *", type: "text", auto: "organization", requis: true }] : []).concat([
+        { n: "nom", l: (entreprise ? T("Nom et prénom de la personne de contact", "Naam en voornaam van de contactpersoon") : T("Nom et prénom", "Naam en voornaam")) + " *", type: "text", auto: "name", requis: true },
+        { n: "email", l: "E-mail *", type: "email", auto: "email", requis: true },
+        { n: "telephone", l: T("Téléphone", "Telefoon") + " *", type: "tel", auto: "tel", requis: true }
+      ]);
+      envoi = T("Continuer", "Verder");
+    } else {
+      champs = [
+        { n: "adresse", l: T("Adresse (rue et numéro)", "Adres (straat en nummer)") + " *", type: "text", auto: "address-line1", requis: true, large: true },
+        { n: "cp", l: T("Code postal", "Postcode") + " *", type: "text", auto: "postal-code", requis: true, court: true },
+        { n: "localite", l: T("Localité", "Gemeente") + " *", type: "text", auto: "address-level2", requis: true },
+        { n: "pays", l: T("Pays", "Land"), type: "select", auto: "country", options: [["BE", T("Belgique", "België")], ["NL", T("Pays-Bas", "Nederland")], ["LU", "Luxembourg"], ["FR", T("France", "Frankrijk")], ["DE", T("Allemagne", "Duitsland")]] }
+      ].concat(entreprise ? [
+        { n: "tva", l: T("Numéro de TVA", "Btw-nummer") + " *", type: "text", requis: true, aide: "BE0123456749" },
+        { n: "emailFactures", l: T("E-mail pour les factures (facultatif)", "E-mail voor facturen (optioneel)"), type: "email", auto: "email" }
+      ] : []);
+      envoi = T("Voir le récapitulatif", "Overzicht bekijken");
+    }
+    var fc = el("form", "chat-dossier");
+    champs.forEach(function (c) {
+      var lab = el("label", c.large ? "large" : c.court ? "court" : null, c.l);
+      var inp;
+      if (c.type === "select") {
+        inp = el("select");
+        c.options.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; inp.appendChild(op); });
+        inp.value = v[c.n] || "BE";
+      } else {
+        inp = el("input");
+        inp.type = c.type; inp.value = v[c.n] || "";
+        if (c.mode) inp.inputMode = c.mode;
+        if (c.max) inp.maxLength = c.max;
+        if (c.aide) inp.placeholder = c.aide;
+      }
+      inp.name = c.n;
+      if (c.auto) inp.autocomplete = c.auto;
+      if (c.requis) inp.required = true;
+      lab.appendChild(inp);
+      if (c.n === "tva") {
+        var alerte = el("small", "chat-alerte", T("Numéro de TVA invalide : vérifiez-le (vous pouvez quand même continuer).", "Ongeldig btw-nummer: controleer het (u kunt toch verdergaan)."));
+        alerte.hidden = true;
+        var controle = function () {
+          var pays = fc.elements.pays ? fc.elements.pays.value : "BE";
+          alerte.hidden = !inp.value.trim() || pays !== "BE" || tvaValide(inp.value);
+        };
+        inp.addEventListener("blur", controle);
+        inp.addEventListener("input", function () { if (!alerte.hidden) controle(); });
+        lab.appendChild(alerte);
+      }
+      fc.appendChild(lab);
+    });
+    fc.appendChild(el("small", "chat-obligatoire", T("* obligatoire", "* verplicht")));
+    var ok = el("button", "btn btn-primary btn-sm", envoi);
+    ok.type = "submit";
+    fc.appendChild(ok);
+    fc.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var vide = champs.filter(function (c) { return c.requis && !fc.elements[c.n].value.trim(); })[0];
+      if (vide) { fc.elements[vide.n].focus(); return; }
+      var mauvais = champs.filter(function (c) { return c.type === "email" && fc.elements[c.n].value.trim() && !fc.elements[c.n].checkValidity(); })[0];
+      if (mauvais) { fc.elements[mauvais.n].focus(); return; }
+      if (m.champ === "chantier" && !/^\d{4}$/.test(fc.elements.cp.value.trim())) { fc.elements.cp.focus(); return; }
+      var valeurs = {};
+      champs.forEach(function (c) { valeurs[c.n] = fc.elements[c.n].value.trim(); });
+      var corps = {}; corps[m.champ] = valeurs;
+      var resume = m.champ === "chantier" ? [valeurs.rue, valeurs.cp].filter(Boolean).join(", ")
+        : m.champ === "coordonnees" ? [valeurs.societe, valeurs.nom, valeurs.email, valeurs.telephone].filter(Boolean).join(" · ")
+        : [valeurs.adresse, valeurs.cp + " " + valeurs.localite, valeurs.pays, valeurs.tva && T("TVA ", "Btw ") + valeurs.tva].filter(Boolean).join(" · ");
+      envoyer(corps, resume);
+    });
+    setTimeout(function () { var premier = fc.querySelector("input"); if (premier && !premier.value) premier.focus({ preventScroll: true }); }, 50);
+    return fc;
   };
 
   var bulle = function (m) {
@@ -186,7 +261,7 @@
     requestAnimationFrame(function () { liste.scrollTop = liste.scrollHeight; });
     var dernier = c.messages[c.messages.length - 1] || {};
     // La case de texte reste disponible, sauf quand le robot attend un clic ou des cases précises
-    var bloque = dernier.champ === "contact" || dernier.champ === "nombre" || (dernier.recap && dernier.boutons && dernier.boutons.length);
+    var bloque = ["chantier", "coordonnees", "facturation", "nombre"].indexOf(dernier.champ) !== -1 || (dernier.recap && dernier.boutons && dernier.boutons.length);
     champ.disabled = !!bloque; bouton.disabled = !!bloque;
     champ.placeholder = dernier.champ === "texte" ? T("Décrivez votre demande…", "Beschrijf uw aanvraag…")
       : bloque ? T("Répondez avec les boutons ou les cases ci-dessus", "Antwoord met de knoppen of vakjes hierboven") : T("Écrivez votre message…", "Schrijf uw bericht…");
