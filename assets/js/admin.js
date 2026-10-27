@@ -602,10 +602,42 @@
                 }, function () { b.disabled = false; toast("Impossible d'ouvrir ce document. Réessayez.", "erreur"); });
             } }, [el("span", { class: "adm-doc-type", text: pdf ? "PDF" : "Photo" }), el("span", { class: "adm-doc-nom", text: f.nom }), el("small", { text: taille + (pdf ? " · télécharger" : " · afficher") })]);
           }))) : null,
+          blocNewtonne(x),
           photoZone
         ]);
       })));
     }, function (e) { zone.innerHTML = ""; zone.appendChild(el("p", { class: "adm-err", text: e.message })); });
+  };
+
+  // Suivi du devis dans NewTonne : statut, décision, information du client, envoi manuel
+  var blocNewtonne = function (x) {
+    var n = x.newtonne || null;
+    var zone = el("div", { class: "adm-newtonne" + (n ? " is-" + n.statut : "") });
+    var client = function () {
+      if (!n.client) return "";
+      return " · Client informé : e-mail " + n.client.email + (n.client.sms && n.client.sms !== "désactivé" ? ", SMS " + n.client.sms : "");
+    };
+    var texte = !n ? "Pas encore dans NewTonne."
+      : n.statut === "a_envoyer" ? "Envoi à NewTonne en cours…"
+      : n.statut === "envoye" ? "Dans NewTonne : devis à valider."
+      : n.statut === "echec" ? "Échec de l'envoi à NewTonne (" + (n.essais || 0) + " essai" + ((n.essais || 0) > 1 ? "s" : "") + ")" + (n.erreur ? " : " + n.erreur : ".")
+      : n.statut === "valide" ? "Devis " + (n.numero || "") + " validé" + (n.decidePar ? " par " + n.decidePar : "") +
+        (n.totalHtva ? " · " + (+n.totalHtva).toLocaleString("fr-BE", { minimumFractionDigits: 2 }) + " € HTVA" : "") + client()
+      : n.statut === "refuse" ? "Refusé" + (n.decidePar ? " par " + n.decidePar : "") + (n.motif ? " : " + n.motif : "") + client()
+      : n.statut === "abandonne" ? "Abandonné dans NewTonne." : n.statut;
+    zone.appendChild(el("span", { class: "adm-newtonne-tag", text: "NewTonne" }));
+    zone.appendChild(el("span", { text: texte }));
+    if (!n || n.statut === "echec") {
+      zone.appendChild(el("button", { type: "button", class: "btn btn-outline btn-sm", text: n ? "Renvoyer" : "Envoyer à NewTonne", onclick: function (e) {
+        var b = e.currentTarget; b.disabled = true; b.textContent = "Envoi…";
+        appel("POST", "/admin/newtonne/envoyer", { id: x.id }).then(function (r) {
+          x.newtonne = r.newtonne;
+          zone.replaceWith(blocNewtonne(x));
+          toast("Demande envoyée dans NewTonne.");
+        }, function (err) { b.disabled = false; b.textContent = "Réessayer"; toast(err.message, "erreur"); });
+      } }));
+    }
+    return zone;
   };
 
   var exporterCsv = function (liste) {

@@ -167,3 +167,12 @@ body.is-admin .mobile-bar { display: none !important; }
 .adm-doc-type { font-size: .7rem; font-weight: 800; letter-spacing: .04em; padding: 3px 7px; border-radius: 6px; background: var(--green-100); color: var(--green-800); }
 .adm-doc-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .adm-doc small { color: var(--muted); white-space: nowrap; }
+
+/* Suivi NewTonne d'une demande */
+.adm-newtonne { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; padding: 8px 10px; border-radius: 10px; background: #f0f6f2; font-size: .875rem; }
+.adm-newtonne-tag { font-weight: 700; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; color: #135c46; }
+.adm-newtonne.is-echec { background: #fbe9ea; }
+.adm-newtonne.is-echec .adm-newtonne-tag { color: #b4232a; }
+.adm-newtonne.is-refuse, .adm-newtonne.is-abandonne { background: #f3f1ea; }
+.adm-newtonne.is-valide { background: #e3efe8; }
+.adm-newtonne .btn { margin-left: auto; }

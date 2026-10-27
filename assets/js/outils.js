@@ -293,7 +293,7 @@
         var code = li.querySelector("select").value;
         var m = index[code];
         if (m) m = Object.assign({}, m, { prix: prixAffiche(code, m.prix) });
-        return { m: m, q: valide ? q : null };
+        return { code: code, m: m, q: valide ? q : null };
       }).filter(function (l) { return l.m; });
     };
 
@@ -342,6 +342,8 @@
           (total ? T("Estimation faite sur le site :\n", "Raming gemaakt op de website:\n") : T("Demande de prix pour :\n", "Prijsaanvraag voor:\n")) + message.join("\n") +
           (total ? T("\n\nTotal estimé : ", "\n\nGeraamd totaal: ") + euro(total) + T(" HTVA, soit ", " excl. btw, of ") + euro(total + tva) + T(" TVAC.", " incl. btw.") : "") +
           T("\n\nPrécisions (date souhaitée, adresse du chantier…) : ", "\n\nDetails (gewenste datum, adres van de werf…): ")) +
+        // Lignes structurées, reprises telles quelles dans le devis NewTonne
+        "&lignes=" + encodeURIComponent(JSON.stringify(lignes.map(function (l) { return [l.code, l.q]; }))) +
         "&estimation=1#formulaire";
       var liens = Object.keys(onglets).map(function (o) {
         var nom = NL ? { "versage-classe3": "storten klasse 3", "versage-terre": "grond storten", "granulats": "granulaten" }[o]

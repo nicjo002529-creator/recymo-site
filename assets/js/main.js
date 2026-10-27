@@ -121,6 +121,10 @@
       });
     }
     if (params.get("message")) form.elements.message.value = params.get("message");
+    // Matériaux et quantités venant de l'estimateur : transmis avec la demande pour préremplir le devis
+    var lignesEstimation = [];
+    try { lignesEstimation = JSON.parse(params.get("lignes") || "[]"); } catch (e) {}
+    if (!Array.isArray(lignesEstimation)) lignesEstimation = [];
 
     // Arrivée depuis l'estimateur : l'estimation est déjà dans le message
     if (params.get("estimation") === "1" && params.get("message")) {
@@ -263,7 +267,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             nom: v("nom"), societe: v("societe"), email: v("email"), telephone: v("telephone"),
-            sujet: v("sujet"), message: v("message"), fichiers: docs.filter(Boolean), langue: NL ? "nl" : "fr", _honey: form.elements._honey.value
+            sujet: v("sujet"), message: v("message"), fichiers: docs.filter(Boolean), langue: NL ? "nl" : "fr", lignes: lignesEstimation.slice(0, 10), _honey: form.elements._honey.value
           }),
           signal: ctrl.signal
         }).then(function (r) {
@@ -271,7 +275,7 @@
           return r.json().catch(function () { return {}; }).then(function (d) {
             if (r.ok) {
               form.reset();
-              fichiers = []; afficherFichiers(); majRappel();
+              fichiers = []; lignesEstimation = []; afficherFichiers(); majRappel();
               var sent = document.getElementById("form-sent");
               if (sent) { sent.hidden = false; sent.focus(); }
               return;

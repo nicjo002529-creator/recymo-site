@@ -11,6 +11,17 @@
 //   DATA_REPO         dépôt des données  (défaut : nicjo002529-creator/recymo-data)
 //   ALLOWED_ORIGINS   origines autorisées, séparées par des virgules
 //   LOCAL_SITE_DIR / LOCAL_DATA_DIR   dossiers utilisés en mode local
+//
+// Connexion à NewTonne (gestion des devis) — facultative, active si NEWTONNE_URL et NEWTONNE_API_KEY existent :
+//   NEWTONNE_URL             adresse de NewTonne (ex. https://newtonne.onrender.com)
+//   NEWTONNE_API_KEY         clé « ntq_… » créée dans NewTonne › Commercial › Devis › Connexion à l'IA
+//   NEWTONNE_WEBHOOK_SECRET  secret « whsec_… » affiché au même endroit (vérifie les décisions reçues)
+//   LIENS_SECRET             clé des liens vers les documents joints (défaut : NEWTONNE_API_KEY)
+// Information du client après la décision (Brevo) — facultative :
+//   BREVO_API_KEY            clé API Brevo (e-mails et SMS)
+//   EMAIL_EXPEDITEUR         adresse d'envoi validée dans Brevo (ex. devis@recymo.be)
+//   EMAIL_COPIE              copie cachée de chaque e-mail envoyé au client (facultatif, ex. info@recymo.be)
+//   SMS_EXPEDITEUR           nom affiché des SMS (ex. Recymo) ; absent : pas de SMS
 "use strict";
 const http = require("node:http");
 const crypto = require("node:crypto");
@@ -113,12 +124,13 @@ const jourBruxelles = (d = new Date()) => new Intl.DateTimeFormat("fr-CA", { tim
 const echapper = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const echapperAttr = (s) => echapper(s).replace(/"/g, "&quot;");
 
-const lireCorps = (req, max) => new Promise((ok, ko) => {
+const lireBrut = (req, max) => new Promise((ok, ko) => {
   const morceaux = []; let taille = 0;
   req.on("data", (c) => { taille += c.length; if (taille > max) { ko(Object.assign(new Error("Trop volumineux"), { status: 413 })); req.destroy(); } else morceaux.push(c); });
-  req.on("end", () => ok(Buffer.concat(morceaux).toString("utf8")));
+  req.on("end", () => ok(Buffer.concat(morceaux)));
   req.on("error", ko);
 });
+const lireCorps = async (req, max) => (await lireBrut(req, max)).toString("utf8");
 
 // Limiteur simple : n essais par fenêtre, par clé
 const limites = new Map();
@@ -196,6 +208,301 @@ const chargerDemandes = async () => {
   }
   return demandes;
 };
+const sauverDemandes = async (message) => {
+  await commit(DATA_REPO, { "demandes/index.json": JSON.stringify(await chargerDemandes(), null, 1) }, message);
+};
+
+/* ---------------------------------------------------------------- NewTonne */
+// Chaque demande part dans la boîte « Devis » de NewTonne (statut « à valider »). La décision prise dans
+// NewTonne revient par un message signé, et le serveur vérifie aussi lui-même l'état des devis ouverts
+// (le service peut être endormi quand NewTonne prévient). Le client est alors informé par e-mail et SMS.
+
+const NEWTONNE_URL = (process.env.NEWTONNE_URL || "").replace(/\/+$/, "");
+const NEWTONNE_CLE = process.env.NEWTONNE_API_KEY || "";
+const NEWTONNE_SECRET = process.env.NEWTONNE_WEBHOOK_SECRET || "";
+const NEWTONNE_ACTIF = !!(NEWTONNE_URL && NEWTONNE_CLE);
+const LIENS_SECRET = process.env.LIENS_SECRET || NEWTONNE_CLE;
+const BREVO_CLE = process.env.BREVO_API_KEY || "";
+const EMAIL_EXPEDITEUR = process.env.EMAIL_EXPEDITEUR || "";
+const EMAIL_COPIE = process.env.EMAIL_COPIE || "";
+const SMS_EXPEDITEUR = (process.env.SMS_EXPEDITEUR || "").slice(0, 11);
+const URL_PUBLIQUE = (process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`).replace(/\/+$/, "");
+const ESSAIS_MAX = 12;
+
+// Codes de l'estimateur du site → matière NewTonne, opération, site
+const MATIERES_NEWTONNE = {
+  B0: "B0", B1: "B1", B2: "B2", B3: "B3", B4: "B4", B5: "B5", B6: "B6", POT: "POTEAUX",
+  BR0: "BR0", BR1: "BR1", BR2: "BR2", BR3: "BR3", BR4: "BR4", BR5: "BR5", BR6: "BR6", BR7: "BR7", BR8: "BR8", BR9: "BR9", BR10: "BR10",
+  YT: "YTONG", TA: "TA", BT: "B-T", TN: "TN",
+  "T-BR": ["TERRE-BRAIVES-PETIT", "depot", "BRAIVES"], "T-BR-GROS": ["TERRE-BRAIVES-GROS", "depot", "BRAIVES"],
+  "T-FO": ["TERRE-FOSSES-SA", "depot", "FOSSES"], "T-TR": ["TERRE-TRANS-SA", "depot", "TRANSINNES"],
+  "T-SA-13": ["TERRE-SAMB-SA-I-III", "depot", "SAMBREVILLE"], "T-SA-45": ["TERRE-SAMB-SA-IV-V", "depot", "SAMBREVILLE"],
+  "T-SA-AN": ["TERRE-SAMB-AA", "depot", "SAMBREVILLE"], "T-SA-INV": ["TERRE-SAMB-INVASIVES", "depot", "SAMBREVILLE"],
+  "T-SA-AM": ["TERRE-SAMB-AMIANTE", "depot", "SAMBREVILLE"],
+  "G-MIX": ["GR-MIXTE-063", "retrait"], "G-TA32": ["GR-TARMAC-032", "retrait"], "G-TA63": ["GR-TARMAC-063", "retrait"],
+  "G-BE32": ["GR-BETON-032", "retrait"], "G-BE60": ["GR-BETON-060", "retrait"], "G-BE2560": ["GR-BETON-2560", "retrait"],
+  "G-SAB": ["GR-SABLE-JAUNE", "retrait"], "G-STAB": ["GR-STABITER-032", "retrait"]
+};
+const matiere = (code) => {
+  const m = MATIERES_NEWTONNE[code];
+  if (!m) return null;
+  const [newtonne, operation = "depot", site = "BRAIVES"] = Array.isArray(m) ? m : [m];
+  return { newtonne, operation, site };
+};
+// Lignes de l'estimateur reçues avec la demande : [[code, tonnes|null], …]
+const lignesValides = (brut) => (Array.isArray(brut) ? brut : []).slice(0, 10)
+  .map((l) => Array.isArray(l) ? { code: String(l[0] || ""), quantite: +l[1] > 0 && +l[1] < 100000 ? Math.round(+l[1] * 1000) / 1000 : null } : null)
+  .filter((l) => l && matiere(l.code));
+
+const SITES_PAR_SUJET = { "Versage classe 3": "BRAIVES", "Achat de granulats": "BRAIVES", "Béton et stabilisé": "BRAIVES", "Synthétiques enterrés": "BRAIVES" };
+
+// Liens signés vers les documents joints (lisibles depuis NewTonne sans compte, valables 90 jours)
+const signerLien = (chemin, exp) => crypto.createHmac("sha256", LIENS_SECRET + ":documents").update(chemin + "|" + exp).digest("base64url");
+const lienDocument = (chemin) => {
+  const exp = Math.floor(Date.now() / 1000) + 90 * 86400;
+  return `${URL_PUBLIQUE}/document?c=${encodeURIComponent(chemin)}&exp=${exp}&sig=${signerLien(chemin, exp)}`;
+};
+
+const dateBruxelles = (iso) => new Intl.DateTimeFormat("fr-BE", { timeZone: "Europe/Brussels", dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+
+const versNewtonne = (d) => {
+  const lignes = (d.lignes || []).map((l) => {
+    const m = matiere(l.code);
+    return { material_code: m.newtonne, operation: m.operation, ...(l.quantite ? { quantity: String(l.quantite) } : {}) };
+  });
+  const site = d.lignes && d.lignes.length ? matiere(d.lignes[0].code).site : SITES_PAR_SUJET[d.sujet];
+  const docs = [...(d.fichiers || []), ...(d.photo ? [{ nom: "photo", chemin: d.photo }] : [])];
+  const resume = [
+    (d.langue === "nl" ? "[NL] Client néerlandophone : répondre en néerlandais. " : "") +
+      `Demande reçue sur recymo.be le ${dateBruxelles(d.date)}. Objet : ${d.sujet || "non précisé"}.`,
+    lignes.length ? `Estimation faite sur le site : ${lignes.length} matériau${lignes.length > 1 ? "x" : ""} (détail dans les lignes et dans le message).` : "Pas d'estimation : lignes à compléter.",
+    docs.length ? "Documents joints (liens valables 90 jours) :\n" + docs.map((f) => `- ${f.nom} : ${lienDocument(f.chemin)}`).join("\n") : "Aucun document joint."
+  ].join("\n");
+  return {
+    external_id: "recymo-" + d.id,
+    status: "a_valider",
+    contact: { name: d.nom, company: d.societe, email: d.email, phone: d.telephone },
+    ...(site ? { site } : {}),
+    summary: resume,
+    messages: [{ role: "client", text: d.message, at: d.date }],
+    ...(lignes.length ? { lines: lignes } : {})
+  };
+};
+
+const appelNewtonne = async (methode, chemin, corps) => {
+  const r = await fetch(NEWTONNE_URL + chemin, {
+    method: methode,
+    headers: { Authorization: "Bearer " + NEWTONNE_CLE, "Content-Type": "application/json", "User-Agent": "recymo-admin" },
+    body: corps ? JSON.stringify(corps) : undefined,
+    signal: AbortSignal.timeout(20000)
+  });
+  const data = await r.json().catch(() => ({}));
+  return { status: r.status, data };
+};
+
+// Envoie une demande à NewTonne ; met à jour d.newtonne (sans sauvegarder)
+const envoyerNewtonne = async (d) => {
+  const n = d.newtonne || (d.newtonne = { statut: "a_envoyer", essais: 0 });
+  n.essais = (n.essais || 0) + 1;
+  try {
+    const { status, data } = await appelNewtonne("POST", "/api/devis/", versNewtonne(d));
+    if (status === 200 || status === 201) {
+      Object.assign(n, { statut: "envoye", envoyeLe: new Date().toISOString(), id: data.id || null, erreur: null });
+      return true;
+    }
+    if (status === 409) { Object.assign(n, { statut: "envoye", erreur: null }); return true; } // déjà décidé dans NewTonne
+    n.statut = "echec";
+    n.erreur = `NewTonne ${status} : ${String(data.error || "").slice(0, 200)}`;
+  } catch (e) {
+    n.statut = "echec";
+    n.erreur = "NewTonne injoignable : " + String(e.message).slice(0, 150);
+  }
+  console.error("Envoi NewTonne", d.id, n.erreur);
+  return false;
+};
+
+/* Information du client */
+const TEXTES = {
+  fr: {
+    sujetValide: (num) => `Votre devis Recymo ${num}`,
+    sujetRefus: "Votre demande de devis Recymo",
+    bonjour: (nom) => `Bonjour ${nom},`,
+    valide: "Votre devis est prêt. Vous le trouverez en pièce jointe.",
+    refus: "Nous avons bien étudié votre demande, mais nous ne pouvons pas y donner suite.",
+    motif: "Motif",
+    total: "Total", htva: "HTVA", tvac: "TVAC", unites: { tonne: "t", metre: "m", piece: "pièce(s)", passage: "passage(s)" },
+    validite: "Ce devis est valable 30 jours. Pour le confirmer ou pour toute question, répondez à cet e-mail ou appelez-nous au 085 21 74 45.",
+    autre: "Pour toute question, appelez-nous au 085 21 74 45.",
+    signature: "L'équipe Recymo Wallonie",
+    sms: (num, total) => `Recymo : votre devis ${num} est prêt (${total} HTVA). Envoyé par e-mail. Questions : 085 21 74 45`,
+    smsRefus: "Recymo : nous ne pouvons pas donner suite à votre demande de devis. Détails par e-mail. Questions : 085 21 74 45"
+  },
+  nl: {
+    sujetValide: (num) => `Uw offerte van Recymo ${num}`,
+    sujetRefus: "Uw offerteaanvraag bij Recymo",
+    bonjour: (nom) => `Beste ${nom},`,
+    valide: "Uw offerte is klaar. U vindt ze in bijlage.",
+    refus: "We hebben uw aanvraag grondig bekeken, maar kunnen er helaas niet op ingaan.",
+    motif: "Reden",
+    total: "Totaal", htva: "excl. btw", tvac: "incl. btw", unites: { tonne: "t", metre: "m", piece: "stuk(s)", passage: "rit(ten)" },
+    validite: "Deze offerte is 30 dagen geldig. Om ze te bevestigen of voor vragen: antwoord op deze e-mail of bel 085 21 74 45.",
+    autre: "Voor vragen kunt u ons bellen op 085 21 74 45.",
+    signature: "Het team van Recymo Wallonie",
+    sms: (num, total) => `Recymo: uw offerte ${num} is klaar (${total} excl. btw). Verstuurd per e-mail. Vragen: 085 21 74 45`,
+    smsRefus: "Recymo: we kunnen niet ingaan op uw offerteaanvraag. Details per e-mail. Vragen: 085 21 74 45"
+  }
+};
+const euros = (v) => (+v || 0).toLocaleString("fr-BE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+
+const courrielHtml = (d, dec) => {
+  const t = TEXTES[d.langue] || TEXTES.fr;
+  const p = (s) => `<p style="margin:0 0 14px">${s}</p>`;
+  let corps = p(echapper(t.bonjour(d.nom)));
+  if (dec.status === "valide") {
+    corps += p(t.valide);
+    if (dec.message_to_client) corps += p(echapper(dec.message_to_client).replace(/\n/g, "<br>"));
+    const lignes = (dec.lines || []).map((l) => `<tr><td style="padding:6px 8px;border-bottom:1px solid #dfe6e1">${echapper(l.label || l.material_code || "")}</td>` +
+      `<td style="padding:6px 8px;border-bottom:1px solid #dfe6e1;text-align:right;white-space:nowrap">${echapper((+l.quantity || 0).toLocaleString("fr-BE"))} ${echapper(t.unites[l.unit] || l.unit || "")}</td>` +
+      `<td style="padding:6px 8px;border-bottom:1px solid #dfe6e1;text-align:right;white-space:nowrap">${euros(l.total_excl_vat)}</td></tr>`).join("");
+    corps += `<table style="border-collapse:collapse;width:100%;font-size:14px;margin:0 0 14px">${lignes}` +
+      `<tr><td colspan="2" style="padding:8px;font-weight:700">${t.total} ${t.htva}</td><td style="padding:8px;text-align:right;font-weight:700">${euros(dec.total_excl_vat)}</td></tr>` +
+      `<tr><td colspan="2" style="padding:0 8px 8px">${t.total} ${t.tvac}</td><td style="padding:0 8px 8px;text-align:right">${euros(dec.total_incl_vat)}</td></tr></table>`;
+    corps += p(t.validite);
+  } else {
+    corps += p(t.refus);
+    if (dec.refusal_reason) corps += p(`<strong>${t.motif} :</strong> ${echapper(dec.refusal_reason)}`);
+    if (dec.message_to_client) corps += p(echapper(dec.message_to_client).replace(/\n/g, "<br>"));
+    corps += p(t.autre);
+  }
+  corps += p(t.signature + "<br>Rue Roua 6, 4260 Braives · 085 21 74 45 · info@recymo.be");
+  return `<!doctype html><html lang="${d.langue === "nl" ? "nl" : "fr"}"><body style="margin:0;padding:24px;background:#f6f4ee;font-family:Arial,sans-serif;color:#0e1a15">` +
+    `<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:28px;font-size:15px;line-height:1.5">${corps}</div></body></html>`;
+};
+
+// Téléphone belge → format international pour les SMS (mobiles uniquement)
+const mobileInternational = (tel) => {
+  let n = String(tel || "").replace(/[^\d+]/g, "");
+  if (n.startsWith("+")) n = n.slice(1); else if (n.startsWith("00")) n = n.slice(2); else if (n.startsWith("0")) n = "32" + n.slice(1);
+  return /^324\d{8}$/.test(n) ? n : null;
+};
+
+const brevo = async (chemin, corps) => {
+  const r = await fetch("https://api.brevo.com/v3" + chemin, {
+    method: "POST", headers: { "api-key": BREVO_CLE, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(corps), signal: AbortSignal.timeout(20000)
+  });
+  if (!r.ok) throw new Error("Brevo " + r.status + " " + (await r.text()).slice(0, 150));
+};
+
+const informerClient = async (d, dec) => {
+  const t = TEXTES[d.langue] || TEXTES.fr;
+  const sujet = dec.status === "valide" ? t.sujetValide(dec.number || "") : t.sujetRefus;
+  const html = courrielHtml(d, dec);
+  const resultat = { email: "non configuré", sms: SMS_EXPEDITEUR ? "non configuré" : "désactivé" };
+
+  // PDF officiel du devis (seulement depuis l'adresse NewTonne configurée : la clé n'est jamais envoyée ailleurs)
+  let pdf = null;
+  if (dec.status === "valide" && dec.pdf_url && NEWTONNE_URL && new URL(dec.pdf_url).origin === new URL(NEWTONNE_URL).origin) {
+    try {
+      const r = await fetch(dec.pdf_url, { headers: { Authorization: "Bearer " + NEWTONNE_CLE }, signal: AbortSignal.timeout(20000) });
+      if (r.ok) pdf = Buffer.from(await r.arrayBuffer());
+    } catch (e) { console.error("PDF NewTonne :", e.message); }
+  }
+
+  if (LOCAL && !BREVO_CLE) {
+    // Mode local : le message est écrit sur le disque au lieu d'être envoyé
+    const dossier = path.join(LOCAL_DIRS[DATA_REPO], "courriels");
+    await fs.mkdir(dossier, { recursive: true });
+    await fs.writeFile(path.join(dossier, `${d.id.slice(0, 8)}-${dec.status}.html`), `<!-- À : ${d.email} · Objet : ${sujet} -->\n` + html);
+    if (pdf) await fs.writeFile(path.join(dossier, `${d.id.slice(0, 8)}-${dec.number}.pdf`), pdf);
+    return { email: "simulé (mode local)", sms: SMS_EXPEDITEUR ? "simulé (mode local)" : "désactivé", pdf: !!pdf };
+  }
+  if (BREVO_CLE && EMAIL_EXPEDITEUR) {
+    try {
+      await brevo("/smtp/email", {
+        sender: { email: EMAIL_EXPEDITEUR, name: "Recymo Wallonie" },
+        to: [{ email: d.email, name: d.nom }],
+        ...(EMAIL_COPIE ? { bcc: [{ email: EMAIL_COPIE }] } : {}),
+        replyTo: { email: EMAIL_COPIE || EMAIL_EXPEDITEUR },
+        subject: sujet, htmlContent: html,
+        ...(pdf ? { attachment: [{ name: `${dec.number || "devis"}.pdf`, content: pdf.toString("base64") }] } : {})
+      });
+      resultat.email = pdf || dec.status !== "valide" ? "envoyé" : "envoyé sans PDF";
+    } catch (e) { resultat.email = "échec"; console.error("E-mail client :", e.message); }
+  }
+  if (BREVO_CLE && SMS_EXPEDITEUR) {
+    const mobile = mobileInternational(d.telephone);
+    if (!mobile) resultat.sms = "pas de numéro mobile";
+    else {
+      try {
+        await brevo("/transactionalSMS/sms", {
+          sender: SMS_EXPEDITEUR, recipient: mobile, type: "transactional",
+          content: dec.status === "valide" ? t.sms(dec.number || "", euros(dec.total_excl_vat)) : t.smsRefus
+        });
+        resultat.sms = "envoyé";
+      } catch (e) { resultat.sms = "échec"; console.error("SMS client :", e.message); }
+    }
+  }
+  return resultat;
+};
+
+// Décision reçue de NewTonne (message signé ou vérification périodique). Ne prévient le client qu'une fois.
+const traiterDecision = async (dec) => {
+  if (!dec || !["valide", "refuse", "abandonne"].includes(dec.status)) return false;
+  const id = String(dec.external_id || "").replace(/^recymo-/, "");
+  const d = (await chargerDemandes()).find((x) => x.id === id);
+  if (!d) return false;
+  const n = d.newtonne || (d.newtonne = { essais: 0 });
+  if (n.statut === dec.status && (n.client || dec.status === "abandonne")) return false;
+  Object.assign(n, {
+    statut: dec.status, numero: dec.number || null, totalHtva: dec.total_excl_vat || null, totalTvac: dec.total_incl_vat || null,
+    decideLe: dec.decided_at || new Date().toISOString(), decidePar: dec.decided_by || null,
+    motif: dec.refusal_reason || null, messageClient: dec.message_to_client || null, erreur: null
+  });
+  if (dec.status !== "abandonne") {
+    n.client = await informerClient(d, dec);
+    n.client.le = new Date().toISOString();
+  }
+  await sauverDemandes(`Devis ${dec.number || id.slice(0, 8)} : ${dec.status}`);
+  return true;
+};
+
+const signatureValide = (brut, ts, sig) => {
+  if (!NEWTONNE_SECRET || !/^\d+$/.test(ts || "") || Math.abs(Date.now() / 1000 - +ts) > 300) return false;
+  const attendu = Buffer.from("sha256=" + crypto.createHmac("sha256", NEWTONNE_SECRET).update(Buffer.concat([Buffer.from(ts + "."), brut])).digest("hex"));
+  const recu = Buffer.from(String(sig || ""));
+  return attendu.length === recu.length && crypto.timingSafeEqual(attendu, recu);
+};
+
+// Tâche de fond : renvoie les demandes en échec et vérifie l'état des devis encore ouverts
+let tacheEnCours = false;
+const tacheNewtonne = async () => {
+  if (!NEWTONNE_ACTIF || tacheEnCours) return;
+  tacheEnCours = true;
+  try {
+    const liste = await chargerDemandes();
+    let change = false;
+    for (const d of liste) {
+      const n = d.newtonne;
+      if (n && ["a_envoyer", "echec"].includes(n.statut) && (n.essais || 0) < ESSAIS_MAX) {
+        await envoyerNewtonne(d);
+        change = true;
+      }
+    }
+    if (change) await sauverDemandes("Envoi des demandes à NewTonne");
+    const limite60j = Date.now() - 60 * 86400000;
+    for (const d of liste) {
+      if (!d.newtonne || d.newtonne.statut !== "envoye" || new Date(d.date) < limite60j) continue;
+      const { status, data } = await appelNewtonne("GET", "/api/devis/" + encodeURIComponent("recymo-" + d.id) + "/").catch(() => ({ status: 0 }));
+      if (status === 200) await traiterDecision(data);
+    }
+  } catch (e) { console.error("Tâche NewTonne :", e.message); }
+  tacheEnCours = false;
+};
+if (NEWTONNE_ACTIF) {
+  setTimeout(tacheNewtonne, 30000).unref();
+  setInterval(tacheNewtonne, 30 * 60000).unref();
+}
 
 /* ---------------------------------------------- Modifications du site */
 
@@ -325,7 +632,10 @@ const envoyer = (res, status, data, type = "application/json; charset=utf-8") =>
 };
 
 const routes = {
-  "GET /sante": async () => ({ ok: true, mode: LOCAL ? "local" : "github", code: !!ADMIN_CODE }),
+  "GET /sante": async () => ({
+    ok: true, mode: LOCAL ? "local" : "github", code: !!ADMIN_CODE,
+    newtonne: NEWTONNE_ACTIF, decisions: !!NEWTONNE_SECRET, email: !!(BREVO_CLE && EMAIL_EXPEDITEUR), sms: !!(BREVO_CLE && SMS_EXPEDITEUR)
+  }),
 
   "POST /hit": async (req) => {
     if (!limite("hit:" + ipDe(req), 120, 60000)) return { ok: false };
@@ -355,8 +665,10 @@ const routes = {
       id: crypto.randomUUID(), date: new Date().toISOString(),
       nom: champ("nom", 120), societe: champ("societe", 120), email: champ("email", 160),
       telephone: champ("telephone", 40), sujet: champ("sujet", 80), message: champ("message", 5000), photo: null,
-      langue: d.langue === "nl" ? "nl" : "fr"
+      langue: d.langue === "nl" ? "nl" : "fr",
+      lignes: lignesValides(d.lignes)
     };
+    if (NEWTONNE_ACTIF) demande.newtonne = { statut: "a_envoyer", essais: 0 };
     if (!demande.nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(demande.email) || !demande.telephone || !demande.message) {
       throw Object.assign(new Error("Champs obligatoires manquants."), { status: 400 });
     }
@@ -388,7 +700,57 @@ const routes = {
     fichiers["demandes/index.json"] = JSON.stringify(liste, null, 1);
     await commit(DATA_REPO, fichiers, "Nouvelle demande");
     await compter("demande", req);
+    // Transmission à NewTonne après la réponse au client (en cas d'échec : nouvel essai par la tâche de fond)
+    if (NEWTONNE_ACTIF) {
+      envoyerNewtonne(demande).then(() => sauverDemandes("Demande transmise à NewTonne")).catch((e) => console.error("NewTonne :", e.message));
+    }
     return { ok: true };
+  },
+
+  // Document joint à une demande, ouvert depuis NewTonne par un lien signé
+  "GET /document": async (req, url, res) => {
+    const chemin = String(url.searchParams.get("c") || "");
+    const exp = String(url.searchParams.get("exp") || "");
+    const sig = Buffer.from(String(url.searchParams.get("sig") || ""));
+    if (!LIENS_SECRET || !/^demandes\/(photos|fichiers)\/[\w.-]+$/.test(chemin) || !/^\d+$/.test(exp) || +exp < Date.now() / 1000) {
+      throw Object.assign(new Error("Lien invalide ou expiré."), { status: 403 });
+    }
+    const attendu = Buffer.from(signerLien(chemin, exp));
+    if (attendu.length !== sig.length || !crypto.timingSafeEqual(attendu, sig)) throw Object.assign(new Error("Lien invalide ou expiré."), { status: 403 });
+    const buf = await lire(DATA_REPO, chemin);
+    if (!buf) throw Object.assign(new Error("Introuvable"), { status: 404 });
+    const type = chemin.endsWith(".pdf") ? "application/pdf" : chemin.endsWith(".png") ? "image/png" : chemin.endsWith(".webp") ? "image/webp" : "image/jpeg";
+    res.writeHead(200, { "Content-Type": type, "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": "inline; filename=\"" + chemin.split("/").pop() + "\"" });
+    res.end(buf);
+    return undefined;
+  },
+
+  // Décision prise dans NewTonne (message signé « devis.decision »)
+  "POST /newtonne/decision": async (req, url, res) => {
+    const brut = await lireBrut(req, 512 * 1024);
+    if (!signatureValide(brut, req.headers["x-newtonne-timestamp"], req.headers["x-newtonne-signature"])) {
+      throw Object.assign(new Error("Signature refusée."), { status: 401 });
+    }
+    let dec;
+    try { dec = JSON.parse(brut.toString("utf8")); } catch { throw Object.assign(new Error("JSON invalide."), { status: 400 }); }
+    // Réponse immédiate (NewTonne attend 10 secondes au plus), traitement ensuite
+    envoyer(res, 200, { ok: true });
+    traiterDecision(dec).catch((e) => console.error("Décision NewTonne :", e.message));
+    return undefined;
+  },
+
+  // Admin : envoyer (ou renvoyer) une demande à NewTonne
+  "POST /admin/newtonne/envoyer": async (req) => {
+    if (!NEWTONNE_ACTIF) throw Object.assign(new Error("NewTonne n'est pas configuré sur le serveur."), { status: 400 });
+    const { id } = JSON.parse(await lireCorps(req, 1000));
+    const d = (await chargerDemandes()).find((x) => x.id === id);
+    if (!d) throw Object.assign(new Error("Demande introuvable."), { status: 404 });
+    d.newtonne = Object.assign(d.newtonne || {}, { statut: "a_envoyer", essais: 0 });
+    const ok = await envoyerNewtonne(d);
+    await sauverDemandes("Demande renvoyée à NewTonne");
+    if (!ok) throw Object.assign(new Error(d.newtonne.erreur || "Échec de l'envoi."), { status: 502 });
+    return { ok: true, newtonne: d.newtonne };
   },
 
   "GET /admin/stats": async (req, url) => {
