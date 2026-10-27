@@ -135,6 +135,16 @@
       setTimeout(function () { input.focus({ preventScroll: true }); }, 50);
     }
     if (m.champ === "chantier" || m.champ === "coordonnees" || m.champ === "facturation") bloc.appendChild(formulaire(m));
+    // Étape inconnue de cette version de la page (mise à jour du site pendant la conversation) : proposer de recharger
+    if (m.champ && ["nombre", "texte", "chantier", "coordonnees", "facturation"].indexOf(m.champ) === -1) {
+      var maj = el("div", "chat-maj");
+      maj.appendChild(el("p", null, T("Le chat a été mis à jour. Rechargez la page pour continuer : votre conversation est gardée.", "De chat is bijgewerkt. Herlaad de pagina om verder te gaan: uw gesprek blijft bewaard.")));
+      var recharger = el("button", "btn btn-primary btn-sm", T("Recharger la page", "Pagina herladen"));
+      recharger.type = "button";
+      recharger.addEventListener("click", function () { location.reload(); });
+      maj.appendChild(recharger);
+      bloc.appendChild(maj);
+    }
     return bloc.children.length ? bloc : null;
   };
 
