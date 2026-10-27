@@ -643,7 +643,7 @@ const construireRecap = async (c) => {
     lignes, site: r.siteNom, siteAdresse: site ? site.address : null,
     chantier: r.chantier ? [r.chantier.rue, r.chantier.cp + " " + r.chantier.commune].filter(Boolean).join(", ") : null,
     profil: r.profil, coordonnees: r.coordonnees, facturation: r.facturation,
-    libre: r.libre, analyse: r.analyse, ailleurs: r.ailleurs, totalHtva: total, totalTvac: Math.round(total * 121) / 100, aConvenir
+    libre: r.libre, analyse: r.analyse, documents: r.documents, ailleurs: r.ailleurs, totalHtva: total, totalTvac: Math.round(total * 121) / 100, aConvenir
   };
 };
 
@@ -667,7 +667,8 @@ const versNewtonneChat = (c) => {
     entreprise ? "Client : entreprise" + (fa.tva && fa.tvaValide === false ? " — attention, numéro de TVA invalide (contrôle modulo 97)." : ".") : "Client : particulier (paiement avant le code de passage).",
     r.libre ? "Le robot n'a pas reconnu la matière : lignes à compléter. Demande du client : « " + r.libre + " »" : "",
     recapMsg ? texteRecap(recapMsg.recap) : "",
-    r.analyse ? "Le client annonce une analyse de terres (RQT/CCQT) : à recevoir par e-mail (info@recymo.be) ou par le formulaire." : ""
+    (c.fichiers || []).length ? "Documents joints (liens valables 90 jours) :\n" + c.fichiers.map((x) => `- ${x.nom} : ${lienDocument(x.chemin)}`).join("\n")
+      : r.analyse ? "Le client annonce une analyse de terres (RQT/CCQT) : pas encore jointe, à recevoir par e-mail (info@recymo.be)." : ""
   ].filter(Boolean).join("\n");
   return {
     external_id: "recymo-" + c.id,
@@ -1055,7 +1056,7 @@ const routes = {
     const chemin = String(url.searchParams.get("c") || "");
     const exp = String(url.searchParams.get("exp") || "");
     const sig = Buffer.from(String(url.searchParams.get("sig") || ""));
-    if (!LIENS_SECRET || !/^demandes\/(photos|fichiers)\/[\w.-]+$/.test(chemin) || !/^\d+$/.test(exp) || +exp < Date.now() / 1000) {
+    if (!LIENS_SECRET || !/^(demandes\/(photos|fichiers)|chats\/fichiers)\/[\w.-]+$/.test(chemin) || !/^\d+$/.test(exp) || +exp < Date.now() / 1000) {
       throw Object.assign(new Error("Lien invalide ou expiré."), { status: 403 });
     }
     const attendu = Buffer.from(signerLien(chemin, exp));
@@ -1090,7 +1091,7 @@ const routes = {
       throw Object.assign(new Error("Trop de messages. Réessayez plus tard ou appelez-nous au 085 21 74 45."), { status: 429 });
     }
     let d = {};
-    try { d = JSON.parse(await lireCorps(req, 8000)); } catch {}
+    try { d = JSON.parse(await lireCorps(req, 85 * 1024 * 1024)); } catch {}
     let c = d.id ? await chargerChat(String(d.id)) : null;
     if (d.id && !c) throw Object.assign(new Error("Conversation introuvable."), { status: 404 });
     const maintenant = () => new Date().toISOString();
@@ -1120,6 +1121,27 @@ const routes = {
         tva: t(d.facturation.tva, 30), emailFactures: t(d.facturation.emailFactures, 160) };
       entree = { facturation: k };
       affiche = [k.adresse, [k.cp, k.localite].filter(Boolean).join(" "), k.pays, k.tva && "TVA " + k.tva, k.emailFactures].filter(Boolean).join(" · ");
+    } else if (Array.isArray(d.fichiers) && dernier.champ === "fichiers") {
+      const EXT = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+      const aEnregistrer = {}, noms = [];
+      c.fichiers = c.fichiers || [];
+      for (const fi of d.fichiers.slice(0, 6)) {
+        const mf = String((fi && fi.data) || "").match(/^data:(application\/pdf|image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+        if (!mf) continue;
+        const buf = Buffer.from(mf[2], "base64");
+        if (buf.length > 10 * 1024 * 1024) continue;
+        if (mf[1] === "application/pdf" && buf.subarray(0, 4).toString() !== "%PDF") continue;
+        const nom = t(fi.nom || "document", 120) || "document";
+        const base = nom.replace(/\.[^.]+$/, "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "-").slice(0, 60) || "document";
+        const chemin = `chats/fichiers/${c.id.slice(0, 10)}-${c.fichiers.length + 1}-${base}.${EXT[mf[1]]}`;
+        aEnregistrer[chemin] = buf;
+        c.fichiers.push({ nom, chemin, type: mf[1], taille: buf.length });
+        noms.push(nom);
+      }
+      if (!noms.length) throw Object.assign(new Error("Document non accepté : utilisez un PDF, un JPG ou un PNG de moins de 10 Mo."), { status: 400 });
+      await commit(DATA_REPO, aEnregistrer, "Chat : documents joints");
+      entree = { fichiers: noms };
+      affiche = "📎 " + noms.join(", ");
     } else if (d.nombre != null && dernier.champ === "nombre") {
       entree = { nombre: t(d.nombre, 20) };
       affiche = t(d.nombre, 20).replace(".", ",") + " t";

@@ -47,6 +47,8 @@
     });
   };
 
+  var ajoutDoc = function (c, docs) { c.appendChild(el("p", "chat-recap-note", "📎 " + T("Documents joints : ", "Bijgevoegde documenten: ") + docs.join(", "))); };
+
   // Carte récapitulative : prix calculés par le serveur d'après la grille tarifaire
   var carte = function (rc) {
     var c = el("div", "chat-recap");
@@ -96,6 +98,7 @@
     }
     c.appendChild(infos);
     if (rc.analyse) c.appendChild(el("p", "chat-recap-note", T("Analyse de terres : envoyez-la à info@recymo.be ou avec le formulaire ci-dessous.", "Grondanalyse: stuur ze naar info@recymo.be of via het formulier hieronder.")));
+    if (rc.documents && rc.documents.length) ajoutDoc(c, rc.documents);
     (rc.ailleurs || []).forEach(function (x) {
       var dest = x.sites && x.sites.length ? x.sites.map(function (s) { return s.nom + (s.km != null ? " (" + s.km + " km)" : ""); }).join(T(" ou ", " of ")) : null;
       c.appendChild(el("p", "chat-recap-ailleurs", dest
@@ -141,8 +144,9 @@
       setTimeout(function () { input.focus({ preventScroll: true }); }, 50);
     }
     if (m.champ === "chantier" || m.champ === "coordonnees" || m.champ === "facturation") bloc.appendChild(formulaire(m));
+    if (m.champ === "fichiers") bloc.insertBefore(choixFichiers(), bloc.firstChild);
     // Étape inconnue de cette version de la page (mise à jour du site pendant la conversation) : proposer de recharger
-    if (m.champ && ["nombre", "texte", "chantier", "coordonnees", "facturation"].indexOf(m.champ) === -1) {
+    if (m.champ && ["nombre", "texte", "chantier", "coordonnees", "facturation", "fichiers"].indexOf(m.champ) === -1) {
       var maj = el("div", "chat-maj");
       maj.appendChild(el("p", null, T("Le chat a été mis à jour. Rechargez la page pour continuer : votre conversation est gardée.", "De chat is bijgewerkt. Herlaad de pagina om verder te gaan: uw gesprek blijft bewaard.")));
       var recharger = el("button", "btn btn-primary btn-sm", T("Recharger la page", "Pagina herladen"));
@@ -246,6 +250,88 @@
     return fc;
   };
 
+  // Documents (analyse de terres) : le bouton ouvre l'explorateur de fichiers sur PC,
+  // et sur téléphone le choix Fichiers / Photos / Appareil photo
+  var MAX_FICHIERS = 6, MAX_TAILLE = 10 * 1024 * 1024;
+  var lireFichier = function (f) {
+    return new Promise(function (ok) {
+      if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
+        var lecteur = new FileReader();
+        lecteur.onload = function () { ok({ nom: f.name, data: String(lecteur.result).replace(/^data:[^;]*;/, "data:application/pdf;") }); };
+        lecteur.onerror = function () { ok(null); };
+        lecteur.readAsDataURL(f);
+        return;
+      }
+      // Photos réduites à 1600 px (JPEG) : envoi plus rapide depuis un téléphone
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function () {
+        var max = 1600, w = img.naturalWidth, h = img.naturalHeight;
+        if (w > max || h > max) { var k = Math.min(max / w, max / h); w = Math.round(w * k); h = Math.round(h * k); }
+        var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        cv.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        ok({ nom: f.name.replace(/\.[^.]+$/, "") + ".jpg", data: cv.toDataURL("image/jpeg", 0.82) });
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); ok(null); };
+      img.src = url;
+    });
+  };
+  var choixFichiers = function () {
+    var zoneF = el("div", "chat-fichiers");
+    var input = el("input");
+    input.type = "file"; input.multiple = true; input.id = "chat-fichier-" + Date.now();
+    input.accept = "application/pdf,.pdf,image/*";
+    input.className = "sr-only";
+    var bouton = el("label", "btn btn-primary btn-sm", T("📎 Ajouter le document", "📎 Document toevoegen"));
+    bouton.htmlFor = input.id;
+    bouton.setAttribute("role", "button"); bouton.tabIndex = 0;
+    bouton.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+    var liste = el("ul", "chat-fichiers-liste");
+    var erreur = el("small", "chat-alerte"); erreur.hidden = true;
+    var envoi = el("button", "btn btn-dark btn-sm", T("Envoyer", "Versturen"));
+    envoi.type = "button"; envoi.hidden = true;
+    var choisis = [];
+    var majListe = function () {
+      liste.innerHTML = "";
+      choisis.forEach(function (f, i) {
+        var li = el("li");
+        li.appendChild(el("span", null, f.name));
+        var suppr = el("button", "chat-fichier-suppr", "×");
+        suppr.type = "button"; suppr.setAttribute("aria-label", T("Retirer ", "Verwijder ") + f.name);
+        suppr.addEventListener("click", function () { choisis.splice(i, 1); majListe(); });
+        li.appendChild(suppr);
+        liste.appendChild(li);
+      });
+      envoi.hidden = !choisis.length;
+      envoi.textContent = choisis.length > 1 ? T("Envoyer les " + choisis.length + " documents", "De " + choisis.length + " documenten versturen") : T("Envoyer le document", "Document versturen");
+      bouton.textContent = choisis.length ? T("📎 Ajouter un autre document", "📎 Nog een document toevoegen") : T("📎 Ajouter le document", "📎 Document toevoegen");
+    };
+    input.addEventListener("change", function () {
+      var refus = false;
+      Array.prototype.forEach.call(input.files, function (f) {
+        var bonType = /^(application\/pdf|image\/(jpeg|png|webp|heic|heif))$/.test(f.type) || /\.(pdf|jpe?g|png|webp|heic)$/i.test(f.name);
+        if (!bonType || f.size > MAX_TAILLE || choisis.length >= MAX_FICHIERS) { refus = true; return; }
+        choisis.push(f);
+      });
+      input.value = "";
+      erreur.textContent = T("Un fichier n'a pas été ajouté : PDF ou photo de moins de 10 Mo, 6 fichiers au plus.", "Een bestand werd niet toegevoegd: pdf of foto van minder dan 10 MB, maximaal 6 bestanden.");
+      erreur.hidden = !refus;
+      majListe();
+    });
+    envoi.addEventListener("click", function () {
+      if (!choisis.length) return;
+      envoi.disabled = true; envoi.textContent = T("Envoi en cours…", "Bezig met verzenden…");
+      Promise.all(choisis.map(lireFichier)).then(function (docs) {
+        docs = docs.filter(Boolean);
+        if (!docs.length) { envoi.disabled = false; erreur.hidden = false; majListe(); return; }
+        envoyer({ fichiers: docs }, "📎 " + docs.map(function (d) { return d.nom; }).join(", ")).catch(function () { envoi.disabled = false; majListe(); });
+      });
+    });
+    zoneF.appendChild(input); zoneF.appendChild(bouton); zoneF.appendChild(liste); zoneF.appendChild(erreur); zoneF.appendChild(envoi);
+    zoneF.appendChild(el("small", "chat-fichiers-aide", T("PDF ou photo, 10 Mo maximum par fichier.", "Pdf of foto, maximaal 10 MB per bestand.")));
+    return zoneF;
+  };
+
   var bulle = function (m) {
     var li = el("li", "chat-msg chat-" + m.role);
     if (m.role === "equipe") li.appendChild(el("span", "chat-tag", T("Équipe Recymo", "Team Recymo")));
@@ -277,7 +363,7 @@
     requestAnimationFrame(function () { liste.scrollTop = liste.scrollHeight; });
     var dernier = c.messages[c.messages.length - 1] || {};
     // La case de texte reste disponible, sauf quand le robot attend un clic ou des cases précises
-    var bloque = ["chantier", "coordonnees", "facturation", "nombre"].indexOf(dernier.champ) !== -1 || (dernier.recap && dernier.boutons && dernier.boutons.length);
+    var bloque = ["chantier", "coordonnees", "facturation", "nombre", "fichiers"].indexOf(dernier.champ) !== -1 || (dernier.recap && dernier.boutons && dernier.boutons.length);
     champ.disabled = !!bloque; bouton.disabled = !!bloque;
     champ.placeholder = dernier.champ === "texte" ? T("Décrivez votre demande…", "Beschrijf uw aanvraag…")
       : bloque ? T("Répondez avec les boutons ou les cases ci-dessus", "Antwoord met de knoppen of vakjes hierboven") : T("Écrivez votre message…", "Schrijf uw bericht…");

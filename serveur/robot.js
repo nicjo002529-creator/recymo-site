@@ -209,6 +209,7 @@ const questions = {
     if (!e.rep.analyse) return q("analyse", T(r, "Avez-vous une analyse de vos terres (RQT / CCQT) ?", "Hebt u een analyse van uw grond (RQT / CCQT)?"),
       [b(r, "oui", "Oui, je la joins", "Ja, ik voeg ze toe"), b(r, "non", "Non", "Nee")]);
     if (e.rep.analyse === "oui") r.analyseAJoindre = true;
+    if (e.rep.analyse === "oui" && !e.rep.fichierDemande) return { fichiers: true };
     if (site === "BRAIVES") {
       if (e.rep.analyse === "non" && !e.rep.braivesSans) return q("braivesSans", T(r, "À Braives, les terres sont acceptées uniquement avec une analyse (RQT, CCQT). Que préférez-vous ?",
         "In Braives wordt grond enkel aanvaard met een analyse (RQT, CCQT). Wat verkiest u?"), [b(r, "continuer", "Je fournirai l'analyse", "Ik bezorg de analyse"), b(r, "autre", "Choisir un autre site", "Een andere site kiezen")]);
@@ -367,6 +368,11 @@ const avancer = (r, outils, prefixe = "") => {
       }
       if (res.info) { r.courant = null; prefixe += res.info + " "; continue; }
       if (res.libre) { r.courant = null; r.etape = "libre"; return reponse(prefixe + res.libre, { champ: "texte" }); }
+      if (res.fichiers) {
+        r.etape = "fichiers";
+        return reponse(prefixe + T(r, "Ajoutez votre analyse (PDF ou photo). Vous pouvez en mettre plusieurs.", "Voeg uw analyse toe (pdf of foto). U kunt er meerdere toevoegen."),
+          { champ: "fichiers", boutons: [b(r, "plus_tard", "Je l'enverrai plus tard", "Ik stuur ze later")] });
+      }
       const nom = res.code ? libelle(res.code, r.langue) : res.nom;
       if (!terre && r.site) {
         const ici = outils.sitesPour(r.chantier && r.chantier.cp).find((x) => x.code === r.site);
@@ -466,7 +472,7 @@ const repondre = (conversation, entree = {}, outils) => {
   const texte = String(entree.texte || "").trim();
   const bouton = entree.bouton ? String(entree.bouton) : null;
   const t = norm(texte);
-  const vide = !texte && !bouton && entree.nombre == null && !entree.chantier && !entree.coordonnees && !entree.facturation;
+  const vide = !texte && !bouton && entree.nombre == null && !entree.chantier && !entree.coordonnees && !entree.facturation && !(Array.isArray(entree.fichiers) && entree.fichiers.length);
 
   if (vide) return r.etape === "accueil" && !r.lignes.length ? reponse(ACCUEIL(r), { boutons: boutonsMatiere(r) }) : reponse("");
 
@@ -560,6 +566,19 @@ const repondre = (conversation, entree = {}, outils) => {
     return suiteDossier(r, T(r, "Merci, c'est noté. ", "Bedankt, genoteerd. "));
   }
 
+  // Analyse de terres : documents ajoutés ou envoi plus tard
+  if (r.etape === "fichiers" && r.courant) {
+    const noms = Array.isArray(entree.fichiers) ? entree.fichiers.filter(Boolean) : [];
+    if (!noms.length && bouton !== "plus_tard") {
+      return reponse(T(r, "Ajoutez le document avec le bouton ci-dessous, ou cliquez sur « Je l'enverrai plus tard ».", "Voeg het document toe met de knop hieronder, of klik op “Ik stuur ze later”."),
+        { champ: "fichiers", boutons: [b(r, "plus_tard", "Je l'enverrai plus tard", "Ik stuur ze later")] });
+    }
+    r.courant.rep.fichierDemande = true;
+    if (noms.length) { r.documents = (r.documents || []).concat(noms); r.courant.note = T(r, "analyse jointe", "analyse bijgevoegd"); }
+    else r.courant.note = T(r, "analyse à envoyer", "analyse te bezorgen");
+    return avancer(r, outils, noms.length ? T(r, "Merci, c'est bien reçu. ", "Bedankt, goed ontvangen. ") : "");
+  }
+
   // Quantité
   if (r.etape === "quantite" && r.courant) {
     const mt = t.match(RE_TONNES), mm = t.match(RE_M3);
@@ -619,7 +638,7 @@ const resume = (r) => ({
   site: r.site || null, siteNom: r.siteNom || null,
   chantier: r.chantier || null,
   profil: r.profil || null, coordonnees: r.coordonnees || null, facturation: r.facturation || null,
-  libre: r.libre || null, analyse: !!r.analyseAJoindre,
+  libre: r.libre || null, analyse: !!r.analyseAJoindre, documents: r.documents || [],
   ailleurs: r.ailleurs || []
 });
 

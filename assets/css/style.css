@@ -1000,3 +1000,12 @@ a.info-item:hover { border-color: var(--green-600); box-shadow: var(--shadow-sm)
 .chat-msg:has(.chat-dossier), .chat-msg:has(.chat-recap) { max-width: min(100%, 680px); }
 .chat-maj { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #fdf3d4; border: 1px solid #f1dc9a; } .chat-maj p { margin: 0; } .chat-maj .btn { justify-self: start; }
 .chat-recap-ailleurs { margin: 0; padding: 8px 10px; border-radius: 8px; background: #fdf3d4; font-size: .85rem; }
+/* Chat : ajout de documents (analyse de terres) */
+.chat-fichiers { display: grid; gap: 8px; justify-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.chat-fichiers label.btn { cursor: pointer; }
+.chat-fichiers-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; width: 100%; }
+.chat-fichiers-liste li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--green-50); font-size: .875rem; }
+.chat-fichiers-liste li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-fichier-suppr { border: 0; background: none; font-size: 1.2rem; line-height: 1; cursor: pointer; color: var(--muted); padding: 0 4px; }
+.chat-fichiers-aide { color: var(--muted); }
+.chat-msg:has(.chat-fichiers) { max-width: min(100%, 560px); }
